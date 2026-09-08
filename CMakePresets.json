@@ -1,0 +1,43 @@
+{
+  "version": 2,
+  "cmakeMinimumRequired": { "major": 3, "minor": 20, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "debug",
+      "displayName": "Debug with a C++20 compiler and Ninja on PATH",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug", "BUILD_TESTING": "ON" }
+    },
+    {
+      "name": "release",
+      "inherits": "debug",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "windows-local-tools",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "${sourceDir}/.tools/llvm-mingw-20250613-ucrt-x86_64/bin/clang++.exe",
+        "CMAKE_MAKE_PROGRAM": "${sourceDir}/.tools/cmake/bin/ninja.exe"
+      },
+      "environment": {
+        "PATH": "${sourceDir}/.tools/llvm-mingw-20250613-ucrt-x86_64/bin;$penv{PATH}"
+      }
+    },
+    { "name": "windows-local-debug", "inherits": ["windows-local-tools", "debug"] },
+    { "name": "windows-local-release", "inherits": ["windows-local-tools", "release"] }
+  ],
+  "buildPresets": [
+    { "name": "debug", "configurePreset": "debug" },
+    { "name": "release", "configurePreset": "release" },
+    { "name": "windows-local-debug", "configurePreset": "windows-local-debug" },
+    { "name": "windows-local-release", "configurePreset": "windows-local-release" }
+  ],
+  "testPresets": [
+    { "name": "debug", "configurePreset": "debug", "output": { "outputOnFailure": true }, "execution": { "noTestsAction": "error" } },
+    { "name": "release", "configurePreset": "release", "output": { "outputOnFailure": true }, "execution": { "noTestsAction": "error" } },
+    { "name": "windows-local-debug", "configurePreset": "windows-local-debug", "output": { "outputOnFailure": true }, "execution": { "noTestsAction": "error" } },
+    { "name": "windows-local-release", "configurePreset": "windows-local-release", "output": { "outputOnFailure": true }, "execution": { "noTestsAction": "error" } }
+  ]
+}

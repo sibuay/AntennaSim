@@ -1,0 +1,2 @@
+d20708180fba89d762c552bf069615d1cbc7934ca5ef1336dc13fbba0f802361  docs/methods/FND-03-yee-conventions.md
+bb2dfcc9ed39ea34c95a933280572677e887f00b655f124d3009e351967a4a38  scripts/check_yee_conventions.py
