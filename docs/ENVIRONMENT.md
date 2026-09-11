@@ -95,3 +95,17 @@ approved execution. Ordinary local terminal use may not have these restrictions.
 Generic `debug` and `release` presets also exist for an independently configured
 C++20 compiler and Ninja on PATH. Those combinations, MSVC, Linux, and macOS have
 not been tested. See [foundation evidence](validation/FND-02-build.md).
+
+## Hosted validation
+
+GitHub is the selected source-control and CI host as of 2026-09-11. The workflow
+in `.github/workflows/ci.yml` configures independent Debug and Release builds on
+`ubuntu-latest`, pins Python 3.13, runs the complete CTest suite, and retains test
+logs, source-snapshot inputs, and smoke-audit outputs for 90 days. It uses read-only
+repository permissions. The first hosted result is pending the workflow commit
+reaching GitHub; until then this is configured coverage, not a recorded CI pass.
+
+Python is a required dependency whenever `BUILD_TESTING=ON`. CMake configuration
+fails if the interpreter is unavailable, and all convention, benchmark-specification,
+golden-state, and CLI artifact audits are registered in CTest. This prevents a
+reduced validation suite from being reported as a successful full run.

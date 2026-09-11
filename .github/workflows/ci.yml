@@ -1,0 +1,58 @@
+name: Validation
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.configuration }} / Ubuntu
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release]
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up required Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Configure
+        run: >-
+          cmake -S . -B build/ci-${{ matrix.configuration }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.configuration }}
+          -DBUILD_TESTING=ON
+
+      - name: Build
+        run: cmake --build build/ci-${{ matrix.configuration }} --parallel
+
+      - name: Run structural and analytical validation
+        run: >-
+          ctest --test-dir build/ci-${{ matrix.configuration }}
+          --output-on-failure
+
+      - name: Retain test and smoke-audit evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: validation-${{ matrix.configuration }}-${{ github.run_id }}
+          path: |
+            build/ci-${{ matrix.configuration }}/Testing/Temporary/
+            build/ci-${{ matrix.configuration }}/ref04-audits/
+            build/ci-${{ matrix.configuration }}/source-snapshot.txt
+          if-no-files-found: error
+          retention-days: 90

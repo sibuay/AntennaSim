@@ -53,9 +53,10 @@ where useful.
 
 ## Evidence and source control
 
-When source control is initialized, keep changes reviewable and group related
-implementation, tests, and method notes. Repository hosting and publication are
-separate choices; no remote is assumed in this plan.
+Keep changes reviewable and group related implementation, tests, and method notes.
+GitHub is the selected source-control and CI host. Repository hosting, licensing,
+and public distribution remain separate choices; a configured remote is not itself
+authorization to publish releases or change repository visibility.
 
 Use stable benchmark IDs. Store small inputs and reference provenance with the
 case; keep large generated arrays out of source control. Evidence reports identify

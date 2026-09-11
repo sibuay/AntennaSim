@@ -52,6 +52,10 @@ target_link_libraries(antennasim PRIVATE antennasim_benchmarks)
 antennasim_target_defaults(antennasim)
 
 if(BUILD_TESTING)
+    # The independent Python audits are part of the validation contract. A
+    # validation build must fail closed when its interpreter is unavailable.
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
     add_executable(antennasim_toolchain_check tests/toolchain_check.cpp)
     target_link_libraries(antennasim_toolchain_check PRIVATE AntennaSim::core)
     antennasim_target_defaults(antennasim_toolchain_check)
@@ -94,13 +98,17 @@ if(BUILD_TESTING)
     add_test(NAME reference.run COMMAND antennasim_run_check)
     set_tests_properties(reference.run PROPERTIES LABELS "reference_structural" TIMEOUT 120)
 
-    find_package(Python3 COMPONENTS Interpreter QUIET)
-    if(Python3_Interpreter_FOUND)
-        add_test(NAME reference.run_artifacts COMMAND "${Python3_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_reference_runs.py"
-            --app "$<TARGET_FILE:antennasim>" --output-root "${CMAKE_CURRENT_BINARY_DIR}/ref04-audits")
-        set_tests_properties(reference.run_artifacts PROPERTIES LABELS "reference_structural" TIMEOUT 120)
-    else()
-        message(WARNING "Python3 missing: reference.run_artifacts is unavailable; run its audit separately.")
-    endif()
+    add_test(NAME reference.yee_conventions COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_yee_conventions.py")
+    add_test(NAME reference.benchmark_specification COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_reference_benchmarks.py")
+    add_test(NAME reference.golden_steps COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_reference_steps.py")
+    set_tests_properties(reference.yee_conventions reference.benchmark_specification
+        reference.golden_steps PROPERTIES LABELS "reference_structural;analytical_audit;fast" TIMEOUT 30)
+
+    add_test(NAME reference.run_artifacts COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_reference_runs.py"
+        --app "$<TARGET_FILE:antennasim>" --output-root "${CMAKE_CURRENT_BINARY_DIR}/ref04-audits")
+    set_tests_properties(reference.run_artifacts PROPERTIES LABELS "reference_structural" TIMEOUT 120)
 endif()

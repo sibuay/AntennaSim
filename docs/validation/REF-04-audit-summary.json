@@ -1,0 +1,32 @@
+{
+  "schema": "antennasim-validation-summary-1",
+  "benchmark": "REF-04",
+  "evidence_kind": "structural_and_smoke_not_physical_acceptance",
+  "source_commit": "593064327251a8c408d617e6f0ef3c5ad57883ac",
+  "source_snapshot_sha256": "b4d2b807ed49d9efd2f40f7f9810a53c590bfea450a16f5ccdd6f98c5602cb84",
+  "source_manifest": "REF-04-source-sha256.txt",
+  "environment": {
+    "os": "Windows x64",
+    "cpu": "AMD Ryzen 5 3600",
+    "compiler": "LLVM-MinGW 20250613 / Clang 20.1.7",
+    "cmake_ctest": "3.31.10"
+  },
+  "ctest": {
+    "debug": { "passed": 8, "total": 8, "elapsed_seconds": 12.48 },
+    "release": { "passed": 8, "total": 8, "elapsed_seconds": 3.88 }
+  },
+  "artifact_audit": {
+    "synthetic_complex_relative_error": 2.6665515000580923e-16,
+    "first_run_elapsed_seconds": 0.5339428,
+    "first_run_peak_working_set_bytes": 20070400,
+    "repeat_run_elapsed_seconds": 0.5361625,
+    "repeat_run_peak_working_set_bytes": 20078592,
+    "raw_csv_repeatability": "byte_for_byte_pass",
+    "invalid_cli_overwrite_and_incomplete_rejection": "pass"
+  },
+  "limits": [
+    "No V01-V03 physical acceptance was evaluated.",
+    "Full propagation and long-time stability suites were not run.",
+    "Same collaborator implemented and reviewed the work."
+  ]
+}

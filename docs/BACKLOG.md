@@ -1,6 +1,6 @@
 # Backlog and project status
 
-Last updated: 2026-09-10.
+Last updated: 2026-09-11.
 
 ## Current position
 
@@ -41,6 +41,7 @@ prerequisites; the chosen sequence may be stricter to keep work focused.
 | REF-02 | P1 | Implement staggered field storage and component indexing | REF-01 | Done | [Storage/access contract](methods/REF-02-field-storage-contract.md); [23838 checks / 1976 stencil reads / build evidence](validation/REF-02-field-storage.md) |
 | REF-03 | P1 | Implement time-step selection and reference E/H updates | REF-02 | Done | [CFL/update contract](methods/REF-03-reference-update-contract.md); [27013 checks / exact-rational half-stage evidence](validation/REF-03-reference-updates.md) |
 | REF-04 | P1 | Add minimal source, probes, run configuration, and CLI output | REF-03 | Done | [Source/run contract](methods/REF-04-run-contract.md); [3337 checks, S07/S08 and deterministic CLI evidence](validation/REF-04-reference-runs.md) |
+| MNT-01 | P1 support | Harden validation, source-control traceability, CI, and durable evidence | REF-04 | Done | [Maintenance evidence](validation/MNT-01-repository-hardening.md); REF-04 commit `5930643`; D016 |
 | REF-05 | P1 | Measure propagation, impedance, stability, and refinement behavior | REF-04 | Ready | V01–V03 evidence; applicable structural regressions |
 | REF-06 | P1 | Review reference-propagation gate | REF-05 | Planned | P1 gate record and supported limits |
 | MAT-01 | P2 | Specify PEC, dielectric, conductivity, and spectral conventions | REF-06 | Planned | Method notes and V04–V07 specifications |
@@ -73,6 +74,28 @@ an ID, dependencies, a completion test, and an evidence location before starting
 
 ## Session handoff
 
+**2026-09-11 — MNT-01 validation and repository hardening complete**
+
+- Preserved the reviewed REF-04 implementation as commit `5930643`, after the
+  redundant worktree and branch were removed. The exact historical SHA-256
+  manifest remains unchanged and now maps to a durable Git revision.
+- Made Python mandatory for validation builds and registered the three independent
+  convention/specification/golden-state scripts in CTest. Validation now fails
+  during configuration rather than silently passing a reduced suite. Debug and
+  Release pass 11/11 CTests in 13.59/4.48 s without compiler warnings; the
+  AddressSanitizer/UndefinedBehaviorSanitizer suite passes 11/11 in 54.53 s.
+- Added read-only GitHub Actions Debug/Release validation for `main` pushes and
+  pull requests, with Python 3.13 and 90-day CTest/source/smoke artifact retention.
+  The workflow is locally reviewed; its first hosted execution awaits a push.
+- Added a tracked compact REF-04 audit summary and stopped treating ignored local
+  build logs as durable repository evidence. Licensing/public distribution remains
+  open under O005; source-control and CI selection are resolved by D016.
+- Numerical implementation and acceptance thresholds are unchanged. REF-05 remains
+  the next ready item, and no physical propagation, impedance, or stability pass
+  is claimed.
+
+### Previous handoff (historical)
+
 **2026-09-10 — REF-04 reference run facilities complete**
 
 - Added validated sparse impressed E-edge currents and half-time amplitudes,
@@ -89,7 +112,8 @@ an ID, dependencies, a completion test, and an evidence location before starting
   metadata/coordinates/timestamps, invalid arguments, overwrite refusal, and
   incomplete-artifact rejection pass an independent reader. Final measured
   Release smoke: 0.5339/0.5362 s, peak working sets 20,070,400/20,078,592 bytes.
-  See [evidence](validation/REF-04-reference-runs.md), D015, and `build/REF-04-*`.
+  See [evidence](validation/REF-04-reference-runs.md), the
+  [durable audit summary](validation/REF-04-audit-summary.json), and D015.
 - Addressed the known compiler sandbox restriction via approved execution. One
   compiler signedness warning was fixed. An incorrect oracle `--check` argument
   was corrected to no arguments. A standalone CLI missing runtime PATH stalled
@@ -102,7 +126,7 @@ an ID, dependencies, a completion test, and an evidence location before starting
   cases, record measured resource use and all failures, and build the physical
   report/refinement/domain/long-time traces. Validate diagnostic/measurement
   reductions independently before accepting their physical results. Preserve
-  all eight CTests and three prior audits; repeat physical suites from a clean
+  all eleven CTests; repeat physical suites from a clean
   Release build as specified. Source cutoff is state 8 for driven stability.
 - Full propagation/enlarged/refinement and long-time suites have not run. C03
   remains in progress until the first measured report; P1 remains open. Larger

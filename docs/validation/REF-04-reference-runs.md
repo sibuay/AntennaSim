@@ -6,9 +6,10 @@ Same collaborator implemented and reviewed; no independent reviewer is claimed.
 
 ## Snapshot and method
 
-Local working snapshot based on `06440a0` (Initial commit), with this session's
-uncommitted source/docs changes. [Source/test/script SHA-256 manifest](REF-04-source-sha256.txt)
-identifies the checked files. The built executable's source-content fingerprint
+The reviewed local snapshot was based on `06440a0` and is now preserved by commit
+`593064327251a8c408d617e6f0ef3c5ad57883ac`.
+[Source/test/script SHA-256 manifest](REF-04-source-sha256.txt) identifies the exact
+checked files. The built executable's source-content fingerprint
 is `b4d2b807ed49d9efd2f40f7f9810a53c590bfea450a16f5ccdd6f98c5602cb84`.
 CMake records its ordered path/hash input in each build's `source-snapshot.txt`;
 the fingerprint includes core, benchmark and CLI sources, headers and build files.
@@ -50,9 +51,11 @@ traces, dispersion, impedance or refinement results.
 
 ## Raw artifacts and resource measurements
 
-Final retained measured Release audit:
-`build/evidence/REF-04/ref04-rkit4pty/` (contains `first/`, `repeat/`, and
-`audit.json`). Both successful runs include three case directories, each with
+The durable compact result is the tracked
+[REF-04 audit summary](REF-04-audit-summary.json). Its source commit, fingerprint,
+measured results, and limitations correspond to the manifest above. The original
+local raw Release audit was generated under `build/evidence/REF-04/` and contained
+`first/`, `repeat/`, and `audit.json`. Both successful runs include three case directories, each with
 `configuration.json`, `metadata.json`, `probes.csv`, and `diagnostics.csv`; propagation diagnostics
 are header-only because its required observable is the native line. The suite's
 `COMPLETE.json` appears only after all streams close and the temporary marker
@@ -98,14 +101,13 @@ python scripts/check_reference_runs.py --app build/windows-local-release/antenna
 
 The last command creates a unique audit subdirectory, runs the CLI twice, tests
 its rejection paths, and retains evidence. CTest runs the same audit under
-`reference.run_artifacts` when Python is available. Direct CLI syntax and its
+`reference.run_artifacts`; Python is required for validation builds. Direct CLI syntax and its
 runtime PATH requirement are documented in the root README. Full fixed suites
 are implemented but not executed here; their physical analyzer remains REF-05.
 
-Logs: `build/REF-04-debug-complete.log`, `build/REF-04-release-complete.log`,
-`build/REF-04-artifact-complete.log`, `build/REF-04-conventions-audit.log`,
-`build/REF-04-benchmark-audit.log`, and `build/REF-04-golden-audit.log`.
-Detailed test output is also in each build's `Testing/Temporary/LastTest.log`.
+Local raw logs remain reproducible build output rather than repository evidence.
+The tracked summary and source manifest preserve the compact durable record;
+GitHub CI retains CTest logs and smoke artifacts for each hosted run.
 
 ## Failures, limits, and next action
 
@@ -114,8 +116,7 @@ Detailed test output is also in each build's `Testing/Temporary/LastTest.log`.
 - The golden script was first invoked with unsupported `--check`; its documented
   no-argument check then passed. No fixture was regenerated to fit solver output.
 - A standalone smoke audit without compiler runtime PATH stalled at startup;
-  only that launched process was stopped. The log is
-  `build/REF-04-artifact-audit.log`. Supplying the runtime PATH resolved it;
+  only that launched process was stopped. Supplying the runtime PATH resolved it;
   CTest already inherited that path. The audit now bounds subprocess duration.
 - A signedness warning in JSON escaping was corrected explicitly. Final builds
   have no warnings. No numerical test failed or tolerance was loosened.
@@ -127,5 +128,6 @@ Detailed test output is also in each build's `Testing/Temporary/LastTest.log`.
 
 Next: REF-05's independent artifact analyzer, diagnostic/measurement checks,
 full physical runs, resource observations and retained pass/failure reports.
-Keep all eight CTests and three prior audits. C03 awaits a measured physical
-report and P1 awaits its evidence gate. No antenna/port capability is implied.
+Keep all eleven current CTests (the original eight plus three integrated audits).
+C03 awaits a measured physical report and P1 awaits its evidence gate. No
+antenna/port capability is implied.

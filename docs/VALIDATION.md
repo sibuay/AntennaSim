@@ -65,6 +65,11 @@ overwrite refusal and incomplete-artifact rejection. Larger fixtures execute
 their S08 checks before stepping in REF-05. A 100-step zero-state regression
 passes, but V03 long-time stability is still pending.
 
+All three independent Python convention/specification/golden-state audits are
+registered in CTest, and Python is required whenever `BUILD_TESTING=ON`; validation
+therefore fails closed instead of reporting a reduced suite as a pass. GitHub CI
+runs the same eleven-test Debug/Release suite and retains logs and smoke artifacts.
+
 | ID | First phase | Case / independent reference | Required measurements and checks |
 | --- | --- | --- | --- |
 | V01 | P1 | Free-space propagation / analytical wave behavior | Travel time or phase velocity; numerical dispersion; amplitude; samples chosen before boundary returns |

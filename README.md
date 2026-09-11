@@ -5,8 +5,9 @@ direction and scientific principles are defined in [VISION.md](VISION.md).
 
 **Current status:** C++20 vacuum reference kernel with checked grid/field storage,
 strict CFL selection, H-then-E updates, impressed currents, native probes, and
-reproducible reference benchmark CLI/output. Debug and Release pass eight CTest
-tests, including independent equation-level, fixture, sampling and artifact checks.
+reproducible reference benchmark CLI/output. Debug and Release pass eleven CTest
+tests, including independent equation-level, analytical, fixture, sampling and
+artifact checks.
 No physical benchmark or antenna accuracy claim is established. The foundation
 gate passed on 2026-09-06; P1 remains open. Physical measurements are next (REF-05).
 
@@ -56,7 +57,13 @@ The project-local Windows toolchain is set up in this workspace. From the root:
 ```
 
 Both commands configure, build, and run CTest. See the environment record to recreate
-the tools. Build outputs and local tools are ignored by Git rules.
+the tools. Python 3 is a required validation dependency; configuration fails instead
+of silently omitting the independent audits. Build outputs and local tools are ignored
+by Git rules.
+
+GitHub Actions runs the same required CMake/CTest validation in Debug and Release
+on Ubuntu for pushes and pull requests targeting `main`. Each run retains its CTest
+logs, source fingerprint input, and smoke-audit outputs as workflow artifacts.
 
 Run the verified smoke command from a PowerShell session with the local compiler
 runtime on its process PATH (the CMake presets already provide this for tests):

@@ -22,6 +22,7 @@ baseline. They do not imply completed implementation.
 | D013 | Keep REF-02 field ownership fixed; expose checked sample access and const contiguous views; classify walls on the validated grid without enforcing them in storage | Prevents shape/storage mismatch and implicit large copies; coordinate and wall checks can run without field allocation; physical initialization and boundary evolution remain kernel/run responsibilities | A concrete run/checkpoint/transfer or profiled iteration requirement needs a broader owner/access API |
 | D014 | Use validated vacuum time-step values and an owned source-free reference stepper with explicit initial copying, divergence/wall screening, and terminal in-place update failure | Pins constant/spacing/time conventions; protects active fields from external mutation; fails with state/component/index instead of exposing a successful partial step; independent local kernels and Fraction states validate implementation | REF-04 current/run requirements, checkpoint needs, or measured performance/representability limits justify a documented extension |
 | D015 | Use validated sparse impressed currents, native probes, separate fixed benchmark runners and streamed CSV/JSON with exclusive completion markers | Preserves initial rho=0 screening, defines later charge by continuity, retains failed evidence and distinguishes raw completion from physical acceptance; see REF-04 contract/evidence | General project/source/charge requirements or measured resource constraints |
+| D016 | Use GitHub for source control and required Debug/Release CI; make Python audits fail closed and retain compact validation evidence | Keeps reviewed snapshots bisectable, prevents reduced suites from passing silently, and makes local/remote evidence inspectable without tracking large generated arrays | Host, runner, dependency, retention, or distribution requirements change |
 
 ## Open decisions
 
@@ -32,7 +33,7 @@ responsibility rather than introducing approval requirements.
 
 | ID | Question | Need by | Responsible role / next step |
 | --- | --- | --- | --- |
-| O005 | Which source-control host, license, and CI environment should be used? | External hosting/distribution; CI selection | Project owner sets distribution intent; collaborator evaluates relevant dependencies |
+| O005 | Which project license and distribution policy should be used? | Before external distribution | Project owner sets distribution intent; source control and CI are resolved by D016 |
 | O006 | Which trusted reference solver/data are accessible, reproducible, and suitable for dipole/patch comparisons? | P4/P6 benchmark specifications | Collaborator inventories accessible references; owner resolves access needs |
 | O007 | Which absorbing boundary formulation and supported test envelope will be used? | P3 implementation | Collaborator: method/reference study after P2 gate |
 | O008 | Which persistent project schema and large-result format should be used? | Persistent benchmark/user project implementation, no later than P6 | Collaborator: evaluate reproducibility, versioning, partial reads, and data sizes |
@@ -228,3 +229,19 @@ units, configuration, fixture checks, memory budget and elapsed time.
 Revisit for a real general-run/project requirement, charge observable, source
 performance bottleneck, or measured full-suite resource issue. No v1 numerical
 threshold, phase sequence, or physical accuracy claim changed.
+
+## D016 detail — source control, CI, and durable evidence on 2026-09-11
+
+Status: implemented locally; the first hosted run occurs after the maintenance
+commit reaches GitHub. The repository uses its existing GitHub `origin` and a
+read-only GitHub Actions workflow for Debug/Release CMake builds and CTest runs on
+Ubuntu. Python is pinned by the workflow and required by CMake for every validation
+build. The three previously manual analytical audits are now CTest tests, so an
+absent interpreter or failed audit cannot produce a reduced successful suite.
+
+Keep numerical implementations and their evidence in coherent commits. Track
+compact audit summaries and checksum manifests; keep large raw arrays out of Git.
+Hosted runs retain CTest logs, source-snapshot inputs, and smoke outputs as
+90-day workflow artifacts. Licensing and public distribution remain O005 and are
+not implied by the configured remote or CI workflow. Revisit if runner coverage,
+artifact retention, or release policy changes.
