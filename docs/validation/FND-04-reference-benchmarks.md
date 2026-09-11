@@ -370,10 +370,14 @@ python scripts/check_reference_benchmarks.py
 ./scripts/build.ps1 -Configuration Release
 ```
 
-**Future executable contract — unavailable until REF-04/REF-05.** Implement
-these commands there, without presenting them as successful today:
+**Execution status as of REF-04 (2026-09-10):** the built-in CLI suites exist and
+their smoke subset passes [structural/artifact checks](REF-04-reference-runs.md).
+The full commands below and physical analyzer remain unexecuted REF-05 work;
+the analyzer script is not yet implemented. On Windows, first put the local
+compiler runtime on the process PATH (also supplied by the CMake presets):
 
 ```powershell
+$env:PATH = (Join-Path (Get-Location) '.tools/llvm-mingw-20250613-ucrt-x86_64/bin') + ';' + $env:PATH
 & ./build/windows-local-release/antennasim.exe --benchmark reference-v1 --suite propagation --output build/evidence/reference-v1/propagation
 & ./build/windows-local-release/antennasim.exe --benchmark reference-v1 --suite stability --output build/evidence/reference-v1/stability
 python scripts/analyze_reference_benchmarks.py --input build/evidence/reference-v1 --output build/evidence/reference-v1/analysis

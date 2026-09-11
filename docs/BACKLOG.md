@@ -1,6 +1,6 @@
 # Backlog and project status
 
-Last updated: 2026-09-07.
+Last updated: 2026-09-10.
 
 ## Current position
 
@@ -9,13 +9,15 @@ Last updated: 2026-09-07.
   reviewed reference Yee-grid conventions, fixed initial benchmark specifications,
   structurally checked core grid metadata/input/allocation validation, and six
   staggered field arrays with checked indexing, native positions, and wall classification;
-  strict CFL selection and source-free reference E/H stepping with structural checks.
+  strict CFL selection and reference E/H stepping, impressed currents, native
+  probes, fixed benchmark fixtures and CLI raw output with structural/smoke checks.
 - **Validated numerical capability:** equation-level/structural checks only; no physical benchmark passed.
 - **Active implementation item:** none.
-- **Next ready item:** REF-04 — minimal sources, probes, run configuration, and CLI output.
+- **Next ready item:** REF-05 — physical propagation, impedance, stability, and refinement evidence.
 - **Scheduling rule:** milestone-based, with no assumed dates or durations.
-- **Blockers:** none for REF-04. The local compiler requires approved execution
-  outside the sandbox; Debug/Release checks pass in that environment.
+- **Blockers:** none for REF-05. The local compiler requires approved execution
+  outside the sandbox; Debug/Release checks pass in that environment. Standalone
+  Windows CLI runs need the compiler runtime directory on the process PATH.
 
 Status vocabulary: **Ready**, **Planned**, **In progress**, **Blocked**, **Done**.
 Ready means prerequisites are satisfied. Done requires linked evidence, not just
@@ -38,8 +40,8 @@ prerequisites; the chosen sequence may be stricter to keep work focused.
 | REF-01 | P1 | Implement core types, grid extents, and input validation | FND-05 | Done | [API/acceptance contract](methods/REF-01-core-grid-contract.md); [136 structural checks / build evidence](validation/REF-01-core-grid.md) |
 | REF-02 | P1 | Implement staggered field storage and component indexing | REF-01 | Done | [Storage/access contract](methods/REF-02-field-storage-contract.md); [23838 checks / 1976 stencil reads / build evidence](validation/REF-02-field-storage.md) |
 | REF-03 | P1 | Implement time-step selection and reference E/H updates | REF-02 | Done | [CFL/update contract](methods/REF-03-reference-update-contract.md); [27013 checks / exact-rational half-stage evidence](validation/REF-03-reference-updates.md) |
-| REF-04 | P1 | Add minimal source, probes, run configuration, and CLI output | REF-03 | Ready | Deterministic end-to-end benchmark command |
-| REF-05 | P1 | Measure propagation, impedance, stability, and refinement behavior | REF-04 | Planned | V01–V03 evidence; applicable structural regressions |
+| REF-04 | P1 | Add minimal source, probes, run configuration, and CLI output | REF-03 | Done | [Source/run contract](methods/REF-04-run-contract.md); [3337 checks, S07/S08 and deterministic CLI evidence](validation/REF-04-reference-runs.md) |
+| REF-05 | P1 | Measure propagation, impedance, stability, and refinement behavior | REF-04 | Ready | V01–V03 evidence; applicable structural regressions |
 | REF-06 | P1 | Review reference-propagation gate | REF-05 | Planned | P1 gate record and supported limits |
 | MAT-01 | P2 | Specify PEC, dielectric, conductivity, and spectral conventions | REF-06 | Planned | Method notes and V04–V07 specifications |
 | MAT-02 | P2 | Implement and validate explicit PEC boundaries/cavity | MAT-01 | Planned | V04 evidence and existing regressions |
@@ -70,6 +72,44 @@ an ID, dependencies, a completion test, and an evidence location before starting
 | P13 | Justified MoM scope and multi-solver support | Planned |
 
 ## Session handoff
+
+**2026-09-10 — REF-04 reference run facilities complete**
+
+- Added validated sparse impressed E-edge currents and half-time amplitudes,
+  preserving rho=0 initial screening and defining later charge by continuity.
+  Added native probes, strict step parsing, separate benchmark library, all 36
+  propagation/four stability configurations, independent compact-curl fixtures,
+  streamed raw CSV/metadata and an exclusive fresh-directory completion marker.
+- Debug/Release pass 8/8 CTests without warnings (12.48/3.88 s). The retained six
+  tests pass; `reference.run` adds 3337 source/probe/input/failure checks and
+  S08 fixture checks. Worst normalized divergence 1.96348e-16, plateau error
+  7.54952e-15. S07 independent synthetic complex ratio error 2.6666e-16.
+  All three prior Python audits pass. No numerical threshold changed.
+- End-to-end smoke outputs repeat byte-for-byte for both CSV files per case;
+  metadata/coordinates/timestamps, invalid arguments, overwrite refusal, and
+  incomplete-artifact rejection pass an independent reader. Final measured
+  Release smoke: 0.5339/0.5362 s, peak working sets 20,070,400/20,078,592 bytes.
+  See [evidence](validation/REF-04-reference-runs.md), D015, and `build/REF-04-*`.
+- Addressed the known compiler sandbox restriction via approved execution. One
+  compiler signedness warning was fixed. An incorrect oracle `--check` argument
+  was corrected to no arguments. A standalone CLI missing runtime PATH stalled
+  at startup and was stopped; the corrected command passes. These were tooling
+  issues, not numerical test failures. No clean-build/sanitizer/platform claim.
+- Next exact action: REF-05. Implement `scripts/analyze_reference_benchmarks.py`
+  using the independently tested `reference_measurements.py`, with strict raw
+  artifact completeness/native sample checks and fixed v1 acceptance tables.
+  Execute all 36 propagation cases and four 20,000-source-free-step stability
+  cases, record measured resource use and all failures, and build the physical
+  report/refinement/domain/long-time traces. Validate diagnostic/measurement
+  reductions independently before accepting their physical results. Preserve
+  all eight CTests and three prior audits; repeat physical suites from a clean
+  Release build as specified. Source cutoff is state 8 for driven stability.
+- Full propagation/enlarged/refinement and long-time suites have not run. C03
+  remains in progress until the first measured report; P1 remains open. Larger
+  fixture identities and peak memory are checked during those full runs, not
+  inferred from smoke. No physical propagation/impedance/stability pass claimed.
+
+### Previous handoff (historical)
 
 **2026-09-07 — REF-03 reference updates complete**
 
@@ -113,6 +153,7 @@ an ID, dependencies, a completion test, and an evidence location before starting
 | 2026-09-06 | REF-01 complete | Core grid and allocation/input checks pass; Debug/Release 4/4 each with 136 grid assertions; REF-02 ready; P1/C02 remain open |
 | 2026-09-07 | REF-02 complete | Six field arrays and checked positions/indexing/wall geometry pass; Debug/Release 5/5 each, 23838 field checks and 1976 stencil reads; REF-03 ready; P1/C02 remain open |
 | 2026-09-07 | REF-03 complete / C02 reviewed | Strict CFL and source-free E/H updates pass 27013 kernel checks; Debug/Release 6/6; exact-rational two-step comparisons pass; C02 complete, C03 in progress, REF-04 ready, P1 open |
+| 2026-09-10 | REF-04 complete | Impressed currents, native probes, fixed fixtures/CLI raw artifacts pass 3337 additional checks and independent artifact/S07 audits; Debug/Release 8/8; REF-05 ready; full physical measurements pending, C03/P1 open |
 
 Add concise entries for work-item/cycle reviews, gate outcomes, material blockers,
 and sequencing changes. Keep detailed measurements in validation reports and link them.

@@ -17,16 +17,38 @@ function(antennasim_target_defaults target)
 endfunction()
 
 configure_file(src/version.hpp.in generated/antennasim/version.hpp @ONLY)
-add_library(antennasim_core STATIC src/build_info.cpp src/grid.cpp src/fields.cpp src/vacuum.cpp)
+add_library(antennasim_core STATIC src/build_info.cpp src/grid.cpp src/fields.cpp src/vacuum.cpp src/run.cpp)
 add_library(AntennaSim::core ALIAS antennasim_core)
 target_include_directories(antennasim_core
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
     PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
 antennasim_target_defaults(antennasim_core)
 
-# The reference kernel exists; simulation CLI commands remain REF-04 work.
+# Fingerprint actual source contents; CMake reconfigures when inputs change.
+file(GLOB_RECURSE snapshot_inputs CONFIGURE_DEPENDS
+    "include/*.hpp" "src/*.cpp" "src/*.in" "apps/*.cpp" "benchmarks/*.cpp" "benchmarks/*.hpp")
+list(APPEND snapshot_inputs "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt" "${CMAKE_CURRENT_SOURCE_DIR}/CMakePresets.json")
+list(SORT snapshot_inputs)
+set(snapshot_text "")
+foreach(input IN LISTS snapshot_inputs)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${input}")
+    file(SHA256 "${input}" input_hash)
+    file(RELATIVE_PATH input_name "${CMAKE_CURRENT_SOURCE_DIR}" "${input}")
+    string(APPEND snapshot_text "${input_name}:${input_hash}\n")
+endforeach()
+string(SHA256 source_snapshot "${snapshot_text}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/source-snapshot.txt" "${snapshot_text}")
+add_library(antennasim_benchmarks STATIC benchmarks/reference.cpp)
+target_include_directories(antennasim_benchmarks PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/benchmarks")
+target_link_libraries(antennasim_benchmarks PUBLIC AntennaSim::core)
+target_compile_definitions(antennasim_benchmarks PRIVATE
+    ANTENNASIM_SOURCE_SNAPSHOT="${source_snapshot}"
+    ANTENNASIM_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
+    ANTENNASIM_COMPILER="${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+antennasim_target_defaults(antennasim_benchmarks)
+
 add_executable(antennasim apps/main.cpp)
-target_link_libraries(antennasim PRIVATE AntennaSim::core)
+target_link_libraries(antennasim PRIVATE antennasim_benchmarks)
 antennasim_target_defaults(antennasim)
 
 if(BUILD_TESTING)
@@ -36,7 +58,7 @@ if(BUILD_TESTING)
     add_test(NAME foundation.toolchain COMMAND antennasim_toolchain_check)
     add_test(NAME foundation.cli_help COMMAND antennasim --help)
     set_tests_properties(foundation.cli_help PROPERTIES
-        PASS_REGULAR_EXPRESSION "Simulation commands are not available yet")
+        PASS_REGULAR_EXPRESSION "physical acceptance is not evaluated")
     add_test(NAME foundation.cli_contract
         COMMAND "${CMAKE_COMMAND}"
         "-DAPP=$<TARGET_FILE:antennasim>"
@@ -65,4 +87,20 @@ if(BUILD_TESTING)
     add_test(NAME reference.vacuum COMMAND antennasim_vacuum_check)
     set_tests_properties(reference.vacuum PROPERTIES
         LABELS "reference_structural;fast" TIMEOUT 10)
+
+    add_executable(antennasim_run_check tests/run_check.cpp)
+    target_link_libraries(antennasim_run_check PRIVATE antennasim_benchmarks)
+    antennasim_target_defaults(antennasim_run_check)
+    add_test(NAME reference.run COMMAND antennasim_run_check)
+    set_tests_properties(reference.run PROPERTIES LABELS "reference_structural" TIMEOUT 120)
+
+    find_package(Python3 COMPONENTS Interpreter QUIET)
+    if(Python3_Interpreter_FOUND)
+        add_test(NAME reference.run_artifacts COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_reference_runs.py"
+            --app "$<TARGET_FILE:antennasim>" --output-root "${CMAKE_CURRENT_BINARY_DIR}/ref04-audits")
+        set_tests_properties(reference.run_artifacts PROPERTIES LABELS "reference_structural" TIMEOUT 120)
+    else()
+        message(WARNING "Python3 missing: reference.run_artifacts is unavailable; run its audit separately.")
+    endif()
 endif()

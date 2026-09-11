@@ -100,6 +100,27 @@ UniformGrid checked_initial_grid(const FieldStorage& fields, const VacuumTimeSte
 }
 } // namespace
 
+ElectricCurrent::ElectricCurrent(const UniformGrid& grid, std::vector<CurrentSample> samples)
+    : grid_(grid), samples_(std::move(samples)) {
+    for (const auto& sample : samples_) {
+        (void)grid_.offset(sample.component, sample.index);
+        if (static_cast<unsigned>(sample.component) >= 3 ||
+            grid_.is_tangential_e_wall(sample.component, sample.index) ||
+            !std::isfinite(sample.amperes_per_m2)) {
+            throw std::invalid_argument("Current requires finite values on unconstrained E edges.");
+        }
+    }
+    const auto key = [&](const CurrentSample& sample) {
+        return std::pair{sample.component, grid_.offset(sample.component, sample.index)};
+    };
+    std::sort(samples_.begin(), samples_.end(), [&](const auto& a, const auto& b) { return key(a) < key(b); });
+    for (std::size_t i = 1; i < samples_.size(); ++i) {
+        if (key(samples_[i-1]) == key(samples_[i])) {
+            throw std::invalid_argument("Duplicate current target.");
+        }
+    }
+}
+
 VacuumTimeStep::VacuumTimeStep(const UniformGrid& grid, double dt_s, double limit_s)
     : spacing_m_(grid.spacing_m()), dt_s_(dt_s), limit_s_(limit_s),
       e_scale_(dt_s / epsilon0), h_scale_(dt_s / mu0) {
@@ -165,11 +186,40 @@ const FieldStorage& ReferenceStepper::fields() const { require_valid(); return f
 FieldTimes ReferenceStepper::times() const { require_valid(); return time_step_.times_at(state_index_); }
 
 void ReferenceStepper::step() {
+    advance(nullptr, 0);
+}
+
+void ReferenceStepper::step(const ElectricCurrent& current, double amplitude) {
+    advance(&current, amplitude);
+}
+
+void ReferenceStepper::advance(const ElectricCurrent* current, double amplitude) {
     require_valid();
     try {
         (void)time_step_.times_at(state_index_ + 1);
+        if (!std::isfinite(amplitude)) { throw std::invalid_argument("Nonfinite current amplitude."); }
+        if (current != nullptr) {
+            if (current->grid().cells().values() != fields_.grid().cells().values() ||
+                current->grid().spacing_m() != fields_.grid().spacing_m()) {
+                throw std::invalid_argument("Current/grid mismatch.");
+            }
+            for (const auto& sample : current->samples()) {
+                const double j = amplitude * sample.amperes_per_m2;
+                if (!std::isfinite(j) || !std::isfinite(time_step_.e_scale() * j)) {
+                    throw FieldUpdateError(state_index_, sample.component, sample.index);
+                }
+            }
+        }
         detail::advance_h(fields_, time_step_, state_index_);
         detail::advance_e(fields_, time_step_, state_index_);
+        if (current != nullptr && amplitude != 0) {
+            for (const auto& sample : current->samples()) {
+                auto& value = fields_.at(sample.component, sample.index);
+                const double next = value - time_step_.e_scale() * (amplitude * sample.amperes_per_m2);
+                if (!std::isfinite(next)) { throw FieldUpdateError(state_index_, sample.component, sample.index); }
+                value = next;
+            }
+        }
         ++state_index_;
     } catch (...) {
         failed_ = true;

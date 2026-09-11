@@ -1,9 +1,11 @@
 # Validation plan and benchmark register
 
-**Current state:** no physical benchmark is implemented or passed. REF-01 has
+**Current state:** physical benchmark runners are implemented, but no full
+physical benchmark has passed. REF-01 has
 [passing production grid structural checks](validation/REF-01-core-grid.md), and
 REF-02 has [passing field storage/access checks](validation/REF-02-field-storage.md).
 REF-03 has [passing CFL and equation-level kernel checks](validation/REF-03-reference-updates.md).
+REF-04 has [passing sources, probes, fixture, and CLI artifact checks](validation/REF-04-reference-runs.md).
 This does not establish electromagnetic accuracy or complete V03.
 
 The initial equations and input/sampling contract are recorded in
@@ -11,11 +13,12 @@ The initial equations and input/sampling contract are recorded in
 [specification audit evidence](validation/FND-03-review.md). V01–V03 now have
 [fixed version-1 acceptance specifications](validation/FND-04-reference-benchmarks.md)
 and [author-review/calculation evidence](validation/FND-04-review.md). Their
-production fixtures and numerical runs remain pending. The
+production fixtures and raw-output runners now exist; full numerical measurements
+remain pending. The
 [FND-05 foundation gate](validation/FND-05-foundation-gate.md) passed on
-2026-09-06. REF-01 through REF-03 are complete and REF-04 is ready. P0 infrastructure,
-S01–S05, source-free S06, and the grid/CFL/core-initial-input subset of V03 are
-checked; source/probe/run-output checks and physical runs remain pending.
+2026-09-06. REF-01 through REF-04 are complete and REF-05 is ready. P0 infrastructure,
+S01–S07, six primary p24/V03-shape S08 checks, and grid/CFL/source/probe/run-input
+checks pass. Larger S08 fixtures and full physical runs remain pending.
 
 ## Acceptance policy
 
@@ -42,7 +45,8 @@ corresponding method. Revisions require a reason and preserve previous evidence.
 
 ## Benchmark register
 
-V01–V03 have status **Specified and author-reviewed; not implemented/run**.
+V01–V03 have status **Specified and author-reviewed; runners implemented,
+only structural/smoke subsets run; physical acceptance pending**.
 V04–V15 remain **Specified at planning level only**. S01–S08 structural
 acceptance requirements are included in the FND-04 version-1 specification.
 
@@ -53,9 +57,13 @@ subset with 136 runtime checks plus compile-time count-type constraints.
 through a test-only stencil harness on the three S01 grids. `reference.vacuum`
 adds 27013 CFL, actual-loop, boundary, curl/sign/divergence/adjoint, half-stage,
 time, and failure-policy checks. Independent Fraction golden states compare
-every sample at two complete source-free steps. S06 current coupling, S07
-probe/output sampling, and S08 production fixtures remain REF-04/05. A 100-step
-zero-state regression passes, but V03 long-time stability is still pending.
+every sample at two complete source-free steps. `reference.run` adds 3337 current,
+continuity, source overflow, native probe and input checks, plus S08 identities
+on six primary p24 grids and the V03 shapes. `reference.run_artifacts` independently
+checks S07 signed synthetic fits, raw native output, repeatability, bad arguments,
+overwrite refusal and incomplete-artifact rejection. Larger fixtures execute
+their S08 checks before stepping in REF-05. A 100-step zero-state regression
+passes, but V03 long-time stability is still pending.
 
 | ID | First phase | Case / independent reference | Required measurements and checks |
 | --- | --- | --- | --- |

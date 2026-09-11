@@ -4,11 +4,11 @@ Antenna-focused electromagnetic simulation and design software. The product
 direction and scientific principles are defined in [VISION.md](VISION.md).
 
 **Current status:** C++20 vacuum reference kernel with checked grid/field storage,
-strict CFL selection, native time levels, and H-then-E updates. Debug and Release
-pass six CTest tests, including independent equation-level and exact-rational
-two-step comparisons. No physical benchmark or antenna accuracy claim is established.
-The foundation gate passed on 2026-09-06; P1 remains open. Minimal sources, probes,
-run configuration, and simulation CLI/output are next (REF-04).
+strict CFL selection, H-then-E updates, impressed currents, native probes, and
+reproducible reference benchmark CLI/output. Debug and Release pass eight CTest
+tests, including independent equation-level, fixture, sampling and artifact checks.
+No physical benchmark or antenna accuracy claim is established. The foundation
+gate passed on 2026-09-06; P1 remains open. Physical measurements are next (REF-05).
 
 ## Project records
 
@@ -33,6 +33,8 @@ run configuration, and simulation CLI/output are next (REF-04).
 | [Field storage evidence](docs/validation/REF-02-field-storage.md) | REF-02 structural checks, Debug/Release results, and REF-03 handoff |
 | [Reference update contract](docs/methods/REF-03-reference-update-contract.md) | CFL, time levels, initialization, kernel equations, and failure policy |
 | [Reference update evidence](docs/validation/REF-03-reference-updates.md) | REF-03 structural/half-stage comparisons, builds, and REF-04 handoff |
+| [Reference run contract](docs/methods/REF-04-run-contract.md) | Impressed current/charge, native probes, fixed suites and output lifecycle |
+| [Reference run evidence](docs/validation/REF-04-reference-runs.md) | REF-04 source/fixture/sampling checks, deterministic CLI smoke and resource measurements |
 
 Start each development session with the backlog and the relevant phase gate.
 Update the records at the end of the session. See [AGENTS.md](AGENTS.md) for
@@ -40,9 +42,9 @@ repository working instructions.
 
 ## Immediate objective
 
-Begin REF-04: specify and implement minimal current coupling, run configuration,
-native probes, and reference benchmark CLI/output. P0 and REF-01 through REF-03
-are complete; physical benchmark measurements follow in REF-05. P1 remains open.
+Begin REF-05: analyze the fixed propagation and stability suites, measure physical
+errors/refinement/resource use, and retain failed evidence. P0 and REF-01 through
+REF-04 are complete. P1 remains open until measured acceptance and gate review.
 
 ## Build and check
 
@@ -54,8 +56,23 @@ The project-local Windows toolchain is set up in this workspace. From the root:
 ```
 
 Both commands configure, build, and run CTest. See the environment record to recreate
-the tools. The CLI currently provides only `--help` and `--version`; simulation
-requests return an error. Build outputs and local tools are ignored by Git rules.
+the tools. Build outputs and local tools are ignored by Git rules.
+
+Run the verified smoke command from a PowerShell session with the local compiler
+runtime on its process PATH (the CMake presets already provide this for tests):
+
+```powershell
+$env:PATH = (Join-Path (Get-Location) '.tools/llvm-mingw-20250613-ucrt-x86_64/bin') + ';' + $env:PATH
+& ./build/windows-local-release/antennasim.exe --benchmark reference-v1 --suite smoke --output build/evidence/reference-smoke
+```
+
+Choose a fresh output directory each time. Smoke runs two steps of p=24 x/y
+propagation and the two q=.99 stability fixtures; `--steps N` is allowed only for
+smoke and must satisfy its isolation guard. `propagation` and `stability` select
+the full fixed v1 suites, whose physical measurements remain REF-05 work.
+Output includes metadata JSON, signed native probe CSV, stability diagnostics
+CSV, and a final `COMPLETE.json` marker. Completion means raw output finished;
+it does not mean physical acceptance passed. No port or antenna metrics exist.
 
 These documents record a work schedule; they do not start background jobs,
 calendar events, or recurring notifications.

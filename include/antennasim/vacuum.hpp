@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <stdexcept>
+#include <vector>
 
 namespace antennasim {
 
@@ -14,6 +15,23 @@ inline constexpr double epsilon0 = 1.0 / (mu0 * c0 * c0);
 inline constexpr double eta0 = mu0 * c0;
 
 struct FieldTimes { double e_s; double h_s; };
+
+struct CurrentSample {
+    FieldComponent component;
+    std::array<std::size_t, 3> index;
+    double amperes_per_m2;
+};
+
+// Fixed impressed E-edge current shape; values apply at the update half time.
+class ElectricCurrent {
+public:
+    ElectricCurrent(const UniformGrid& grid, std::vector<CurrentSample> samples);
+    [[nodiscard]] const UniformGrid& grid() const noexcept { return grid_; }
+    [[nodiscard]] std::span<const CurrentSample> samples() const noexcept { return samples_; }
+private:
+    UniformGrid grid_;
+    std::vector<CurrentSample> samples_;
+};
 
 class VacuumTimeStep {
 public:
@@ -48,7 +66,7 @@ private:
     std::array<std::size_t, 3> index_;
 };
 
-// Source-free vacuum, rho=0, provisional reflecting zero_tangential_e box.
+// Vacuum with rho=0 initially, provisional reflecting zero_tangential_e box.
 // Explicitly copies initial fields. Local algebra harnesses live in detail/.
 class ReferenceStepper {
 public:
@@ -59,6 +77,7 @@ public:
     ReferenceStepper& operator=(ReferenceStepper&&) = delete;
 
     void step();
+    void step(const ElectricCurrent& current, double amplitude = 1.0);
     // Borrowed view, valid for this owner's lifetime. It changes on step().
     // After any step exception, discard earlier views: fields may be partial.
     [[nodiscard]] const FieldStorage& fields() const;
@@ -68,6 +87,7 @@ public:
     [[nodiscard]] const VacuumTimeStep& time_step() const noexcept { return time_step_; }
 
 private:
+    void advance(const ElectricCurrent* current, double amplitude);
     void require_valid() const;
     FieldStorage fields_;
     VacuumTimeStep time_step_;

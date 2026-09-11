@@ -21,6 +21,7 @@ baseline. They do not imply completed implementation.
 | D012 | Use validated grid value types, integral-only counts, standard exception categories, and checked allocation/geometry limits | REF-01 rejects bad geometry and sizes before field allocation; six exact layouts remain independent of storage, CLI, and solver updates; see REF-01 contract/evidence | A supported use case requires different limits, error transport, or coordinate representation |
 | D013 | Keep REF-02 field ownership fixed; expose checked sample access and const contiguous views; classify walls on the validated grid without enforcing them in storage | Prevents shape/storage mismatch and implicit large copies; coordinate and wall checks can run without field allocation; physical initialization and boundary evolution remain kernel/run responsibilities | A concrete run/checkpoint/transfer or profiled iteration requirement needs a broader owner/access API |
 | D014 | Use validated vacuum time-step values and an owned source-free reference stepper with explicit initial copying, divergence/wall screening, and terminal in-place update failure | Pins constant/spacing/time conventions; protects active fields from external mutation; fails with state/component/index instead of exposing a successful partial step; independent local kernels and Fraction states validate implementation | REF-04 current/run requirements, checkpoint needs, or measured performance/representability limits justify a documented extension |
+| D015 | Use validated sparse impressed currents, native probes, separate fixed benchmark runners and streamed CSV/JSON with exclusive completion markers | Preserves initial rho=0 screening, defines later charge by continuity, retains failed evidence and distinguishes raw completion from physical acceptance; see REF-04 contract/evidence | General project/source/charge requirements or measured resource constraints |
 
 ## Open decisions
 
@@ -195,3 +196,35 @@ S01–S05 and the source-free part of S06 pass. A separate Fraction axis-permuta
 oracle fixes every small-grid half-stage without using production results.
 The existing method/threshold records remain unchanged. C02's structural/CFL
 review passes; C03/P1 remain open for run facilities and physical measurements.
+
+## D015 detail — REF-04 source and run decisions on 2026-09-10
+
+Status: implemented with structural and end-to-end smoke evidence. See the
+[run contract](methods/REF-04-run-contract.md) and
+[REF-04 evidence](validation/REF-04-reference-runs.md). Same-author review.
+
+Considered arbitrary mutable field injection, a general source hierarchy, and
+a validated sparse current shape. Choose the shape plus a half-time amplitude:
+it supports the prescribed V03 pulse without allowing mutation of active fields
+or adding a port framework. Preserve rho=0 initialization; later charge follows
+discrete continuity, with no stored charge/projection. Initial copying and
+terminal update failure remain D014's policy. Count both field payloads and the
+source capacity in the 2 GiB run budget.
+
+Keep benchmark generators/diagnostics in a separate library from the solver.
+They use independently transcribed permutation differences, with no production
+curl calls. Generate compact potentials on demand to avoid extra volumes.
+Expose raw signed probes at native coordinates/times; independent Python fits
+test the estimator before REF-05 applies it to physical benchmark outputs.
+
+Use built-in v1 suites and an explicitly named smoke subset. Only smoke accepts
+step overrides, and its dependency guard still applies. This is a benchmark
+artifact format, not the persistent user-project decision O008. Refuse existing
+directories; preserve partial files on failure; close all data/metadata before
+renaming the temporary completion marker. A complete raw artifact is not a
+physical pass. Record source-content fingerprint, compiler, CPU identifier,
+units, configuration, fixture checks, memory budget and elapsed time.
+
+Revisit for a real general-run/project requirement, charge observable, source
+performance bottleneck, or measured full-suite resource issue. No v1 numerical
+threshold, phase sequence, or physical accuracy claim changed.
