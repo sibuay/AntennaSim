@@ -1,6 +1,7 @@
 # MNT-01 — Repository and validation hardening
 
-2026-09-11. **Complete locally; first hosted CI run pending push.** This maintenance
+2026-09-11, updated 2026-09-15. **Complete locally; commits pushed; first hosted
+CI result pending.** This maintenance
 item changes validation enforcement, source-control traceability, and evidence
 retention. It does not change solver equations, benchmark thresholds, or physical
 acceptance status.
@@ -35,6 +36,17 @@ The GitHub workflow was checked against the current official major versions of
 `actions/checkout`, `actions/setup-python`, and `actions/upload-artifact`. A local
 Windows run cannot establish the Ubuntu result; record the first hosted outcome
 after the commit is pushed. No check was skipped or treated as a pass.
+
+## Hosted run
+
+| Date | Event | Result |
+| --- | --- | --- |
+| 2026-09-15 | `main` at `3043b39` (with `5930643`) pushed to `origin`; workflow trigger expected for that push | Pending: record the Debug and Release outcomes and run URL here |
+
+A follow-up commit on 2026-09-15 removed an unused `<numeric>` include from
+`benchmarks/reference.cpp` and documented the pip launcher shim in the environment
+record; local clean Debug/Release builds pass 11/11 without warnings after it.
+This item is Done only after the hosted run above is recorded as passing.
 
 ## Remaining limits and next action
 

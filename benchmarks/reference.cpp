@@ -10,7 +10,6 @@
 #include <locale>
 #include <memory>
 #include <numbers>
-#include <numeric>
 #include <thread>
 
 namespace antennasim::benchmark {

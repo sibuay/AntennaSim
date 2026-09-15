@@ -37,6 +37,11 @@ directory has no CTest. These application-owned copies are not the selected tool
 
 The tools live entirely under the ignored `.tools` directory. Project presets
 provide the compiler runtime DLL search path to configure/build/test subprocesses.
+`.tools/cmake/bin/cmake.exe` and `ctest.exe` are pip console launchers that need
+the installing Python on PATH and fail elsewhere with a `No module named 'cmake'`
+traceback; invoke the real binaries under `.tools/cmake/cmake/data/bin/` instead.
+The `ninja.exe` launcher in `.tools/cmake/bin/` is self-contained and is the one
+the presets use.
 No global PATH, system compiler installation, or global Python package was changed.
 The existing Python environment emitted a pre-existing invalid-distribution `-ffi`
 warning during pip use; package installation still succeeded.
