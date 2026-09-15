@@ -1,6 +1,6 @@
 # Backlog and project status
 
-Last updated: 2026-09-15.
+Last updated: 2026-09-16.
 
 ## Current position
 
@@ -15,9 +15,7 @@ Last updated: 2026-09-15.
 - **Active implementation item:** none.
 - **Next ready item:** REF-05 — physical propagation, impedance, stability, and refinement evidence.
 - **Scheduling rule:** milestone-based, with no assumed dates or durations.
-- **Blockers:** none for REF-05. MNT-01 closes only when the first hosted CI
-  result is observed and recorded; it was pending at the time of this update.
-  The local compiler requires approved execution outside the sandbox;
+- **Blockers:** none for REF-05. The local compiler requires approved execution outside the sandbox;
   Debug/Release checks pass in that environment. Standalone Windows CLI runs
   need the compiler runtime directory on the process PATH.
 
@@ -43,7 +41,7 @@ prerequisites; the chosen sequence may be stricter to keep work focused.
 | REF-02 | P1 | Implement staggered field storage and component indexing | REF-01 | Done | [Storage/access contract](methods/REF-02-field-storage-contract.md); [23838 checks / 1976 stencil reads / build evidence](validation/REF-02-field-storage.md) |
 | REF-03 | P1 | Implement time-step selection and reference E/H updates | REF-02 | Done | [CFL/update contract](methods/REF-03-reference-update-contract.md); [27013 checks / exact-rational half-stage evidence](validation/REF-03-reference-updates.md) |
 | REF-04 | P1 | Add minimal source, probes, run configuration, and CLI output | REF-03 | Done | [Source/run contract](methods/REF-04-run-contract.md); [3337 checks, S07/S08 and deterministic CLI evidence](validation/REF-04-reference-runs.md) |
-| MNT-01 | P1 support | Harden validation, source-control traceability, CI, and durable evidence | REF-04 | In progress | [Maintenance evidence](validation/MNT-01-repository-hardening.md); REF-04 commit `5930643` and hardening commit `3043b39` pushed to `origin/main` on 2026-09-15; Done after the first hosted Debug/Release run is recorded; D016 |
+| MNT-01 | P1 support | Harden validation, source-control traceability, CI, and durable evidence | REF-04 | Done | [Maintenance evidence](validation/MNT-01-repository-hardening.md); commits `5930643`/`3043b39`/`b342821` on `origin/main`; hosted Debug/Release runs passed 2026-09-16; D016 |
 | REF-05 | P1 | Measure propagation, impedance, stability, and refinement behavior | REF-04 | Ready | V01–V03 evidence; applicable structural regressions |
 | REF-06 | P1 | Review reference-propagation gate | REF-05 | Planned | P1 gate record and supported limits |
 | MAT-01 | P2 | Specify PEC, dielectric, conductivity, and spectral conventions | REF-06 | Planned | Method notes and V04–V07 specifications |
@@ -90,9 +88,8 @@ an ID, dependencies, a completion test, and an evidence location before starting
   compiler other than Clang 20 has built this code yet.
 - Removed an unused `<numeric>` include from the benchmark library and documented
   the pip launcher shim under `.tools/cmake/bin/`. No numerical change.
-- Next exact action: record the hosted workflow outcome in the MNT-01 record and
-  mark it Done if both configurations pass; then begin REF-05 as previously
-  specified. Observation for REF-05 planning: the checked-access reference kernel
+- 2026-09-16 update: the owner reported both hosted Debug/Release runs passed;
+  MNT-01 is Done. Next exact action: begin REF-05 as previously specified. Observation for REF-05 planning: the checked-access reference kernel
   and per-state diagnostics make the 20,000-step stability cases minutes-scale.
 
 ### Previous handoff (historical)
@@ -202,6 +199,7 @@ an ID, dependencies, a completion test, and an evidence location before starting
 | 2026-09-07 | REF-03 complete / C02 reviewed | Strict CFL and source-free E/H updates pass 27013 kernel checks; Debug/Release 6/6; exact-rational two-step comparisons pass; C02 complete, C03 in progress, REF-04 ready, P1 open |
 | 2026-09-10 | REF-04 complete | Impressed currents, native probes, fixed fixtures/CLI raw artifacts pass 3337 additional checks and independent artifact/S07 audits; Debug/Release 8/8; REF-05 ready; full physical measurements pending, C03/P1 open |
 | 2026-09-15 | Review and push | Clean Debug/Release 11/11 without warnings; `main` pushed to `origin`; MNT-01 returned to In progress pending the first hosted CI result; REF-05 still next |
+| 2026-09-16 | MNT-01 complete | First hosted Ubuntu Debug/Release runs passed for `3043b39` and `b342821`; MNT-01 Done; REF-05 ready and next |
 
 Add concise entries for work-item/cycle reviews, gate outcomes, material blockers,
 and sequencing changes. Keep detailed measurements in validation reports and link them.

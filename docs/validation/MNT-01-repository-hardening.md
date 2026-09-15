@@ -1,8 +1,7 @@
 # MNT-01 — Repository and validation hardening
 
-2026-09-11, updated 2026-09-15. **Complete locally; commits pushed; first hosted
-CI result pending.** This maintenance
-item changes validation enforcement, source-control traceability, and evidence
+2026-09-11, updated 2026-09-16. **Complete; first hosted Debug/Release runs passed.**
+This maintenance item changes validation enforcement, source-control traceability, and evidence
 retention. It does not change solver equations, benchmark thresholds, or physical
 acceptance status.
 
@@ -41,12 +40,16 @@ after the commit is pushed. No check was skipped or treated as a pass.
 
 | Date | Event | Result |
 | --- | --- | --- |
-| 2026-09-15 | `main` at `3043b39` (with `5930643`) pushed to `origin`; workflow trigger expected for that push | Pending: record the Debug and Release outcomes and run URL here |
+| 2026-09-15 | `main` at `3043b39` (with `5930643`) pushed to `origin`; workflow triggered | Debug and Release passed, as reported by the repository owner on 2026-09-16 from the private Actions page |
+| 2026-09-15 | `main` at `b342821` pushed (unused include removed; records updated) | Debug and Release passed, same report |
 
 A follow-up commit on 2026-09-15 removed an unused `<numeric>` include from
 `benchmarks/reference.cpp` and documented the pip launcher shim in the environment
 record; local clean Debug/Release builds pass 11/11 without warnings after it.
-This item is Done only after the hosted run above is recorded as passing.
+Both hosted runs passed, so this item is Done. These are the first builds of
+the code with a compiler other than Clang 20; the workflow's Ubuntu GCC build
+is now recorded coverage rather than configured coverage. Run URLs and logs live
+on the private Actions page and its 90-day artifacts; they were not copied here.
 
 ## Remaining limits and next action
 
