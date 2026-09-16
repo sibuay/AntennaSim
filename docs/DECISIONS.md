@@ -23,6 +23,7 @@ baseline. They do not imply completed implementation.
 | D014 | Use validated vacuum time-step values and an owned source-free reference stepper with explicit initial copying, divergence/wall screening, and terminal in-place update failure | Pins constant/spacing/time conventions; protects active fields from external mutation; fails with state/component/index instead of exposing a successful partial step; independent local kernels and Fraction states validate implementation | REF-04 current/run requirements, checkpoint needs, or measured performance/representability limits justify a documented extension |
 | D015 | Use validated sparse impressed currents, native probes, separate fixed benchmark runners and streamed CSV/JSON with exclusive completion markers | Preserves initial rho=0 screening, defines later charge by continuity, retains failed evidence and distinguishes raw completion from physical acceptance; see REF-04 contract/evidence | General project/source/charge requirements or measured resource constraints |
 | D016 | Use GitHub for source control and required Debug/Release CI; make Python audits fail closed and retain compact validation evidence | Keeps reviewed snapshots bisectable, prevents reduced suites from passing silently, and makes local/remote evidence inspectable without tracking large generated arrays | Host, runner, dependency, retention, or distribution requirements change |
+| D017 | Evaluate physical acceptance only through an independent artifact analyzer whose reductions are validated by synthetic fault injection and a separately transcribed oracle before results are read; run full suites manually from clean Release builds, keep smoke-length reductions in CTest/CI | Separates solver output from its judgement, catches analysis defects before they can mask or fabricate a pass, and keeps the fast suite bounded; see REF-05 contract/evidence | Suite runtime, hosted-runner capacity, or a new observable that the synthetic/oracle coverage does not exercise |
 
 ## Open decisions
 
@@ -229,6 +230,28 @@ units, configuration, fixture checks, memory budget and elapsed time.
 Revisit for a real general-run/project requirement, charge observable, source
 performance bottleneck, or measured full-suite resource issue. No v1 numerical
 threshold, phase sequence, or physical accuracy claim changed.
+
+## D017 detail — REF-05 physical analysis and acceptance policy on 2026-09-16
+
+Status: implemented with measured evidence. See the
+[measurement contract](methods/REF-05-measurement-contract.md) and
+[REF-05 evidence](validation/REF-05-reference-measurements.md). Same-author review.
+
+Considered evaluating acceptance inside the C++ benchmark runner, adding the full
+physical suites to CTest, or a separate reader. Choose a separate standard-library
+Python analyzer that reads only emitted artifacts, re-derives the v1 geometry and
+enumeration, and applies the fixed limits; it records every failure and exits
+nonzero while retaining outputs. Require its reductions to detect injected faults
+on synthetic data and to agree with a pure-Python transcription of the update
+equations and diagnostics on production smoke output before any physical result
+is interpreted. Register that validation in CTest; keep the multi-minute full
+suites as a manual clean-build step with a resource-measuring runner, so hosted
+CI stays bounded while physical evidence remains reproducible by command.
+
+Consequences: no solver change; the measured V01–V03 pass is bounded to the
+axis-aligned vacuum/closed-grid envelope; later phases must extend the synthetic
+and oracle coverage whenever they add an observable. Revisit if suite runtime
+justifies hosted long runs or a new observable lacks independent validation.
 
 ## D016 detail — source control, CI, and durable evidence on 2026-09-11
 

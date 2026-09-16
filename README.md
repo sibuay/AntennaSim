@@ -5,11 +5,13 @@ direction and scientific principles are defined in [VISION.md](VISION.md).
 
 **Current status:** C++20 vacuum reference kernel with checked grid/field storage,
 strict CFL selection, H-then-E updates, impressed currents, native probes, and
-reproducible reference benchmark CLI/output. Debug and Release pass eleven CTest
-tests, including independent equation-level, analytical, fixture, sampling and
-artifact checks.
-No physical benchmark or antenna accuracy claim is established. The foundation
-gate passed on 2026-09-06; P1 remains open. Physical measurements are next (REF-05).
+reproducible reference benchmark CLI/output, and an independent analyzer. Debug
+and Release pass twelve CTest tests, including independent equation-level,
+analytical, fixture, sampling, artifact and reduction checks. The version-1
+free-space propagation, impedance, refinement and closed-grid stability
+benchmarks (V01–V03) passed on 2026-09-16 from a clean Release build.
+No PEC, material, open-boundary, port or antenna accuracy claim is established.
+The foundation gate passed on 2026-09-06; P1 remains open pending REF-06.
 
 ## Project records
 
@@ -36,6 +38,8 @@ gate passed on 2026-09-06; P1 remains open. Physical measurements are next (REF-
 | [Reference update evidence](docs/validation/REF-03-reference-updates.md) | REF-03 structural/half-stage comparisons, builds, and REF-04 handoff |
 | [Reference run contract](docs/methods/REF-04-run-contract.md) | Impressed current/charge, native probes, fixed suites and output lifecycle |
 | [Reference run evidence](docs/validation/REF-04-reference-runs.md) | REF-04 source/fixture/sampling checks, deterministic CLI smoke and resource measurements |
+| [Measurement contract](docs/methods/REF-05-measurement-contract.md) | V01–V03 reductions, independence, reduction validation and acceptance mapping |
+| [Physical measurement evidence](docs/validation/REF-05-reference-measurements.md) | REF-05 propagation/impedance/refinement/stability results, resources and limits |
 
 Start each development session with the backlog and the relevant phase gate.
 Update the records at the end of the session. See [AGENTS.md](AGENTS.md) for
@@ -43,9 +47,9 @@ repository working instructions.
 
 ## Immediate objective
 
-Begin REF-05: analyze the fixed propagation and stability suites, measure physical
-errors/refinement/resource use, and retain failed evidence. P0 and REF-01 through
-REF-04 are complete. P1 remains open until measured acceptance and gate review.
+Begin REF-06: review the Phase 1 exit criteria against the REF-01 through REF-05
+evidence, record the supported limits, and decide the gate. P0 and REF-01 through
+REF-05 are complete. P1 remains open until that gate record exists.
 
 ## Build and check
 
@@ -76,7 +80,9 @@ $env:PATH = (Join-Path (Get-Location) '.tools/llvm-mingw-20250613-ucrt-x86_64/bi
 Choose a fresh output directory each time. Smoke runs two steps of p=24 x/y
 propagation and the two q=.99 stability fixtures; `--steps N` is allowed only for
 smoke and must satisfy its isolation guard. `propagation` and `stability` select
-the full fixed v1 suites, whose physical measurements remain REF-05 work.
+the full fixed v1 suites; `scripts/run_reference_benchmarks.py` runs them with
+resource measurement and `scripts/analyze_reference_benchmarks.py` evaluates the
+v1 acceptance independently.
 Output includes metadata JSON, signed native probe CSV, stability diagnostics
 CSV, and a final `COMPLETE.json` marker. Completion means raw output finished;
 it does not mean physical acceptance passed. No port or antenna metrics exist.

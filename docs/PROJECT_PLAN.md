@@ -66,8 +66,10 @@ Phase 1 is **in progress**: [REF-01 grid](validation/REF-01-core-grid.md),
 [REF-02 storage](validation/REF-02-field-storage.md), and
 [REF-03 CFL/reference-update structural checks](validation/REF-03-reference-updates.md)
 pass. [REF-04 sources/probes/fixtures/CLI and raw artifact checks](validation/REF-04-reference-runs.md)
-pass; REF-05 physical measurements are ready. All later phases are
-**not started**; physical propagation and antenna accuracy remain unvalidated.
+pass, and [REF-05 physical measurements](validation/REF-05-reference-measurements.md)
+pass the version-1 V01–V03 criteria; the REF-06 gate review is next. All later
+phases are **not started**; PEC, material, open-boundary and antenna accuracy
+remain unvalidated.
 The milestone column maps this plan to the original vision. Later phases are
 broken into detailed work items only when their prerequisites are understood.
 

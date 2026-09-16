@@ -1,24 +1,26 @@
 # Validation plan and benchmark register
 
-**Current state:** physical benchmark runners are implemented, but no full
-physical benchmark has passed. REF-01 has
+**Current state:** V01–V03 version-1 benchmarks have been measured and passed
+from a clean Release build ([REF-05 evidence](validation/REF-05-reference-measurements.md));
+the P1 gate review (REF-06) is pending. REF-01 has
 [passing production grid structural checks](validation/REF-01-core-grid.md), and
 REF-02 has [passing field storage/access checks](validation/REF-02-field-storage.md).
 REF-03 has [passing CFL and equation-level kernel checks](validation/REF-03-reference-updates.md).
 REF-04 has [passing sources, probes, fixture, and CLI artifact checks](validation/REF-04-reference-runs.md).
-This does not establish electromagnetic accuracy or complete V03.
+REF-05 has [passing physical measurements with validated reductions](validation/REF-05-reference-measurements.md).
+These establish only the declared axis-aligned vacuum and closed-grid envelope.
 
 The initial equations and input/sampling contract are recorded in
 [FND-03 conventions](methods/FND-03-yee-conventions.md), with
 [specification audit evidence](validation/FND-03-review.md). V01–V03 now have
 [fixed version-1 acceptance specifications](validation/FND-04-reference-benchmarks.md)
 and [author-review/calculation evidence](validation/FND-04-review.md). Their
-production fixtures and raw-output runners now exist; full numerical measurements
-remain pending. The
+production fixtures, raw-output runners, and independent analyzer now exist and
+their full measurements pass. The
 [FND-05 foundation gate](validation/FND-05-foundation-gate.md) passed on
-2026-09-06. REF-01 through REF-04 are complete and REF-05 is ready. P0 infrastructure,
-S01–S07, six primary p24/V03-shape S08 checks, and grid/CFL/source/probe/run-input
-checks pass. Larger S08 fixtures and full physical runs remain pending.
+2026-09-06. REF-01 through REF-05 are complete and REF-06 is ready. P0 infrastructure,
+S01–S08 on every executed fixture, grid/CFL/source/probe/run-input checks, and the
+full V01–V03 v1 suites pass.
 
 ## Acceptance policy
 
@@ -45,8 +47,8 @@ corresponding method. Revisions require a reason and preserve previous evidence.
 
 ## Benchmark register
 
-V01–V03 have status **Specified and author-reviewed; runners implemented,
-only structural/smoke subsets run; physical acceptance pending**.
+V01–V03 have status **Version 1 measured and passed (REF-05, 2026-09-16);
+gate review pending**.
 V04–V15 remain **Specified at planning level only**. S01–S08 structural
 acceptance requirements are included in the FND-04 version-1 specification.
 
@@ -61,14 +63,19 @@ every sample at two complete source-free steps. `reference.run` adds 3337 curren
 continuity, source overflow, native probe and input checks, plus S08 identities
 on six primary p24 grids and the V03 shapes. `reference.run_artifacts` independently
 checks S07 signed synthetic fits, raw native output, repeatability, bad arguments,
-overwrite refusal and incomplete-artifact rejection. Larger fixtures execute
-their S08 checks before stepping in REF-05. A 100-step zero-state regression
-passes, but V03 long-time stability is still pending.
+overwrite refusal and incomplete-artifact rejection. `reference.analysis_reductions`
+adds 97 synthetic reduction, resource-budget and failure-retention checks, an
+independent pure-Python oracle of the
+stability diagnostics on smoke output, and a two-step production propagation
+measurement. All larger fixtures executed their S08 checks before stepping in
+the full REF-05 runs, and V03 long-time stability passed.
 
-All three independent Python convention/specification/golden-state audits are
-registered in CTest, and Python is required whenever `BUILD_TESTING=ON`; validation
-therefore fails closed instead of reporting a reduced suite as a pass. GitHub CI
-runs the same eleven-test Debug/Release suite and retains logs and smoke artifacts.
+All four independent Python convention/specification/golden-state/reduction
+audits are registered in CTest, and Python is required whenever `BUILD_TESTING=ON`;
+validation therefore fails closed instead of reporting a reduced suite as a pass.
+GitHub CI runs the same twelve-test Debug/Release suite and retains logs and smoke
+artifacts. The full physical suites are run manually from a clean Release build
+with `scripts/run_reference_benchmarks.py` and `scripts/analyze_reference_benchmarks.py`.
 
 | ID | First phase | Case / independent reference | Required measurements and checks |
 | --- | --- | --- | --- |

@@ -111,4 +111,10 @@ if(BUILD_TESTING)
         "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_reference_runs.py"
         --app "$<TARGET_FILE:antennasim>" --output-root "${CMAKE_CURRENT_BINARY_DIR}/ref04-audits")
     set_tests_properties(reference.run_artifacts PROPERTIES LABELS "reference_structural" TIMEOUT 120)
+
+    add_test(NAME reference.analysis_reductions COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_reference_analysis.py"
+        --app "$<TARGET_FILE:antennasim>" --output-root "${CMAKE_CURRENT_BINARY_DIR}/ref05-audits")
+    set_tests_properties(reference.analysis_reductions PROPERTIES
+        LABELS "reference_structural;analytical_audit" TIMEOUT 300)
 endif()

@@ -4,14 +4,14 @@ Recorded: 2026-09-05. Per the owner's instruction, work is ordered by dependenci
 and completion evidence, with **no assumed dates, durations, or weekly capacity**.
 Record dates identify history only; they are not delivery targets.
 
-Current position (2026-09-10): C01 is complete following the
+Current position (2026-09-16): C01 is complete following the
 [P0 gate pass](validation/FND-05-foundation-gate.md). C02 is complete following
 the [REF-03 structural/CFL review](validation/REF-03-reference-updates.md), with
-REF-01 grid and REF-02 storage/indexing evidence retained. C03 is in progress:
-reference updates and REF-04 sources/probes/configuration/CLI pass structural and
-smoke checks; REF-05 physical measurements are ready. C03 still needs its first
-measured physical report. All numerical phase gates remain open. No sequencing or duration
-assumptions changed.
+REF-01 grid and REF-02 storage/indexing evidence retained. C03 is complete: the
+[REF-05 measured physical report](validation/REF-05-reference-measurements.md)
+reproduces all 36 propagation and four stability cases from a clean build. C04
+is in progress with the REF-06 gate review as its first item. All numerical
+phase gates remain open. No sequencing or duration assumptions changed.
 
 ## Sequencing policy
 

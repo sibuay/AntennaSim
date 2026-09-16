@@ -53,6 +53,7 @@ jobs:
           path: |
             build/ci-${{ matrix.configuration }}/Testing/Temporary/
             build/ci-${{ matrix.configuration }}/ref04-audits/
+            build/ci-${{ matrix.configuration }}/ref05-audits/
             build/ci-${{ matrix.configuration }}/source-snapshot.txt
           if-no-files-found: error
           retention-days: 90

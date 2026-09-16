@@ -10,14 +10,19 @@ Last updated: 2026-09-16.
   structurally checked core grid metadata/input/allocation validation, and six
   staggered field arrays with checked indexing, native positions, and wall classification;
   strict CFL selection and reference E/H stepping, impressed currents, native
-  probes, fixed benchmark fixtures and CLI raw output with structural/smoke checks.
-- **Validated numerical capability:** equation-level/structural checks only; no physical benchmark passed.
+  probes, fixed benchmark fixtures and CLI raw output with structural/smoke checks;
+  an independent analyzer with validated reductions and the first measured
+  V01–V03 physical report (36 propagation and four 20,000-step stability cases).
+- **Validated numerical capability:** axis-aligned vacuum eigenwave propagation,
+  signed impedance, second-order refinement, and closed-grid long-time stability
+  within the FND-04 v1 envelope. No PEC-resonance, material, open-boundary,
+  oblique/broadband, port, or antenna capability is validated.
 - **Active implementation item:** none.
-- **Next ready item:** REF-05 — physical propagation, impedance, stability, and refinement evidence.
+- **Next ready item:** REF-06 — reference-propagation gate review.
 - **Scheduling rule:** milestone-based, with no assumed dates or durations.
-- **Blockers:** none for REF-05. The local compiler requires approved execution outside the sandbox;
-  Debug/Release checks pass in that environment. Standalone Windows CLI runs
-  need the compiler runtime directory on the process PATH.
+- **Blockers:** none for REF-06. The compiler ran inside the ordinary session
+  sandbox on 2026-09-16; standalone Windows CLI runs still need the compiler
+  runtime directory on the process PATH.
 
 Status vocabulary: **Ready**, **Planned**, **In progress**, **Blocked**, **Done**.
 Ready means prerequisites are satisfied. Done requires linked evidence, not just
@@ -42,8 +47,8 @@ prerequisites; the chosen sequence may be stricter to keep work focused.
 | REF-03 | P1 | Implement time-step selection and reference E/H updates | REF-02 | Done | [CFL/update contract](methods/REF-03-reference-update-contract.md); [27013 checks / exact-rational half-stage evidence](validation/REF-03-reference-updates.md) |
 | REF-04 | P1 | Add minimal source, probes, run configuration, and CLI output | REF-03 | Done | [Source/run contract](methods/REF-04-run-contract.md); [3337 checks, S07/S08 and deterministic CLI evidence](validation/REF-04-reference-runs.md) |
 | MNT-01 | P1 support | Harden validation, source-control traceability, CI, and durable evidence | REF-04 | Done | [Maintenance evidence](validation/MNT-01-repository-hardening.md); commits `5930643`/`3043b39`/`b342821` on `origin/main`; hosted Debug/Release runs passed 2026-09-16; D016 |
-| REF-05 | P1 | Measure propagation, impedance, stability, and refinement behavior | REF-04 | Ready | V01–V03 evidence; applicable structural regressions |
-| REF-06 | P1 | Review reference-propagation gate | REF-05 | Planned | P1 gate record and supported limits |
+| REF-05 | P1 | Measure propagation, impedance, stability, and refinement behavior | REF-04 | Done | [Measurement contract](methods/REF-05-measurement-contract.md); [36/36 propagation, 4/4 stability, refinement/enlarged evidence](validation/REF-05-reference-measurements.md); [compact metrics](validation/REF-05-analysis-summary.json); D017 |
+| REF-06 | P1 | Review reference-propagation gate | REF-05 | Ready | P1 gate record and supported limits |
 | MAT-01 | P2 | Specify PEC, dielectric, conductivity, and spectral conventions | REF-06 | Planned | Method notes and V04–V07 specifications |
 | MAT-02 | P2 | Implement and validate explicit PEC boundaries/cavity | MAT-01 | Planned | V04 evidence and existing regressions |
 | MAT-03 | P2 | Implement and validate dielectric and conductive updates | MAT-02 | Planned | V05–V06 evidence and existing regressions |
@@ -73,6 +78,37 @@ an ID, dependencies, a completion test, and an evidence location before starting
 | P13 | Justified MoM scope and multi-solver support | Planned |
 
 ## Session handoff
+
+**2026-09-16 — REF-05 physical measurements complete**
+
+- Added `scripts/analyze_reference_benchmarks.py` (independent V01–V03 analysis
+  of the raw artifacts against the fixed v1 limits, exits nonzero on failure while
+  retaining outputs), `scripts/check_reference_analysis.py` (97 synthetic
+  pass/fault-detection checks plus a pure-Python transcription of the update
+  equations, V03 fixture and weighted U/Q diagnostic compared with production
+  smoke output within 1e-12; CTest `reference.analysis_reductions`), and
+  `scripts/run_reference_benchmarks.py` (serial suite runner with elapsed/peak
+  working-set measurement). No solver, fixture, or tolerance changed.
+- Clean Release and Debug builds pass 12/12 CTests without warnings (13.39 s /
+  23.81 s). Full suites from the clean Release build: 36/36 propagation cases,
+  six refinement sequences (orders 2.0039/2.0010), six enlarged comparisons
+  (max difference 2.8e-14), and 4/4 stability cases (invariant drift <= 1.3e-15
+  over 20,000 source-free steps) pass. Propagation took 606.45 s with a 1.03 GB
+  peak working set; stability 158.58 s. See the
+  [evidence](validation/REF-05-reference-measurements.md).
+- Three analysis/self-test construction defects were fixed before the physical
+  runs; none was a solver finding. A post-run review found three evidence
+  acceptance gaps in the analyzer (unchecked probe-line indices, unenforced
+  2 GiB budget, crash on corrupt metadata); revision 2 fixes them with
+  fault-injection checks, and run1 was re-analyzed with identical numerical
+  results. The CMake source fingerprint is the SHA-256 of the LF-normalized
+  snapshot text (Windows writes CRLF); documented.
+- Next exact action: REF-06 gate review. Review the P1 exit criteria against
+  REF-01–REF-05 evidence, record the supported limits (axis-aligned vacuum,
+  reflecting box, declared durations), decide pass/continue, and expand the P2
+  breakdown only after the gate record exists. No new solver scope.
+
+### Previous handoff (historical)
 
 **2026-09-15 — Review, push, and MNT-01 status correction**
 
@@ -200,6 +236,7 @@ an ID, dependencies, a completion test, and an evidence location before starting
 | 2026-09-10 | REF-04 complete | Impressed currents, native probes, fixed fixtures/CLI raw artifacts pass 3337 additional checks and independent artifact/S07 audits; Debug/Release 8/8; REF-05 ready; full physical measurements pending, C03/P1 open |
 | 2026-09-15 | Review and push | Clean Debug/Release 11/11 without warnings; `main` pushed to `origin`; MNT-01 returned to In progress pending the first hosted CI result; REF-05 still next |
 | 2026-09-16 | MNT-01 complete | First hosted Ubuntu Debug/Release runs passed for `3043b39` and `b342821`; MNT-01 Done; REF-05 ready and next |
+| 2026-09-16 | REF-05 complete | Validated reductions; 36/36 propagation, 4/4 stability, refinement and enlarged checks pass v1 limits from a clean Release build; Debug/Release 12/12; C03 measured report exists, C04 begins; REF-06 ready; P1 open pending gate review |
 
 Add concise entries for work-item/cycle reviews, gate outcomes, material blockers,
 and sequencing changes. Keep detailed measurements in validation reports and link them.

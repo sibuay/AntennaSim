@@ -92,10 +92,12 @@ For individual steps, invoke the local tools from the root:
 & ./.tools/cmake/cmake/data/bin/ctest.exe --preset windows-local-debug
 ```
 
-The execution sandbox denied starting the portable compiler. The build commands
-succeeded through approved elevated tool execution; this is an environment access
-constraint, not an observed compiler failure. Network access likewise required
-approved execution. Ordinary local terminal use may not have these restrictions.
+The execution sandbox denied starting the portable compiler during P0. The build
+commands then succeeded through approved elevated tool execution; this was an
+environment access constraint, not an observed compiler failure. On 2026-09-16 the
+compiler, CTest, and the full benchmark suites ran inside the ordinary session
+sandbox without approval. Network access previously required approved execution.
+Ordinary local terminal use may not have these restrictions.
 
 Generic `debug` and `release` presets also exist for an independently configured
 C++20 compiler and Ninja on PATH. Those combinations, MSVC, Linux, and macOS have
