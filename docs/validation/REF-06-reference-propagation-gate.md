@@ -199,6 +199,8 @@ arithmetic; cross-platform numerical agreement remains unmeasured.
 | Unstable or inaccurate boundaries/ports | Only the reflecting closure exists; its stability is measured for the declared cases. PEC validation is P2, absorbing boundaries P3, ports P4. |
 | Mesh-driven cost exceeds memory | The finest v1 case peaked at 1.03 GB against the enforced 2 GiB budget; the runner aborts over-budget suites. Larger P2 cavity/material meshes must be budgeted in MAT-01. |
 | Reference data unavailable or ambiguous | Not exercised in P1 (analytical comparators only). O006 stays open for P4/P6. |
+| GPU or commercial tools unavailable | Unchanged; not exercised in P1. No threading or GPU claim exists (all P1 evidence is single-threaded CPU), and no commercial reference tool was needed. Applies from P4/P6 (reference data) and P9 (GPU). |
+| UI/AI scope displaces numerical work | Unchanged; not exercised in P1. Every C01–C04 item was a numerical or evidence item in the active backlog; no UI/AI work was started. Re-checked at each subsequent gate. |
 | Same author and reviewer miss a numerical error | Mitigated by three separately written operator forms (solver, permutation-difference fixtures, transcribed oracle) and fault-injected analysis; the limitation is recorded, not removed. |
 | Work advances without adequate evidence | This gate compares each P1 criterion with linked measurements; P2 items below each name their completion test and evidence location before starting. |
 

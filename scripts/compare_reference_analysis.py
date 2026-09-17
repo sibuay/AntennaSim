@@ -40,7 +40,9 @@ def compare(reference, candidate, path, tolerance, mismatches, counter):
         return
     counter["leaves"] += 1
     if isinstance(reference, bool) or isinstance(candidate, bool) or reference is None or candidate is None:
-        if reference != candidate:
+        # Python treats True == 1, so a boolean-to-number schema change would
+        # pass a plain equality test; require the same type as well.
+        if type(reference) is not type(candidate) or reference != candidate:
             mismatches.append("%s: %r versus %r" % (path, reference, candidate))
         return
     if isinstance(reference, (int, float)) and isinstance(candidate, (int, float)):
@@ -70,6 +72,8 @@ def main():
     parser.add_argument("--tolerance", type=float, default=0.0,
                         help="allowed relative difference for floating-point metrics (default exact)")
     args = parser.parse_args()
+    if not math.isfinite(args.tolerance) or args.tolerance < 0.0:
+        parser.error("--tolerance must be a finite, nonnegative number (got %r)" % args.tolerance)
     reference = json.loads(args.reference.read_text())
     candidate = json.loads(args.candidate.read_text())
     mismatches = []
