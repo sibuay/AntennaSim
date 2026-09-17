@@ -388,6 +388,78 @@ def audit_v04_spectrum():
     return math.prod(cells) * V04B_STEPS
 
 
+# ---- V04-C interior PEC enforcement ----------------------------------------
+V04C_MARGIN = 3
+V04C_SOURCE_INSIDE = (8, 10, 12)   # Ez edge index
+V04C_SOURCE_OUTSIDE = (1, 1, 1)    # Ez edge index
+
+
+def e_edges(cells, component):
+    """All (i,j,k) storage indices of one E component on the FND-03 extents."""
+    extents = [cells[axis] + (0 if axis == component else 1) for axis in range(3)]
+    for i in range(extents[0]):
+        for j in range(extents[1]):
+            for k in range(extents[2]):
+                yield (i, j, k)
+
+
+def pec_marked(component, index, box, shell):
+    """Independent endpoint enumeration of the pec_box / pec_shell rules."""
+    lo = [box[0][0], box[1][0], box[2][0]]
+    hi = [box[0][1], box[1][1], box[2][1]]
+    a = component
+    if not (lo[a] <= index[a] < hi[a]):
+        return False
+    on_face = False
+    for axis in range(3):
+        if axis == a:
+            continue
+        if not (lo[axis] <= index[axis] <= hi[axis]):
+            return False
+        if index[axis] in (lo[axis], hi[axis]):
+            on_face = True
+    return on_face if shell else True
+
+
+def audit_v04_enforcement():
+    print("== V04-C interior PEC enforcement (mask enumeration, fixture compatibility) ==")
+    cells = tuple(c + 2 * V04C_MARGIN for c in V04_BASE_CELLS)
+    box = tuple((V04C_MARGIN, V04C_MARGIN + c) for c in V04_BASE_CELLS)
+    counts = {"shell": [0, 0, 0], "box": [0, 0, 0]}
+    conflicts = {"shell": 0, "box": 0}
+    inner = tuple((lo + 1, hi - 1) for lo, hi in box)
+    for a in range(3):
+        _, b, c = cyclic(a)
+        for index in e_edges(cells, a):
+            # Support of the shifted (1,1) mode with polarization a: integer
+            # transverse indices strictly inside the cavity, any a index inside.
+            support = (box[a][0] <= index[a] < box[a][1] and inner[b][0] <= index[b] <= inner[b][1]
+                       and inner[c][0] <= index[c] <= inner[c][1])
+            for kind, shell in (("shell", True), ("box", False)):
+                marked = pec_marked(a, index, box, shell)
+                counts[kind][a] += marked
+                conflicts[kind] += marked and support
+    require(conflicts["shell"] == 0, "V04-C mode support touches the shell mask")
+    require(conflicts["box"] > 0, "solid box must conflict with the cavity mode (S09 rejection case)")
+    require(not pec_marked(2, V04C_SOURCE_INSIDE, box, True) and
+            all(box[axis][0] < V04C_SOURCE_INSIDE[axis] < box[axis][1] for axis in range(3)),
+            "C2 source must be strictly inside and unmasked")
+    require(pec_marked(2, V04C_SOURCE_INSIDE, box, False), "C2 source must be masked by the solid box")
+    require(any(V04C_SOURCE_OUTSIDE[axis] < box[axis][0] for axis in range(3)) and
+            not pec_marked(2, V04C_SOURCE_OUTSIDE, box, True), "C3 source must be outside")
+    # The outer closure equals the shell of the whole domain.
+    whole = tuple((0, c) for c in cells)
+    for a in range(3):
+        for index in e_edges(cells, a):
+            wall = any(index[axis] in (0, cells[axis]) for axis in range(3) if axis != a)
+            require(pec_marked(a, index, whole, True) == wall, "outer closure is the whole-domain shell")
+    print("cells=%s shell=%s edges=%d per component %s; solid box edges=%d; mode/solid conflicts=%d; "
+          "sources inside=%s outside=%s" % (cells, box, sum(counts["shell"]), counts["shell"],
+                                            sum(counts["box"]), conflicts["box"], V04C_SOURCE_INSIDE,
+                                            V04C_SOURCE_OUTSIDE))
+    return sum(counts["shell"])
+
+
 # --------------------------------------------------------------------------
 # V05 - dielectric propagation, interface and slab-loaded cavity
 # --------------------------------------------------------------------------
@@ -682,6 +754,28 @@ def lossy_step_root(dt, big_k, eps, sigma):
     return (-b + 1j * math.sqrt(-disc)) / (2 * a)
 
 
+def modal_recursion(dt, big_k, eps, sigma, steps, z):
+    """Two-amplitude transcription of the lossy update for one spatial harmonic.
+
+    Returns the worst abs(ratio/z-1) over the record for the exact lossy
+    initialization and for the lossless one (E at 0, H at -dt/2 from omega_d).
+    """
+    x = sigma * dt / (2 * eps)
+    ca, cb = (1 - x) / (1 + x), (dt / eps) / (1 + x)
+    z0 = cmath.exp(1j * discrete_omega(dt, big_k, eps / EPS0))
+    results = []
+    for root in (z, z0):
+        h = (1j * dt * big_k / MU0) / (root**0.5 - root**-0.5) * root**-0.5
+        e, worst = 1 + 0j, 0.0
+        for _ in range(steps):
+            h += (1j * dt * big_k / MU0) * e
+            e_new = ca * e + cb * 1j * big_k * h
+            worst = max(worst, abs(e_new / e / z - 1))
+            e = e_new
+        results.append(worst)
+    return results[0], results[1]
+
+
 def audit_v06():
     print("== V06-A lossy eigenwave (exact discrete growth factor vs continuum decay/phase) ==")
     eps = EPS_R * EPS0
@@ -702,6 +796,12 @@ def audit_v06():
             require(abs(z)**steps >= 0.6, "amplitude floor over the record")
             decay_errors.append(decay_error)
             phase_errors.append(phase_error)
+            worst_lossy, worst_lossless = modal_recursion(dt, kappa(k, spacing[0]), eps, sigma, steps, z)
+            require(worst_lossy < 1e-12, "exact lossy initialization must reproduce z at every step")
+            require(worst_lossless > V06_DISCRETE_LIMIT, "lossless initialization must be rejected")
+            if p == 24:
+                print("  modal recursion: lossy-initialized ratio/z-1 %.2e; lossless-initialized %.2e "
+                      "(first ratio (z0-x)/(1+x))" % (worst_lossy, worst_lossless))
             print("sigma=%g p=%d x=sigma*dt/(2eps)=%.4g alpha=%.6g 1/s omega'=%.6g decay_error=%.6g cap=%g "
                   "phase_error=%.6g cap=%g final_amplitude=%.4f" %
                   (sigma, p, x, alpha, omega_l, decay_error, V06_DECAY_CAPS[p, sigma], phase_error,
@@ -831,6 +931,7 @@ def main():
     print("c0=%.0f eta0=%.12f epsilon0=%.15g" % (C0, ETA0, EPS0))
     work_v04a = audit_v04_eigenmodes()
     work_v04b = audit_v04_spectrum()
+    audit_v04_enforcement()
     audit_v05_homogeneous()
     audit_v05_interface()
     work_v05c = audit_v05_slab()

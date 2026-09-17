@@ -134,22 +134,30 @@ through the production path within `1e-12` of the peak magnitude.
 
 ### V04-C Interior PEC enforcement (3 + 2 cases)
 
-- C1 (eigenmode equivalence, three polarizations): outer grid `(18,22,26)`
-  cells at the `s=1` spacing; interior PEC box `[3,15) x [3,19) x [3,23)`
-  (the V04-A cavity shifted by three cells on every side); the V04-A mode
-  (1,1) initialized inside with all exterior samples zero; `N` as in V04-A.
-  Required: every recorded interior line sample equals the V04-A `s=1` sample
-  (same polarization, index shifted by three) within `1e-12` normalized by `A`
-  or `A/eta0` (bitwise agreement is expected and reported); every E sample on
-  the box surface and every E and H sample outside the closed box is exactly
-  zero at every state (checked from per-state exterior/surface maxima written
-  by the run); the run reports the masked-edge counts.
+All three cases use the outer grid `(18,22,26)` cells at the `s=1` spacing
+and the hollow primitive `pec_shell([3,15) x [3,19) x [3,23))` (the V04-A
+cavity walls shifted by three cells on every side). The shell marks 3,008 E
+edges in addition to the outer closure; the audit enumerates the mask and
+confirms that the shifted mode's support contains no masked edge, that the C2
+source edge is inside and unmasked, and that the C3 source edge is outside.
+The solid `pec_box` of the same ranges would mask the mode's support and the
+C2 source and must make both cases fail before stepping (S09).
+
+- C1 (eigenmode equivalence, three polarizations): the V04-A mode (1,1)
+  initialized inside the shell (indices shifted by three) with every sample
+  outside the open box zero; `N` as in V04-A. Required: every recorded
+  interior line sample equals the V04-A `s=1` sample (same polarization, index
+  shifted by three) within `1e-12` normalized by `A` or `A/eta0` (bitwise
+  agreement is expected and reported); every E and H sample whose position is
+  not strictly inside the open box (shell edges, face-normal H, and the
+  exterior) is exactly zero at every state (checked from per-state maxima over
+  that set written by the run); the run reports the masked-edge counts.
 - C2 (source inside, exterior silent): the V04-B pulse on edge `(8,10,12)`
-  inside the box, 4096 steps: all exterior and surface samples exactly zero,
-  interior fields finite.
+  inside the shell, 4096 steps: every sample not strictly inside the open box
+  exactly zero, interior fields finite.
 - C3 (source outside, interior shielded): the same pulse on edge `(1,1,1)` in
-  the margin, 4096 steps: all interior and surface samples exactly zero, exterior
-  fields finite.
+  the margin, 4096 steps: every sample not strictly outside the closed box
+  exactly zero, exterior fields finite.
 
 ## V05 — Dielectric propagation, interface, and slab-loaded cavity
 
@@ -250,18 +258,24 @@ comparator with no gating.
 
 The V05-A fixture with `eps_r=4` and `sigma` in `{0.01, 0.1}` S/m; all six
 orderings at `p=24,48`, ordering `(x,y)` only at `p=96`. Initialize the
-lossless discrete eigenwave (E at 0, H at `-dt/2` with the lossless `omega_d`);
-the record is short enough that the initial transient is the exact lossy mode
-to first order and the per-step ratio is measured, not the initial phase.
-Reduction: the V01 spatial fits `C_n` at every E state; per-step ratio
-`rho_n=C_(n+1)/C_n`; `rho_m` their mean; `decay_m=-ln(abs(rho_m))/dt`,
-`phase_m=arg(rho_m)/dt`.
+**exact lossy discrete eigenwave** of the methods note: `E^0 = v A cos(k r_a)`
+in the plateau and `H^(-1/2) = w s Re{hhat z^(-1/2) exp(-i k r_a)}` with
+`hhat/A=(i dt K/mu0)/(z^(1/2)-z^(-1/2))` from the growth factor `z`, generated
+through the FND-04 potentials with the `H` potential's amplitude and phase set
+to `abs(hhat z^(-1/2))` and `arg(hhat z^(-1/2))` (the lossless case is
+`1/eta` and `omega_d dt/2`). The generator computes `z` from the quadratic in
+binary64; the analyzer recomputes it independently. Reduction: the V01 spatial
+fits `C_n` at every E state; per-step ratio `rho_n=C_(n+1)/C_n`; `rho_m` their
+mean; `decay_m=-ln(abs(rho_m))/dt`, `phase_m=arg(rho_m)/dt`. The lossless
+initialization is not an acceptable substitute: it excites the conjugate mode
+and its first ratio is `(z0-x)/(1+x)`, `4.6e-2` from `z` at `sigma=0.1`, `p=24`
+(audit), which the discrete limit below rejects.
 
 | Metric | Required limit |
 | --- | --- |
 | Decay `abs(decay_m/alpha-1)`, `alpha=sigma/(2 eps)` | sigma=0.01: 8.5e-6 / 2.1e-6 / 5.3e-7; sigma=0.1: 8.5e-4 / 2.1e-4 / 5.3e-5 (p=24/48/96) |
 | Phase `abs(phase_m/omega'-1)`, `omega'=sqrt(c0^2 k^2/eps_r - alpha^2)` | 0.0035 / 0.0009 / 0.00022 |
-| Discrete `abs(rho_n/z-1)` at every state, `z` the exact growth factor | <= 1e-9 |
+| Discrete `abs(rho_n/z-1)` at every state, `z` the exact growth factor (audit: 1.6e-15 with the lossy initialization on the modal recursion) | <= 1e-9 |
 | Amplitude floor `abs(C_n)>=0.5 A`, condition number, sample counts | as V01; predicted final amplitudes 0.756–0.974 |
 | Refinement of decay and phase errors | orders in [1.8,2.2] |
 
@@ -329,7 +343,7 @@ production operator as its own oracle.
 
 | ID / owner | Fixture and assertion | Threshold |
 | --- | --- | --- |
-| S09 / MAT-02 | PEC mask on `(5,4,3)` and `(2,3,4)`: the default mask equals the enumerated tangential outer-face set; boxes `[1,3)x[1,3)x[1,2)`, a box touching a wall, two overlapping boxes: marked edges equal the independent endpoint enumeration; masked E stays exactly zero over two steps with a compatible nonzero interior fixture; unmasked samples evolve; H inside a box stays zero; nonzero initial masked sample, source on a masked edge, inverted/out-of-range box rejected | exact integers/zeros; no unintended zeroing |
+| S09 / MAT-02 | PEC mask on `(5,4,3)` and `(2,3,4)`: the default mask equals `pec_shell` of the whole domain and the enumerated tangential outer-face set; `pec_box` and `pec_shell` for `[1,3)x[1,3)x[1,2)`, a primitive touching a wall, two overlapping primitives, and the V04-C shell on `(18,22,26)` (3,008 edges): marked edges equal the independent endpoint enumeration; masked E stays exactly zero over two steps with a compatible nonzero fixture; unmasked samples evolve; H inside a box and face-normal H on a shell stay zero; nonzero initial masked sample (including the V04-C mode inside a `pec_box`), source on a masked edge, inverted/out-of-range primitive rejected | exact integers/zeros; no unintended zeroing |
 | S10 / MAT-03 | Per-cell material map on `(2,3,4)` with `eps_r` and `sigma` from the S05 modular formula (`eps_r=1+value/60`, `sigma=value/50` clipped at 0): every edge coefficient equals the independently averaged value; vacuum map gives `Ca=1` and `Cb=dt/epsilon0` bitwise; `eps_r<1`, `sigma<0`, nonfinite, wrong-shape maps rejected | coefficients <= 1e-15 relative; vacuum exact |
 | S11 / MAT-03 | Single edge with prescribed `eps_e`, `sigma_e`, curl and J: `Enew` equals the independent formula for four `x_e` values including 0; two full lossy steps on `(5,4,3)` against the pure-Python transcription of the coefficient update | <= 1e-13 normalized |
 | S12 / MAT-03 | Time-step policy unchanged: the accepted `dt` for a material grid equals the vacuum value; `eps_r<1` rejected before allocation; coefficient overflow/nonfinite rejected | exact |
@@ -347,11 +361,12 @@ add synthetic pass and fault-detection cases for every new observable:
 - V04-B: the modal-sum synthetic record passes both analyses; a shifted line,
   an added spurious line at 0.1 strength, a missing required line, and a
   truncated record are detected.
-- V04-C: a nonzero exterior sample, a nonzero surface sample, and a `1e-11`
-  interior deviation are detected.
+- V04-C: a nonzero exterior sample, a nonzero shell or face-normal sample, and
+  a `1e-11` interior deviation are detected.
 - V05-B/C, V06-A/B: synthetic series built from the closed-form references pass;
   injected gate shift, magnitude, phase, `Im R`, `b`-plane mismatch, decay,
-  growth-factor, balance, monotonicity, and bound faults are detected.
+  growth-factor (including the lossless-initialization transient), balance,
+  monotonicity, and bound faults are detected.
 - Oracle: the pure-Python transcription is extended with the edge mask, per-cell
   materials with edge averaging, the lossy coefficient update and `D_n`; it
   must reproduce the production smoke cases of the new suites (`U`, `Q`, `D`,

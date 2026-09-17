@@ -123,10 +123,19 @@ an ID, dependencies, a completion test, and an evidence location before starting
   the time gate (fixed by a taller guide and re-derived layout; two rejected
   layouts admitted wall echoes). No solver, fixture, tolerance, test, or analyzer
   of P1 changed.
+- A post-audit read-through found two specification contradictions, both
+  corrected and now covered by the audit: V04-C had placed a cavity mode and a
+  source inside a solid PEC box (fixed by adding the hollow `pec_shell`
+  primitive, of which the outer closure is the whole-domain instance, and
+  enumerating the 3,008-edge V04-C mask), and V06-A had initialized the
+  lossless eigenwave while requiring the lossy growth factor at every step
+  (fixed by initializing the exact lossy mode; the audit's modal recursion
+  shows the lossless start deviates by 4.6e-2 at the first step). No cap or
+  prediction changed.
 - Fresh `build/MAT-01-release` and `build/MAT-01-debug` trees configured, built
-  without warnings, and pass 13/13 CTests; see the
-  [review](validation/MAT-01-review.md). Records updated: backlog, project plan,
-  schedule, validation plan, README, decision log (D018).
+  without warnings, and pass 13/13 CTests before and after the corrections; see
+  the [review](validation/MAT-01-review.md). Records updated: backlog, project
+  plan, schedule, validation plan, README, decision log (D018).
 - Next exact action: MAT-02. Implement the E-edge PEC mask (outer closure plus
   grid-aligned boxes) in the reference kernel with its contract note, the S09
   structural test, the `closed-v1` `cavity`/`cavity-spectrum`/`pec` suites and
@@ -327,6 +336,7 @@ an ID, dependencies, a completion test, and an evidence location before starting
 | 2026-09-16 | REF-05 complete | Validated reductions; 36/36 propagation, 4/4 stability, refinement and enlarged checks pass v1 limits from a clean Release build; Debug/Release 12/12; C03 measured report exists, C04 begins; REF-06 ready; P1 open pending gate review |
 | 2026-09-17 | REF-06 / P1 gate passed | Acceptance matrix complete; fresh Debug/Release 12/12 without warnings; full V01–V03 suites reproduced exactly from the clean Release build; supported limits recorded; C04 complete, C05 ready; MAT-01 ready; P2 open |
 | 2026-09-18 | MAT-01 complete | P2 method note and V04–V07/S09–S14 specifications fixed with audited caps; new analytical audit registered; fresh Debug/Release 13/13 without warnings; D018; C05 in progress; MAT-02 ready; no P2 physics validated |
+| 2026-09-18 | MAT-01 review correction | Two fixture contradictions (V04-C solid box, V06-A lossless start) found in review and fixed; `pec_shell` primitive added; audit extended to enumerate the V04-C mask and the lossy modal recursion; 13/13 CTests still pass; MAT-01 remains Done, MAT-02 ready |
 
 Add concise entries for work-item/cycle reviews, gate outcomes, material blockers,
 and sequencing changes. Keep detailed measurements in validation reports and link them.

@@ -32,7 +32,7 @@ the reviewed inputs and final records (CRLF checkout, as for REF-06).
 | Resource budgets | Calculated per suite by the audit: 5,358,056,072 cell-steps, largest transient the `p=96` two-payload construction (2 x 489.380 MiB) within 2 GiB |
 | Structural extensions of S01–S08 | S09–S14 with fixtures, independent enumerations, and thresholds |
 | Synthetic/oracle analyzer coverage extensions | Per-benchmark fault-injection list and the oracle extension (mask, materials, lossy update, `D_n`) fixed before MAT-02 |
-| Analytical audit script extended and passing | `check_material_benchmarks.py` passes standalone (Python 3.9.7, 19.3 s) and in CTest (Python 3.10.2, 14.2–14.7 s) in both configurations |
+| Analytical audit script extended and passing | `check_material_benchmarks.py` passes standalone (Python 3.9.7, about 19 s) and in CTest (Python 3.10.2, about 14 s) in both configurations, including the V04-C mask enumeration and the lossy modal-recursion checks added after review |
 
 ## Deterministic calculations executed
 
@@ -91,6 +91,38 @@ precision requirement of the cavity estimator from `1e-12` to `1e-11` after the
 866-state recurrence fit showed `1.5e-12` on the finest synthetic case; the
 `1e-9` acceptance limits are unaffected.
 
+## Post-audit review corrections
+
+A read-through of the first fixed specification against the method note found
+two contradictions that the audit had not exercised. Both were corrected before
+this record was closed, and the audit now constructs the affected fixtures:
+
+1. **V04-C used a cavity inside a solid PEC box.** The method note defined the
+   only interior primitive as a solid box masking every surface and interior
+   edge, while V04-C initialized a nonzero mode and placed a source inside that
+   box, which the mask semantics require to be rejected before stepping. The
+   note now defines two primitives, `pec_box` (solid) and `pec_shell` (hollow,
+   face-plane edges only), makes the outer closure the whole-domain shell, and
+   V04-C and S09 use the shell. The audit enumerates the `(18,22,26)` mask:
+   the shell marks 3,008 edges (864/1,024/1,120 per component), the mode's
+   support meets none of them, the C2 source edge `(8,10,12)` is inside and
+   unmasked, the C3 edge `(1,1,1)` is outside, the solid box of the same
+   ranges masks 13,072 edges including 10,064 of the mode's support (the S09
+   rejection case), and the whole-domain shell equals the FND-03 tangential
+   wall set on every edge.
+2. **V06-A initialized the lossless eigenwave but required the lossy growth
+   factor at every step.** The lossless start excites the conjugate lossy mode;
+   the first per-step ratio is `(z0-x)/(1+x)`, not `z`. The specification now
+   initializes the exact lossy mode (`H` from `hhat/A=(i dt K/mu0)/(z^(1/2)-z^(-1/2))`
+   at `-dt/2`), and the audit transcribes the two-amplitude lossy recursion:
+   the lossy initialization reproduces `z` within `1.7e-15` at every step for
+   all six `(sigma,p)` cases, while the lossless initialization deviates by
+   `4.6e-2` at the first step and by up to `0.13`–`0.17` over the record,
+   which the `1e-9` limit rejects.
+
+No cap, continuum prediction, or budget changed as a result; the corrections
+are to fixture definitions and to the audit's coverage.
+
 ## Clean-build and infrastructure regression
 
 Fresh `build/MAT-01-release` and `build/MAT-01-debug` trees (absent before
@@ -101,8 +133,8 @@ compiler warnings. Commands as at REF-06 with `B=build/MAT-01-{release,debug}`.
 
 | Run | Configure | Build | CTest (after the final script revision) | Measured CTest time |
 | --- | --- | --- | --- | --- |
-| Fresh Release | Pass | Pass, no warnings | 13/13 pass; `reference.material_specification` 14.15 s | 28.14 s (first run 28.32 s) |
-| Fresh Debug | Pass | Pass, no warnings | 13/13 pass; `reference.material_specification` 14.67 s | 39.41 s (first run 38.95 s) |
+| Fresh Release | Pass | Pass, no warnings | 13/13 pass; `reference.material_specification` 14.37 s | 28.62 s (earlier runs 28.32 s, 28.14 s) |
+| Fresh Debug | Pass | Pass, no warnings | 13/13 pass; `reference.material_specification` 14.62 s | 39.05 s (earlier runs 38.95 s, 39.41 s) |
 
 The thirteen tests are the twelve of REF-06 plus `reference.material_specification`
 (labels `reference_structural;analytical_audit`, timeout 300 s). The Release

@@ -154,24 +154,38 @@ E is constrained to zero.
 A PEC region is represented as a set of **E edges** (`pec_edges`), stored per
 E component as a mask over that component's allocated extents. Semantics:
 
-- The outer `zero_tangential_e` closure of FND-03 is exactly the mask of the
-  tangential outer-face edges; it is always present. Metadata report both the
-  closure label and the number of masked edges per component.
-- A grid-aligned PEC box is specified by half-open cell ranges
-  `[i0,i1) x [j0,j1) x [k0,k1)` with `0<=i0<i1<=Nx` etc. It marks every E edge
-  whose two endpoints both lie in the closed box
-  `[i0*dx, i1*dx] x [j0*dy, j1*dy] x [k0*dz, k1*dz]`, i.e. all edges on the
-  box surface and in its interior, evaluated with exact integer/half-integer
-  index arithmetic, never with floating-point coordinates. Boxes may overlap;
-  the mask is their union with the outer closure. A single cell, plate, or
-  wire of zero thickness is not a version-1 shape.
+- Two grid-aligned primitives are specified by half-open cell ranges
+  `[i0,i1) x [j0,j1) x [k0,k1)` with `0<=i0<i1<=Nx` etc., evaluated with exact
+  integer/half-integer index arithmetic, never with floating-point coordinates.
+  An `E_a` edge with integer storage index `(i_a, i_b, i_c)` (cyclic `a,b,c`)
+  spans the endpoints `i_a` and `i_a+1` along `a` at the node coordinates
+  `i_b`, `i_c`. **`pec_box` (solid)** marks every E edge whose two endpoints
+  both lie in the closed box, i.e. `i0<=i_a<i1`, `j0<=i_b<=j1`, `k0<=i_c<=k1`
+  for `E_a` and cyclically for the others: all edges on the surface and in the
+  interior. **`pec_shell` (hollow)** marks only the edges that lie in one of
+  the six face planes: the same ranges with the additional condition
+  `i_b in {j0,j1}` or `i_c in {k0,k1}` for `E_a` (an `a`-directed edge never
+  lies in an `a`-face). The interior of a shell is free and evolves as an
+  independent cavity. Primitives may overlap; the mask is their union with the
+  outer closure. A single cell, plate, or wire of zero thickness is not a
+  version-1 shape.
+- The outer `zero_tangential_e` closure of FND-03 is exactly
+  `pec_shell([0,Nx) x [0,Ny) x [0,Nz))`; it is always present. Metadata report
+  the closure label, every primitive, and the number of masked edges per
+  component.
 - Masked E samples are held at exactly zero: they are never written by the
   update, initial fields must be exactly zero there (reject otherwise), and
-  impressed currents must not target them (reject). Probes may read them.
-- H samples are never masked. An H sample surrounded by masked tangential E
-  receives a zero curl increment and therefore stays at its initial value,
-  which the initial screening requires to be zero on the outer normal walls and
-  which V04-C requires to be zero inside an interior box.
+  impressed currents must not target them (reject). Probes may read them. A
+  cavity fixture or source therefore belongs inside a `pec_shell`, never inside
+  a `pec_box`, whose interior edges are masked.
+- H samples are never masked. An H sample whose four surrounding tangential E
+  samples are all masked receives a zero curl increment and therefore stays at
+  its initial value; the initial screening requires it to be zero on the outer
+  normal walls, in the interior of a `pec_box`, and on the face planes of a
+  `pec_shell` (the H samples with an integer index on a face are the face-normal
+  components), so that a shell's exterior stays exactly zero when only its
+  interior is excited, and its interior stays exactly zero when only the
+  exterior is excited (V04-C).
 - Surface charge on PEC faces is implied by Gauss's law and is not tracked;
   the P1 initial-divergence screening is applied only at nodes whose six
   surrounding E samples are all unmasked and unconstrained.
@@ -239,13 +253,22 @@ roots are the discrete modes; the continuum characteristic function is
 `beta1 cos(beta1 L1) sin(beta2 L2) + beta2 sin(beta1 L1) cos(beta2 L2)`.
 
 **Lossy eigenwave.** For a real spatial harmonic with discrete wavenumber `K`
-in a uniform `eps`, `sigma` medium, the per-step growth factor `z` solves
+in a uniform `eps`, `sigma` medium, the per-step growth factor `z` (the root
+with positive imaginary part) solves
 `(eps + sigma dt/2) z^2 + (-2 eps + dt^2 K^2/mu0) z + (eps - sigma dt/2) = 0`.
 Its modulus is exactly `sqrt((1-x)/(1+x))`, `x=sigma dt/(2 eps)`, independent of
 `K`, so the discrete decay rate `-ln|z|/dt` differs from the continuum
 `alpha=sigma/(2 eps)` by the relative amount `x^2/3 + O(x^4)`; the phase
 `arg(z)/dt` approximates the continuum `sqrt(c0^2 k^2/eps_r - alpha^2)` with the
-usual spatial dispersion error.
+usual spatial dispersion error. The exact discrete mode is
+`E^n = Re{A z^n exp(-i k r_a)}` with
+`H^(n-1/2) = w s_H Re{hhat z^(n-1/2) exp(-i k r_a)}`,
+`hhat/A = (i dt K/mu0)/(z^(1/2) - z^(-1/2))` (principal square root), which for
+`sigma=0` reduces to the V01 initialization `hhat/A=1/eta`. Both families must
+be initialized from the lossy `z`: starting the lossless mode in a lossy medium
+excites the conjugate mode as well, and the first per-step ratio is then
+`(z0 - x)/(1+x)` instead of `z` (a 4.6e-2 deviation for `sigma=0.1`, `p=24`),
+which the V06-A acceptance is designed to reject.
 
 ## Spectral processing conventions
 
