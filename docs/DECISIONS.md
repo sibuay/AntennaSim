@@ -24,6 +24,7 @@ baseline. They do not imply completed implementation.
 | D015 | Use validated sparse impressed currents, native probes, separate fixed benchmark runners and streamed CSV/JSON with exclusive completion markers | Preserves initial rho=0 screening, defines later charge by continuity, retains failed evidence and distinguishes raw completion from physical acceptance; see REF-04 contract/evidence | General project/source/charge requirements or measured resource constraints |
 | D016 | Use GitHub for source control and required Debug/Release CI; make Python audits fail closed and retain compact validation evidence | Keeps reviewed snapshots bisectable, prevents reduced suites from passing silently, and makes local/remote evidence inspectable without tracking large generated arrays | Host, runner, dependency, retention, or distribution requirements change |
 | D017 | Evaluate physical acceptance only through an independent artifact analyzer whose reductions are validated by synthetic fault injection and a separately transcribed oracle before results are read; run full suites manually from clean Release builds, keep smoke-length reductions in CTest/CI | Separates solver output from its judgement, catches analysis defects before they can mask or fabricate a pass, and keeps the fast suite bounded; see REF-05 contract/evidence | Suite runtime, hosted-runner capacity, or a new observable that the synthetic/oracle coverage does not exercise |
+| D018 | Fix the P2 conventions before any P2 code: per-cell isotropic `eps_r>=1`/`sigma>=0` with `mu0`, four-cell arithmetic edge averaging, time-centred conductivity coefficients that reproduce the vacuum kernel bitwise, the unchanged vacuum CFL policy justified by the eps-weighted dissipation identity, E-edge PEC masks with the outer closure as a special case, `exp(-i omega t)*dt` transforms with rectangular/Hann windows, and closed-form discrete comparators for V04–V07 | Keeps P1 evidence valid by construction, makes implementation and discretization errors separable, and fixes caps from exact predictions with a 24–35 percent margin; see the MAT-01 method note, specification and review | A material, boundary, or spectral requirement outside the declared scope (magnetic or dispersive media, subcell conductors, constant loss tangent, oblique interfaces) or a failed P2 measurement that traces to a convention rather than an implementation |
 
 ## Open decisions
 
@@ -60,6 +61,42 @@ boundary formulation) is needed for the P3 breakdown that the P2 gate (MAT-05)
 must produce, so its method/reference study is due at that gate. The
 [P1 gate record](validation/REF-06-reference-propagation-gate.md) passes Phase 1
 under D010–D017 without a new decision; it fixes no P2 method or tolerance.
+MAT-01 (2026-09-18) adds D018; none of O005–O010 is due before MAT-02.
+
+## D018 detail — MAT-01 Phase 2 conventions on 2026-09-18
+
+Status: specified and audited; no P2 implementation and no validated PEC,
+material, or spectral capability. See the
+[method note](methods/MAT-01-closed-domain-conventions.md),
+[specification](validation/MAT-01-closed-domain-benchmarks.md) and
+[review](validation/MAT-01-review.md). Same-author review.
+
+Considered: material coefficients stored per edge versus per cell (chose
+per-cell assignment with four-cell arithmetic averaging on edges, the
+node-aligned interface that Schneider 7.8 shows to be optimal and purely real);
+an explicit vacuum code path versus one coefficient kernel (chose one kernel
+whose vacuum coefficients are exactly `1` and `dt/epsilon0`, so V01–V03 must
+reproduce bitwise); a rederived material CFL versus the vacuum bound (the
+eps-weighted dissipation identity shows the vacuum bound suffices for
+`eps_r>=1`, `sigma>=0`, `mu=mu0`, so the time-step object is unchanged and
+`eps_r<1` is rejected); PEC as zero-coefficient material versus an explicit
+edge mask (chose the mask: exact zeros, skipped updates, rejected sources, and
+the outer closure becomes a special case); a broadband gated interface
+experiment near the guide cutoff versus a taller guide (the audit showed the
+former leaks across the gate; the fixture now has cutoff at a quarter of the
+carrier, with the record length and gate fixed as part of the fixture);
+spectral-only cavity validation versus exact eigenmode phase measurement (both:
+V04-A carries the precise resonance claim, V04-B the identification and
+resolution claim).
+
+Consequences: P1 evidence remains valid by construction; each P2 observable has
+a continuum reference and a closed-form discrete diagnostic, so a failure can be
+attributed; the P2 suites cost about five times the P1 suites and stay manual
+from clean Release builds while smoke-length cases and synthetic/oracle checks
+stay in CTest. Constant conductivity is explicitly not a loss-tangent model and
+the supported loss scope is `sigma*dt/(2*eps)<=0.045`. Revisit on any
+requirement outside the declared scope or on a P2 measurement failure that
+traces to a convention.
 
 ## D010 detail — O002 resolved on 2026-09-05
 

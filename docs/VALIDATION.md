@@ -20,11 +20,14 @@ and [author-review/calculation evidence](validation/FND-04-review.md). Their
 production fixtures, raw-output runners, and independent analyzer now exist and
 their full measurements pass. The
 [FND-05 foundation gate](validation/FND-05-foundation-gate.md) passed on
-2026-09-06 and the P1 gate on 2026-09-17. REF-01 through REF-06 are complete and
-MAT-01 is ready. P0 infrastructure, S01–S08 on every executed fixture,
-grid/CFL/source/probe/run-input checks, and the full V01–V03 v1 suites pass.
-V04–V07 specifications with fixed, justified tolerances are MAT-01's first
-obligation before any P2 method is implemented.
+2026-09-06 and the P1 gate on 2026-09-17. REF-01 through REF-06 and MAT-01 are
+complete and MAT-02 is ready. P0 infrastructure, S01–S08 on every executed
+fixture, grid/CFL/source/probe/run-input checks, and the full V01–V03 v1 suites
+pass. V04–V07 now have
+[fixed version-1 specifications](validation/MAT-01-closed-domain-benchmarks.md)
+under the [MAT-01 conventions](methods/MAT-01-closed-domain-conventions.md),
+with [audit evidence](validation/MAT-01-review.md); no P2 benchmark has run and
+no PEC, material, or spectral capability is validated.
 
 ## Acceptance policy
 
@@ -55,8 +58,12 @@ V01–V03 have status **Version 1 measured and passed (REF-05, 2026-09-16);
 P1 gate passed and measurements reproduced exactly from a clean build (REF-06,
 2026-09-17)**. They are permanent regressions: any change to the kernel, fixtures,
 or analyzer must keep them passing with their fixed limits.
-V04–V15 remain **Specified at planning level only**. S01–S08 structural
-acceptance requirements are included in the FND-04 version-1 specification.
+V04–V07 have status **Version 1 specified (MAT-01, 2026-09-18); not run**:
+fixtures, closed-form discrete and continuum comparators, fixed caps, resource
+budgets, and the S09–S14 structural extensions are in the
+[MAT-01 specification](validation/MAT-01-closed-domain-benchmarks.md). V08–V15
+remain **Specified at planning level only**. S01–S08 structural acceptance
+requirements are included in the FND-04 version-1 specification.
 
 Implemented structural coverage: `reference.grid` (CTest labels
 `reference_structural;fast`) covers REF-01's extent/count/size/geometry-input
@@ -75,11 +82,15 @@ independent pure-Python oracle of the
 stability diagnostics on smoke output, and a two-step production propagation
 measurement. All larger fixtures executed their S08 checks before stepping in
 the full REF-05 runs, and V03 long-time stability passed.
+`reference.material_specification` (MAT-01) recomputes every V04–V07 prediction
+and cap, checks the cavity, interface, slab, lossy and spectral estimators and
+their fault detection on synthetic data, and verifies the interface gating
+against a reduced-system oracle; it exercises no solver code.
 
-All four independent Python convention/specification/golden-state/reduction
+All five independent Python convention/specification/golden-state/reduction
 audits are registered in CTest, and Python is required whenever `BUILD_TESTING=ON`;
 validation therefore fails closed instead of reporting a reduced suite as a pass.
-GitHub CI runs the same twelve-test Debug/Release suite and retains logs and smoke
+GitHub CI runs the same thirteen-test Debug/Release suite and retains logs and smoke
 artifacts. The full physical suites are run manually from a clean Release build
 with `scripts/run_reference_benchmarks.py` and `scripts/analyze_reference_benchmarks.py`;
 `scripts/compare_reference_analysis.py` checks a re-run's summary against the

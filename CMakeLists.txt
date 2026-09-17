@@ -106,6 +106,10 @@ if(BUILD_TESTING)
         "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_reference_steps.py")
     set_tests_properties(reference.yee_conventions reference.benchmark_specification
         reference.golden_steps PROPERTIES LABELS "reference_structural;analytical_audit;fast" TIMEOUT 30)
+    add_test(NAME reference.material_specification COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_material_benchmarks.py")
+    set_tests_properties(reference.material_specification PROPERTIES
+        LABELS "reference_structural;analytical_audit" TIMEOUT 300)
 
     add_test(NAME reference.run_artifacts COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_reference_runs.py"

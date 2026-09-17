@@ -72,8 +72,12 @@ and [REF-05 physical measurements](validation/REF-05-reference-measurements.md)
 pass, and the gate reproduced the V01–V03 measurements exactly from a clean
 build. The gate record states the supported limits: axis-aligned vacuum
 eigenwaves in a reflecting box at the declared grids and durations. Phase 2 is
-**ready** with MAT-01. All later phases are **not started**; PEC, material,
-open-boundary and antenna accuracy remain unvalidated.
+**in progress**: MAT-01 fixed the P2 conventions and the V04–V07 specifications
+([method note](methods/MAT-01-closed-domain-conventions.md),
+[specification](validation/MAT-01-closed-domain-benchmarks.md),
+[audit review](validation/MAT-01-review.md)) and MAT-02 is ready. All later
+phases are **not started**; PEC, material, open-boundary and antenna accuracy
+remain unvalidated.
 The milestone column maps this plan to the original vision. Later phases are
 broken into detailed work items only when their prerequisites are understood.
 

@@ -6,14 +6,16 @@ direction and scientific principles are defined in [VISION.md](VISION.md).
 **Current status:** C++20 vacuum reference kernel with checked grid/field storage,
 strict CFL selection, H-then-E updates, impressed currents, native probes, and
 reproducible reference benchmark CLI/output, and an independent analyzer. Debug
-and Release pass twelve CTest tests, including independent equation-level,
+and Release pass thirteen CTest tests, including independent equation-level,
 analytical, fixture, sampling, artifact and reduction checks. The version-1
 free-space propagation, impedance, refinement and closed-grid stability
 benchmarks (V01–V03) passed on 2026-09-16 from a clean Release build and were
 reproduced exactly from a second clean build at the Phase 1 gate on 2026-09-17.
-No PEC, material, open-boundary, port or antenna accuracy claim is established.
+The Phase 2 method note and the V04–V07 benchmark specifications are fixed and
+audited (MAT-01, 2026-09-18); no P2 solver code exists yet, and no PEC,
+material, open-boundary, port or antenna accuracy claim is established.
 The foundation gate passed on 2026-09-06 and the reference-propagation gate on
-2026-09-17; Phase 2 (materials and closed domains) is ready to start.
+2026-09-17; Phase 2 (materials and closed domains) is in progress.
 
 ## Project records
 
@@ -43,6 +45,9 @@ The foundation gate passed on 2026-09-06 and the reference-propagation gate on
 | [Measurement contract](docs/methods/REF-05-measurement-contract.md) | V01–V03 reductions, independence, reduction validation and acceptance mapping |
 | [Physical measurement evidence](docs/validation/REF-05-reference-measurements.md) | REF-05 propagation/impedance/refinement/stability results, resources and limits |
 | [Reference-propagation gate](docs/validation/REF-06-reference-propagation-gate.md) | P1 acceptance matrix, supported limits, clean-build reproduction, risk review, and P2 breakdown |
+| [Closed-domain conventions](docs/methods/MAT-01-closed-domain-conventions.md) | PEC edge masks, isotropic dielectric/conductivity update, dissipation identity, spectral conventions, closed-form discrete references |
+| [Closed-domain benchmark specifications](docs/validation/MAT-01-closed-domain-benchmarks.md) | V04–V07 fixtures, comparators, fixed thresholds, S09–S14, analyzer coverage, and resource budgets |
+| [Closed-domain specification review](docs/validation/MAT-01-review.md) | MAT-01 audit calculations, fixture corrections, clean-build regression, and MAT-02 handoff |
 
 Start each development session with the backlog and the relevant phase gate.
 Update the records at the end of the session. See [AGENTS.md](AGENTS.md) for
@@ -50,10 +55,12 @@ repository working instructions.
 
 ## Immediate objective
 
-Begin MAT-01: write the Phase 2 method notes and V04–V07 benchmark specifications
-(explicit PEC surfaces, isotropic dielectric and constant-conductivity updates,
-spectral processing conventions) with fixed, justified tolerances before any P2
-solver code. P0, P1, and REF-01 through REF-06 are complete.
+Begin MAT-02: implement explicit PEC edge masks in the reference kernel and
+produce the V04 cavity evidence under the fixed MAT-01 specification (exact
+eigenmode, driven-spectrum and interior-enforcement suites with an independent,
+fault-checked analyzer), keeping the vacuum path bitwise identical and all
+thirteen CTests and the V01–V03 suites passing. P0, P1, REF-01 through REF-06,
+and MAT-01 are complete.
 
 ## Build and check
 

@@ -4,7 +4,7 @@ Recorded: 2026-09-05. Per the owner's instruction, work is ordered by dependenci
 and completion evidence, with **no assumed dates, durations, or weekly capacity**.
 Record dates identify history only; they are not delivery targets.
 
-Current position (2026-09-17): C01 is complete following the
+Current position (2026-09-18): C01 is complete following the
 [P0 gate pass](validation/FND-05-foundation-gate.md). C02 is complete following
 the [REF-03 structural/CFL review](validation/REF-03-reference-updates.md), with
 REF-01 grid and REF-02 storage/indexing evidence retained. C03 is complete: the
@@ -12,9 +12,10 @@ REF-01 grid and REF-02 storage/indexing evidence retained. C03 is complete: the
 reproduces all 36 propagation and four stability cases from a clean build. C04
 is complete: the [REF-06 gate review](validation/REF-06-reference-propagation-gate.md)
 passed P1 with an exact clean-build reproduction of the physical suites and
-recorded the supported limits. C05 is ready, starting with MAT-01 (P2 method
-notes and V04–V07 specifications). The P2 and later numerical gates remain open.
-No sequencing or duration assumptions changed.
+recorded the supported limits. C05 is in progress: MAT-01 (the P2 method note
+and the V04–V07 specifications with fixed, audited tolerances) is complete and
+MAT-02 (explicit PEC edges and V04 cavity evidence) is ready. The P2 and later
+numerical gates remain open. No sequencing or duration assumptions changed.
 
 ## Sequencing policy
 

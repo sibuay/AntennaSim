@@ -1,11 +1,11 @@
 # Backlog and project status
 
-Last updated: 2026-09-17.
+Last updated: 2026-09-18.
 
 ## Current position
 
-- **Active phase:** P2 — Materials and closed domains (ready to start; P0 and
-  P1 gates passed).
+- **Active phase:** P2 — Materials and closed domains (in progress; P0 and
+  P1 gates passed; MAT-01 complete).
 - **Completed capability:** planning records, a verified C++20/CMake build scaffold,
   reviewed reference Yee-grid conventions, fixed initial benchmark specifications,
   structurally checked core grid metadata/input/allocation validation, and six
@@ -14,7 +14,10 @@ Last updated: 2026-09-17.
   probes, fixed benchmark fixtures and CLI raw output with structural/smoke checks;
   an independent analyzer with validated reductions, the measured V01–V03
   physical report (36 propagation and four 20,000-step stability cases), and the
-  P1 gate record with a clean-build exact reproduction of those measurements.
+  P1 gate record with a clean-build exact reproduction of those measurements;
+  the P2 method note (PEC edge masks, isotropic dielectric/conductivity update,
+  spectral conventions) and the V04–V07/S09–S14 specifications with fixed
+  tolerances, backed by a passing standard-library audit registered in CTest.
 - **Validated numerical capability:** axis-aligned vacuum eigenwave propagation,
   signed impedance, second-order refinement, and closed-grid long-time stability
   within the FND-04 v1 envelope, as bounded in the
@@ -22,12 +25,14 @@ Last updated: 2026-09-17.
   PEC-resonance, material, open-boundary, oblique/broadband, port, or antenna
   capability is validated.
 - **Active implementation item:** none.
-- **Next ready item:** MAT-01 — P2 method notes and V04–V07 specifications.
+- **Next ready item:** MAT-02 — explicit PEC edge masks and V04 cavity evidence
+  under the fixed MAT-01 specification.
 - **Scheduling rule:** milestone-based, with no assumed dates or durations.
-- **Blockers:** none for MAT-01. The compiler ran inside the ordinary session
-  sandbox on 2026-09-16 and 2026-09-17; standalone Windows CLI runs still need
-  the compiler runtime directory on the process PATH. Commits after `b98bc4c`
-  are local until the owner pushes `main`, so their hosted CI result is pending.
+- **Blockers:** none for MAT-02. The compiler ran inside the ordinary session
+  sandbox on 2026-09-16 through 2026-09-18; standalone Windows CLI runs still
+  need the compiler runtime directory on the process PATH. Commits after
+  `b98bc4c` are local until the owner pushes `main`, so their hosted CI result
+  is pending.
 
 Status vocabulary: **Ready**, **Planned**, **In progress**, **Blocked**, **Done**.
 Ready means prerequisites are satisfied. Done requires linked evidence, not just
@@ -54,8 +59,8 @@ prerequisites; the chosen sequence may be stricter to keep work focused.
 | MNT-01 | P1 support | Harden validation, source-control traceability, CI, and durable evidence | REF-04 | Done | [Maintenance evidence](validation/MNT-01-repository-hardening.md); commits `5930643`/`3043b39`/`b342821` on `origin/main`; hosted Debug/Release runs passed 2026-09-16; D016 |
 | REF-05 | P1 | Measure propagation, impedance, stability, and refinement behavior | REF-04 | Done | [Measurement contract](methods/REF-05-measurement-contract.md); [36/36 propagation, 4/4 stability, refinement/enlarged evidence](validation/REF-05-reference-measurements.md); [compact metrics](validation/REF-05-analysis-summary.json); D017 |
 | REF-06 | P1 | Review reference-propagation gate | REF-05 | Done | [P1 gate: pass; supported limits; clean-build exact reproduction](validation/REF-06-reference-propagation-gate.md) |
-| MAT-01 | P2 | Specify PEC, dielectric, conductivity, and spectral conventions | REF-06 | Ready | Method notes and V04–V07 specifications with fixed, justified tolerances; extended structural/analyzer coverage plan |
-| MAT-02 | P2 | Implement and validate explicit PEC boundaries/cavity | MAT-01 | Planned | V04 evidence and existing regressions |
+| MAT-01 | P2 | Specify PEC, dielectric, conductivity, and spectral conventions | REF-06 | Done | [Method note](methods/MAT-01-closed-domain-conventions.md); [V04–V07/S09–S14 specification](validation/MAT-01-closed-domain-benchmarks.md); [audit/review evidence, 13/13 CTests](validation/MAT-01-review.md); D018 |
+| MAT-02 | P2 | Implement and validate explicit PEC boundaries/cavity | MAT-01 | Ready | V04 evidence and existing regressions |
 | MAT-03 | P2 | Implement and validate dielectric and conductive updates | MAT-02 | Planned | V05–V06 evidence and existing regressions |
 | MAT-04 | P2 | Implement spectral processing and validate sampling/normalization | MAT-03 | Planned | V07 and cavity spectral evidence |
 | MAT-05 | P2 | Review materials/closed-domain gate | MAT-04 | Planned | P2 gate record and P3 breakdown |
@@ -85,6 +90,53 @@ an ID, dependencies, a completion test, and an evidence location before starting
 | P13 | Justified MoM scope and multi-solver support | Planned |
 
 ## Session handoff
+
+**2026-09-18 — MAT-01 P2 conventions and V04–V07 specifications complete**
+
+- Wrote the [P2 method note](methods/MAT-01-closed-domain-conventions.md):
+  per-cell isotropic `eps_r>=1`, `sigma>=0`, `mu=mu0`; four-cell arithmetic
+  edge averaging; Schneider's time-centred conductivity coefficients in a form
+  that reproduces the vacuum kernel bitwise; the eps-weighted dissipation
+  identity `Q_(n+1)=Q_n-D_n` that keeps the vacuum CFL policy valid for every
+  allowed material; E-edge PEC masks with the outer closure as a special case;
+  `exp(-i omega t)*dt` transforms with rectangular/Hann windows; closed-form
+  discrete references (cavity modes and line strengths, reduced TE interface
+  `R_d`, slab-cavity roots, lossy growth factor). Sources rechecked from the
+  extracted text of Schneider chapters 3, 7, and 9 with section/equation/page
+  references.
+- Wrote the [V04–V07 specification](validation/MAT-01-closed-domain-benchmarks.md):
+  V04-A eigenmodes (30 cases, caps 0.0052/0.0013/0.000325), V04-B driven spectrum
+  (8 required lines, 0.25-bin identification, two record lengths), V04-C interior
+  PEC enforcement (exact zeros, bitwise equivalence), V05-A dielectric eigenwave,
+  V05-B TE-mode interface (7 cases, closed-form discrete `R_d`, caps
+  0.06/0.0135/0.0034), V05-C slab-loaded cavity (18 cases), V06-A lossy eigenwave
+  (26 cases, decay/phase caps), V06-B dissipation identity, V06-C zero-conductivity
+  bitwise regression, V07 synthetic spectra, S09–S14, analyzer/oracle coverage
+  extensions, CLI/analysis contract, and a calculated 5.36e9 cell-step budget.
+- Added `scripts/check_material_benchmarks.py` (standard library; CTest
+  `reference.material_specification`, about 14.5 s) computing every prediction
+  and cap, checking the estimators and fault detection on synthetic data, and
+  verifying the V05-B gating/isolation against a pure-Python reduced-TE oracle
+  (agreement 1.3e-5 with the closed form). Two fixture defects were found and
+  fixed during the audit: a near-degenerate cavity line pair inside the spectral
+  cutoff, and interface pulse content near the guide cutoff that leaked across
+  the time gate (fixed by a taller guide and re-derived layout; two rejected
+  layouts admitted wall echoes). No solver, fixture, tolerance, test, or analyzer
+  of P1 changed.
+- Fresh `build/MAT-01-release` and `build/MAT-01-debug` trees configured, built
+  without warnings, and pass 13/13 CTests; see the
+  [review](validation/MAT-01-review.md). Records updated: backlog, project plan,
+  schedule, validation plan, README, decision log (D018).
+- Next exact action: MAT-02. Implement the E-edge PEC mask (outer closure plus
+  grid-aligned boxes) in the reference kernel with its contract note, the S09
+  structural test, the `closed-v1` `cavity`/`cavity-spectrum`/`pec` suites and
+  their fixtures (exact discrete eigenmodes, antisymmetric pulse, exterior and
+  surface maxima), the independent analyzer with the V04 reductions and the
+  synthetic fault-injection coverage listed in the specification, then run V04
+  from a clean Release build. Preserve all thirteen CTests and the V01–V03
+  suites; the vacuum path must stay bitwise identical.
+
+### Previous handoff (historical)
 
 **2026-09-17 — REF-06 P1 gate review complete**
 
@@ -274,6 +326,7 @@ an ID, dependencies, a completion test, and an evidence location before starting
 | 2026-09-16 | MNT-01 complete | First hosted Ubuntu Debug/Release runs passed for `3043b39` and `b342821`; MNT-01 Done; REF-05 ready and next |
 | 2026-09-16 | REF-05 complete | Validated reductions; 36/36 propagation, 4/4 stability, refinement and enlarged checks pass v1 limits from a clean Release build; Debug/Release 12/12; C03 measured report exists, C04 begins; REF-06 ready; P1 open pending gate review |
 | 2026-09-17 | REF-06 / P1 gate passed | Acceptance matrix complete; fresh Debug/Release 12/12 without warnings; full V01–V03 suites reproduced exactly from the clean Release build; supported limits recorded; C04 complete, C05 ready; MAT-01 ready; P2 open |
+| 2026-09-18 | MAT-01 complete | P2 method note and V04–V07/S09–S14 specifications fixed with audited caps; new analytical audit registered; fresh Debug/Release 13/13 without warnings; D018; C05 in progress; MAT-02 ready; no P2 physics validated |
 
 Add concise entries for work-item/cycle reviews, gate outcomes, material blockers,
 and sequencing changes. Keep detailed measurements in validation reports and link them.
