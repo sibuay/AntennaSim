@@ -55,6 +55,12 @@ foundation and makes REF-01 ready under D001–D011, without changing architectu
 or tolerances. The same-author review and approved-execution limitations remain
 explicit; no new numerical capability is claimed.
 
+REF-06 reviewed them again on 2026-09-17: none is due before P2. O007 (absorbing
+boundary formulation) is needed for the P3 breakdown that the P2 gate (MAT-05)
+must produce, so its method/reference study is due at that gate. The
+[P1 gate record](validation/REF-06-reference-propagation-gate.md) passes Phase 1
+under D010–D017 without a new decision; it fixes no P2 method or tolerance.
+
 ## D010 detail — O002 resolved on 2026-09-05
 
 Status: accepted for the reference specification, not numerically validated.

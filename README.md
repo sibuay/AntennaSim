@@ -9,9 +9,11 @@ reproducible reference benchmark CLI/output, and an independent analyzer. Debug
 and Release pass twelve CTest tests, including independent equation-level,
 analytical, fixture, sampling, artifact and reduction checks. The version-1
 free-space propagation, impedance, refinement and closed-grid stability
-benchmarks (V01–V03) passed on 2026-09-16 from a clean Release build.
+benchmarks (V01–V03) passed on 2026-09-16 from a clean Release build and were
+reproduced exactly from a second clean build at the Phase 1 gate on 2026-09-17.
 No PEC, material, open-boundary, port or antenna accuracy claim is established.
-The foundation gate passed on 2026-09-06; P1 remains open pending REF-06.
+The foundation gate passed on 2026-09-06 and the reference-propagation gate on
+2026-09-17; Phase 2 (materials and closed domains) is ready to start.
 
 ## Project records
 
@@ -40,6 +42,7 @@ The foundation gate passed on 2026-09-06; P1 remains open pending REF-06.
 | [Reference run evidence](docs/validation/REF-04-reference-runs.md) | REF-04 source/fixture/sampling checks, deterministic CLI smoke and resource measurements |
 | [Measurement contract](docs/methods/REF-05-measurement-contract.md) | V01–V03 reductions, independence, reduction validation and acceptance mapping |
 | [Physical measurement evidence](docs/validation/REF-05-reference-measurements.md) | REF-05 propagation/impedance/refinement/stability results, resources and limits |
+| [Reference-propagation gate](docs/validation/REF-06-reference-propagation-gate.md) | P1 acceptance matrix, supported limits, clean-build reproduction, risk review, and P2 breakdown |
 
 Start each development session with the backlog and the relevant phase gate.
 Update the records at the end of the session. See [AGENTS.md](AGENTS.md) for
@@ -47,9 +50,10 @@ repository working instructions.
 
 ## Immediate objective
 
-Begin REF-06: review the Phase 1 exit criteria against the REF-01 through REF-05
-evidence, record the supported limits, and decide the gate. P0 and REF-01 through
-REF-05 are complete. P1 remains open until that gate record exists.
+Begin MAT-01: write the Phase 2 method notes and V04–V07 benchmark specifications
+(explicit PEC surfaces, isotropic dielectric and constant-conductivity updates,
+spectral processing conventions) with fixed, justified tolerances before any P2
+solver code. P0, P1, and REF-01 through REF-06 are complete.
 
 ## Build and check
 
@@ -81,8 +85,9 @@ Choose a fresh output directory each time. Smoke runs two steps of p=24 x/y
 propagation and the two q=.99 stability fixtures; `--steps N` is allowed only for
 smoke and must satisfy its isolation guard. `propagation` and `stability` select
 the full fixed v1 suites; `scripts/run_reference_benchmarks.py` runs them with
-resource measurement and `scripts/analyze_reference_benchmarks.py` evaluates the
-v1 acceptance independently.
+resource measurement, `scripts/analyze_reference_benchmarks.py` evaluates the
+v1 acceptance independently, and `scripts/compare_reference_analysis.py` compares
+a re-run's summary with the tracked one for reproduction evidence.
 Output includes metadata JSON, signed native probe CSV, stability diagnostics
 CSV, and a final `COMPLETE.json` marker. Completion means raw output finished;
 it does not mean physical acceptance passed. No port or antenna metrics exist.

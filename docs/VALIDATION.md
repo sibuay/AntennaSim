@@ -1,8 +1,10 @@
 # Validation plan and benchmark register
 
 **Current state:** V01–V03 version-1 benchmarks have been measured and passed
-from a clean Release build ([REF-05 evidence](validation/REF-05-reference-measurements.md));
-the P1 gate review (REF-06) is pending. REF-01 has
+from a clean Release build ([REF-05 evidence](validation/REF-05-reference-measurements.md)),
+and the [P1 gate (REF-06)](validation/REF-06-reference-propagation-gate.md)
+passed on 2026-09-17 after reproducing those measurements exactly from a second
+clean build; its record bounds the supported envelope. REF-01 has
 [passing production grid structural checks](validation/REF-01-core-grid.md), and
 REF-02 has [passing field storage/access checks](validation/REF-02-field-storage.md).
 REF-03 has [passing CFL and equation-level kernel checks](validation/REF-03-reference-updates.md).
@@ -18,9 +20,11 @@ and [author-review/calculation evidence](validation/FND-04-review.md). Their
 production fixtures, raw-output runners, and independent analyzer now exist and
 their full measurements pass. The
 [FND-05 foundation gate](validation/FND-05-foundation-gate.md) passed on
-2026-09-06. REF-01 through REF-05 are complete and REF-06 is ready. P0 infrastructure,
-S01–S08 on every executed fixture, grid/CFL/source/probe/run-input checks, and the
-full V01–V03 v1 suites pass.
+2026-09-06 and the P1 gate on 2026-09-17. REF-01 through REF-06 are complete and
+MAT-01 is ready. P0 infrastructure, S01–S08 on every executed fixture,
+grid/CFL/source/probe/run-input checks, and the full V01–V03 v1 suites pass.
+V04–V07 specifications with fixed, justified tolerances are MAT-01's first
+obligation before any P2 method is implemented.
 
 ## Acceptance policy
 
@@ -48,7 +52,9 @@ corresponding method. Revisions require a reason and preserve previous evidence.
 ## Benchmark register
 
 V01–V03 have status **Version 1 measured and passed (REF-05, 2026-09-16);
-gate review pending**.
+P1 gate passed and measurements reproduced exactly from a clean build (REF-06,
+2026-09-17)**. They are permanent regressions: any change to the kernel, fixtures,
+or analyzer must keep them passing with their fixed limits.
 V04–V15 remain **Specified at planning level only**. S01–S08 structural
 acceptance requirements are included in the FND-04 version-1 specification.
 
@@ -75,7 +81,9 @@ audits are registered in CTest, and Python is required whenever `BUILD_TESTING=O
 validation therefore fails closed instead of reporting a reduced suite as a pass.
 GitHub CI runs the same twelve-test Debug/Release suite and retains logs and smoke
 artifacts. The full physical suites are run manually from a clean Release build
-with `scripts/run_reference_benchmarks.py` and `scripts/analyze_reference_benchmarks.py`.
+with `scripts/run_reference_benchmarks.py` and `scripts/analyze_reference_benchmarks.py`;
+`scripts/compare_reference_analysis.py` checks a re-run's summary against the
+tracked one at zero tolerance for gate-level reproduction evidence.
 
 | ID | First phase | Case / independent reference | Required measurements and checks |
 | --- | --- | --- | --- |

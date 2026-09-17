@@ -62,14 +62,18 @@ a decision record before persistent user projects are introduced.
 ## Phases and completion gates
 
 Phase 0 is **complete**, with the [foundation gate passed on 2026-09-06](validation/FND-05-foundation-gate.md).
-Phase 1 is **in progress**: [REF-01 grid](validation/REF-01-core-grid.md),
-[REF-02 storage](validation/REF-02-field-storage.md), and
-[REF-03 CFL/reference-update structural checks](validation/REF-03-reference-updates.md)
-pass. [REF-04 sources/probes/fixtures/CLI and raw artifact checks](validation/REF-04-reference-runs.md)
-pass, and [REF-05 physical measurements](validation/REF-05-reference-measurements.md)
-pass the version-1 V01–V03 criteria; the REF-06 gate review is next. All later
-phases are **not started**; PEC, material, open-boundary and antenna accuracy
-remain unvalidated.
+Phase 1 is **complete**, with the
+[reference-propagation gate passed on 2026-09-17](validation/REF-06-reference-propagation-gate.md):
+[REF-01 grid](validation/REF-01-core-grid.md),
+[REF-02 storage](validation/REF-02-field-storage.md),
+[REF-03 CFL/reference-update structural checks](validation/REF-03-reference-updates.md),
+[REF-04 sources/probes/fixtures/CLI and raw artifact checks](validation/REF-04-reference-runs.md),
+and [REF-05 physical measurements](validation/REF-05-reference-measurements.md)
+pass, and the gate reproduced the V01–V03 measurements exactly from a clean
+build. The gate record states the supported limits: axis-aligned vacuum
+eigenwaves in a reflecting box at the declared grids and durations. Phase 2 is
+**ready** with MAT-01. All later phases are **not started**; PEC, material,
+open-boundary and antenna accuracy remain unvalidated.
 The milestone column maps this plan to the original vision. Later phases are
 broken into detailed work items only when their prerequisites are understood.
 

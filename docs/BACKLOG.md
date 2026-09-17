@@ -1,28 +1,33 @@
 # Backlog and project status
 
-Last updated: 2026-09-16.
+Last updated: 2026-09-17.
 
 ## Current position
 
-- **Active phase:** P1 — Reference propagation (in progress; P0 gate passed).
+- **Active phase:** P2 — Materials and closed domains (ready to start; P0 and
+  P1 gates passed).
 - **Completed capability:** planning records, a verified C++20/CMake build scaffold,
   reviewed reference Yee-grid conventions, fixed initial benchmark specifications,
   structurally checked core grid metadata/input/allocation validation, and six
   staggered field arrays with checked indexing, native positions, and wall classification;
   strict CFL selection and reference E/H stepping, impressed currents, native
   probes, fixed benchmark fixtures and CLI raw output with structural/smoke checks;
-  an independent analyzer with validated reductions and the first measured
-  V01–V03 physical report (36 propagation and four 20,000-step stability cases).
+  an independent analyzer with validated reductions, the measured V01–V03
+  physical report (36 propagation and four 20,000-step stability cases), and the
+  P1 gate record with a clean-build exact reproduction of those measurements.
 - **Validated numerical capability:** axis-aligned vacuum eigenwave propagation,
   signed impedance, second-order refinement, and closed-grid long-time stability
-  within the FND-04 v1 envelope. No PEC-resonance, material, open-boundary,
-  oblique/broadband, port, or antenna capability is validated.
+  within the FND-04 v1 envelope, as bounded in the
+  [P1 gate record](validation/REF-06-reference-propagation-gate.md). No
+  PEC-resonance, material, open-boundary, oblique/broadband, port, or antenna
+  capability is validated.
 - **Active implementation item:** none.
-- **Next ready item:** REF-06 — reference-propagation gate review.
+- **Next ready item:** MAT-01 — P2 method notes and V04–V07 specifications.
 - **Scheduling rule:** milestone-based, with no assumed dates or durations.
-- **Blockers:** none for REF-06. The compiler ran inside the ordinary session
-  sandbox on 2026-09-16; standalone Windows CLI runs still need the compiler
-  runtime directory on the process PATH.
+- **Blockers:** none for MAT-01. The compiler ran inside the ordinary session
+  sandbox on 2026-09-16 and 2026-09-17; standalone Windows CLI runs still need
+  the compiler runtime directory on the process PATH. Commits after `b98bc4c`
+  are local until the owner pushes `main`, so their hosted CI result is pending.
 
 Status vocabulary: **Ready**, **Planned**, **In progress**, **Blocked**, **Done**.
 Ready means prerequisites are satisfied. Done requires linked evidence, not just
@@ -48,8 +53,8 @@ prerequisites; the chosen sequence may be stricter to keep work focused.
 | REF-04 | P1 | Add minimal source, probes, run configuration, and CLI output | REF-03 | Done | [Source/run contract](methods/REF-04-run-contract.md); [3337 checks, S07/S08 and deterministic CLI evidence](validation/REF-04-reference-runs.md) |
 | MNT-01 | P1 support | Harden validation, source-control traceability, CI, and durable evidence | REF-04 | Done | [Maintenance evidence](validation/MNT-01-repository-hardening.md); commits `5930643`/`3043b39`/`b342821` on `origin/main`; hosted Debug/Release runs passed 2026-09-16; D016 |
 | REF-05 | P1 | Measure propagation, impedance, stability, and refinement behavior | REF-04 | Done | [Measurement contract](methods/REF-05-measurement-contract.md); [36/36 propagation, 4/4 stability, refinement/enlarged evidence](validation/REF-05-reference-measurements.md); [compact metrics](validation/REF-05-analysis-summary.json); D017 |
-| REF-06 | P1 | Review reference-propagation gate | REF-05 | Ready | P1 gate record and supported limits |
-| MAT-01 | P2 | Specify PEC, dielectric, conductivity, and spectral conventions | REF-06 | Planned | Method notes and V04–V07 specifications |
+| REF-06 | P1 | Review reference-propagation gate | REF-05 | Done | [P1 gate: pass; supported limits; clean-build exact reproduction](validation/REF-06-reference-propagation-gate.md) |
+| MAT-01 | P2 | Specify PEC, dielectric, conductivity, and spectral conventions | REF-06 | Ready | Method notes and V04–V07 specifications with fixed, justified tolerances; extended structural/analyzer coverage plan |
 | MAT-02 | P2 | Implement and validate explicit PEC boundaries/cavity | MAT-01 | Planned | V04 evidence and existing regressions |
 | MAT-03 | P2 | Implement and validate dielectric and conductive updates | MAT-02 | Planned | V05–V06 evidence and existing regressions |
 | MAT-04 | P2 | Implement spectral processing and validate sampling/normalization | MAT-03 | Planned | V07 and cavity spectral evidence |
@@ -57,6 +62,8 @@ prerequisites; the chosen sequence may be stricter to keep work focused.
 
 MAT-02 can use an independently checked analysis script for initial cavity
 evidence; MAT-04 subsequently validates the production spectral path against it.
+The [P1 gate record](validation/REF-06-reference-propagation-gate.md) expands each
+P2 item with its scope, completion test, and evidence location.
 
 ## Later work queue
 
@@ -78,6 +85,35 @@ an ID, dependencies, a completion test, and an evidence location before starting
 | P13 | Justified MoM scope and multi-solver support | Planned |
 
 ## Session handoff
+
+**2026-09-17 — REF-06 P1 gate review complete**
+
+- Reviewed the Phase 1 deliverables and exit criteria against the REF-01–REF-05
+  evidence in a [gate record](validation/REF-06-reference-propagation-gate.md):
+  every criterion has linked passing measurements; decision **PASS** within the
+  declared envelope (axis-aligned vacuum eigenwaves, reflecting box, declared
+  grids/durations). The supported and unvalidated limits are listed there.
+- Fresh `build/REF-06-release` and `build/REF-06-debug` trees configured, built
+  without warnings, and passed 12/12 CTests (Release 14.37 s; Debug
+  28.04 s). The Release fingerprint equals REF-05's
+  `f9ddf4f2…`; all 35 REF-05 manifest entries matched before edits.
+- The full 36-case propagation and 4-case stability suites were re-run from the
+  fresh Release executable and re-analyzed; the new
+  `scripts/compare_reference_analysis.py` (standard library, fault-checked
+  before use) found all 1211 compared values (40 cases, 823 floating-point) identical
+  at zero tolerance. Resources: propagation 596.61 s / 1.03 GB peak working
+  set, stability 174.07 s / 5.2 MB, within the 2 GiB budget.
+- No solver, fixture, tolerance, test, or analyzer changed. Records updated:
+  backlog, project plan, schedule, validation plan, README, decision-log note.
+- Next exact action: MAT-01. Write the P2 method notes and V04–V07
+  specifications (explicit PEC surfaces and their relation to the current
+  closure; isotropic dielectric and constant-conductivity updates with stability
+  and frequency scope; spectral processing conventions) with fixed, justified
+  tolerances, resource budgets, and the required S01–S08/analyzer coverage
+  extensions, before any P2 solver code. Preserve all twelve CTests and the
+  V01–V03 suites as permanent regressions.
+
+### Previous handoff (historical)
 
 **2026-09-16 — REF-05 physical measurements complete**
 
@@ -237,6 +273,7 @@ an ID, dependencies, a completion test, and an evidence location before starting
 | 2026-09-15 | Review and push | Clean Debug/Release 11/11 without warnings; `main` pushed to `origin`; MNT-01 returned to In progress pending the first hosted CI result; REF-05 still next |
 | 2026-09-16 | MNT-01 complete | First hosted Ubuntu Debug/Release runs passed for `3043b39` and `b342821`; MNT-01 Done; REF-05 ready and next |
 | 2026-09-16 | REF-05 complete | Validated reductions; 36/36 propagation, 4/4 stability, refinement and enlarged checks pass v1 limits from a clean Release build; Debug/Release 12/12; C03 measured report exists, C04 begins; REF-06 ready; P1 open pending gate review |
+| 2026-09-17 | REF-06 / P1 gate passed | Acceptance matrix complete; fresh Debug/Release 12/12 without warnings; full V01–V03 suites reproduced exactly from the clean Release build; supported limits recorded; C04 complete, C05 ready; MAT-01 ready; P2 open |
 
 Add concise entries for work-item/cycle reviews, gate outcomes, material blockers,
 and sequencing changes. Keep detailed measurements in validation reports and link them.
