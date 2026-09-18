@@ -25,6 +25,7 @@ baseline. They do not imply completed implementation.
 | D016 | Use GitHub for source control and required Debug/Release CI; make Python audits fail closed and retain compact validation evidence | Keeps reviewed snapshots bisectable, prevents reduced suites from passing silently, and makes local/remote evidence inspectable without tracking large generated arrays | Host, runner, dependency, retention, or distribution requirements change |
 | D017 | Evaluate physical acceptance only through an independent artifact analyzer whose reductions are validated by synthetic fault injection and a separately transcribed oracle before results are read; run full suites manually from clean Release builds, keep smoke-length reductions in CTest/CI | Separates solver output from its judgement, catches analysis defects before they can mask or fabricate a pass, and keeps the fast suite bounded; see REF-05 contract/evidence | Suite runtime, hosted-runner capacity, or a new observable that the synthetic/oracle coverage does not exercise |
 | D018 | Fix the P2 conventions before any P2 code: per-cell isotropic `eps_r>=1`/`sigma>=0` with `mu0`, four-cell arithmetic edge averaging, time-centred conductivity coefficients that reproduce the vacuum kernel bitwise, the unchanged vacuum CFL policy justified by the eps-weighted dissipation identity, E-edge PEC masks with the outer closure as a special case, `exp(-i omega t)*dt` transforms with rectangular/Hann windows, and closed-form discrete comparators for V04–V07 | Keeps P1 evidence valid by construction, makes implementation and discretization errors separable, and fixes caps from exact predictions with a 24–35 percent margin; see the MAT-01 method note, specification and review | A material, boundary, or spectral requirement outside the declared scope (magnetic or dispersive media, subcell conductors, constant loss tangent, oblique interfaces) or a failed P2 measurement that traces to a convention rather than an implementation |
+| D019 | Represent PEC as an owned per-E-sample byte mask inside the reference stepper (outer closure always present, `pec_box`/`pec_shell` primitives by exact index arithmetic), screen initial data on masked E and enclosed H samples, skip masked edges in the unchanged FND-03 update ranges, reject currents on masked edges at the step, and keep the V04 evidence in a separate `closed-v1` benchmark library with an independent analyzer that imports the MAT-01 audit's closed-form predictions | Keeps the vacuum arithmetic bitwise identical (closure-only mask performs the same operations), makes enforcement exact rather than approximate, keeps solver code free of fixtures/CLI, and lets a V04 failure be attributed to implementation (discrete comparators) or discretization (continuum caps); see the MAT-02 contract and evidence | A conductor model that is not a set of full E edges (thin sheets, subcell/conformal surfaces, finite conductivity), a memory constraint that requires a bit mask, or a measured V04 failure traced to the mask semantics |
 
 ## Open decisions
 
@@ -62,6 +63,39 @@ must produce, so its method/reference study is due at that gate. The
 [P1 gate record](validation/REF-06-reference-propagation-gate.md) passes Phase 1
 under D010–D017 without a new decision; it fixes no P2 method or tolerance.
 MAT-01 (2026-09-18) adds D018; none of O005–O010 is due before MAT-02.
+MAT-02 (2026-09-18) adds D019; none of O005–O010 is due before MAT-03.
+
+## D019 detail — MAT-02 PEC mask and V04 evidence decisions on 2026-09-18
+
+Status: implemented with measured V04 evidence. See the
+[MAT-02 contract](methods/MAT-02-pec-mask-contract.md) and
+[MAT-02 evidence](validation/MAT-02-pec-cavity.md). Same-author review.
+
+Considered: PEC as a zero-coefficient material (rejected in D018), a
+separate boundary object applied after each E update (rejected: writes zeros
+instead of never touching the sample, and doubles the loop), or a mask
+consulted inside the E loop (chosen: masked samples are never written, the
+closure-only mask performs the identical arithmetic, and the outer walls
+become the special case `pec_shell([0,N))`). Considered validating currents
+against the mask in `ElectricCurrent` (rejected: the current object has no
+mask; the step rejects a masked target before any mutation and fails
+terminally as every other step error). Considered screening H initial data
+only on the three named surfaces (rejected in favour of the general rule "all
+four surrounding tangential E samples masked", which reduces to those
+surfaces for boxes and shells and stays correct for overlapping primitives).
+Considered adding the exact-mode and pulse cases to the `reference-v1`
+library (rejected: a separate `closed-v1` library keeps the P1 fixtures and
+their byte-identical outputs untouched and shares only stream/JSON helpers).
+Considered re-deriving the V04 predictions inside the analyzer (rejected: the
+analyzer imports the MAT-01 audit's closed-form functions so that the
+specification and the acceptance use one set of predictions, while its own
+structural audit and reductions remain independent of the solver).
+
+Consequences: one byte per E sample of memory; no change to the H update or
+the time-step policy; the V01–V03 evidence remains valid and is re-run at
+zero tolerance; V04-A/B/C become permanent regressions through the smoke
+suite and the manual closed-v1 suites. Revisit for conductor models outside
+full-edge masks or a mask-related V04 failure.
 
 ## D018 detail — MAT-01 Phase 2 conventions on 2026-09-18
 

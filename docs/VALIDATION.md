@@ -20,14 +20,18 @@ and [author-review/calculation evidence](validation/FND-04-review.md). Their
 production fixtures, raw-output runners, and independent analyzer now exist and
 their full measurements pass. The
 [FND-05 foundation gate](validation/FND-05-foundation-gate.md) passed on
-2026-09-06 and the P1 gate on 2026-09-17. REF-01 through REF-06 and MAT-01 are
-complete and MAT-02 is ready. P0 infrastructure, S01–S08 on every executed
-fixture, grid/CFL/source/probe/run-input checks, and the full V01–V03 v1 suites
-pass. V04–V07 now have
+2026-09-06 and the P1 gate on 2026-09-17. REF-01 through REF-06, MAT-01 and
+MAT-02 are complete and MAT-03 is ready. P0 infrastructure, S01–S09 on every
+executed fixture, grid/CFL/source/probe/run-input/mask checks, and the full
+V01–V03 v1 suites pass. V04–V07 have
 [fixed version-1 specifications](validation/MAT-01-closed-domain-benchmarks.md)
 under the [MAT-01 conventions](methods/MAT-01-closed-domain-conventions.md),
-with [audit evidence](validation/MAT-01-review.md); no P2 benchmark has run and
-no PEC, material, or spectral capability is validated.
+with [audit evidence](validation/MAT-01-review.md). V04 (PEC cavity
+eigenmodes, driven spectrum, interior enforcement) has
+[passing measured evidence](validation/MAT-02-pec-cavity.md) from a clean
+Release build (MAT-02, 2026-09-18), with the V01–V03 suites reproduced at
+zero tolerance through the mask-capable kernel; no material or spectral
+production capability is validated.
 
 ## Acceptance policy
 
@@ -58,12 +62,16 @@ V01–V03 have status **Version 1 measured and passed (REF-05, 2026-09-16);
 P1 gate passed and measurements reproduced exactly from a clean build (REF-06,
 2026-09-17)**. They are permanent regressions: any change to the kernel, fixtures,
 or analyzer must keep them passing with their fixed limits.
-V04–V07 have status **Version 1 specified (MAT-01, 2026-09-18); not run**:
-fixtures, closed-form discrete and continuum comparators, fixed caps, resource
-budgets, and the S09–S14 structural extensions are in the
+V04 has status **Version 1 measured and passed (MAT-02, 2026-09-18)** from a
+clean Release build with the independent, fault-checked closed-v1 analyzer;
+it is a permanent regression through the `closed-v1` suites and their smoke
+subset. V05–V07 have status **Version 1 specified (MAT-01, 2026-09-18); not
+run**: fixtures, closed-form discrete and continuum comparators, fixed caps,
+resource budgets, and the S10–S14 structural extensions are in the
 [MAT-01 specification](validation/MAT-01-closed-domain-benchmarks.md). V08–V15
 remain **Specified at planning level only**. S01–S08 structural acceptance
-requirements are included in the FND-04 version-1 specification.
+requirements are included in the FND-04 version-1 specification; S09 is
+implemented by `reference.pec`.
 
 Implemented structural coverage: `reference.grid` (CTest labels
 `reference_structural;fast`) covers REF-01's extent/count/size/geometry-input
@@ -86,15 +94,34 @@ the full REF-05 runs, and V03 long-time stability passed.
 and cap, checks the cavity, interface, slab, lossy and spectral estimators and
 their fault detection on synthetic data, and verifies the interface gating
 against a reduced-system oracle; it exercises no solver code.
+`reference.pec` (MAT-02, S09) adds 209550 checks: the default mask against the
+grid's wall classification, box/shell/wall-touching/overlapping primitives on
+`(5,4,3)` and `(2,3,4)` and the V04-C shell and solid box on `(18,22,26)`
+against an independent endpoint enumeration (3,008 and 13,072 edges), exact
+zeros of masked E and enclosed H over two driven steps with evolving unmasked
+samples, bitwise agreement of the closure-only mask with the vacuum kernel and
+stepper, and the rejection matrix (inverted/out-of-range primitives, mask/grid
+mismatch, nonzero masked or enclosed initial samples, a current on a masked
+edge, the V04-C mode and C2 source inside a solid box). `reference.closed_analysis`
+(MAT-02) adds 665 checks: synthetic exact modes on all 30 V04-A configurations
+with the specified fault injections, the V04-B modal-sum record with shifted,
+spurious, missing, truncated, growing and nonfinite faults, synthetic V04-C
+C1/C2/C3 with region-leak, interior-deviation, missing-reference and mask-count
+faults, and the four-step closed-v1 smoke suite reproduced by a pure-Python
+oracle with an independently enumerated mask (probes, `U`, `Q`, component and
+region maxima within 1e-12), including the shell case reproducing the open
+cavity bitwise.
 
-All five independent Python convention/specification/golden-state/reduction
+All six independent Python convention/specification/golden-state/reduction
 audits are registered in CTest, and Python is required whenever `BUILD_TESTING=ON`;
 validation therefore fails closed instead of reporting a reduced suite as a pass.
-GitHub CI runs the same thirteen-test Debug/Release suite and retains logs and smoke
+GitHub CI runs the same fifteen-test Debug/Release suite and retains logs and smoke
 artifacts. The full physical suites are run manually from a clean Release build
-with `scripts/run_reference_benchmarks.py` and `scripts/analyze_reference_benchmarks.py`;
-`scripts/compare_reference_analysis.py` checks a re-run's summary against the
-tracked one at zero tolerance for gate-level reproduction evidence.
+with `scripts/run_reference_benchmarks.py` (`--benchmark reference-v1` or
+`closed-v1`), `scripts/analyze_reference_benchmarks.py` and
+`scripts/analyze_closed_benchmarks.py`; `scripts/compare_reference_analysis.py`
+checks a re-run's summary against the tracked one at zero tolerance for
+gate-level reproduction evidence.
 
 | ID | First phase | Case / independent reference | Required measurements and checks |
 | --- | --- | --- | --- |

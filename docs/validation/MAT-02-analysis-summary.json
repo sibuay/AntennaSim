@@ -1,0 +1,1531 @@
+{
+ "schema": "closed-v1-analysis-1",
+ "input": "C:\\Users\\Sina\\Desktop\\kod\\AntennaSim\\build\\evidence\\MAT-02\\run1",
+ "suites": [
+  {
+   "suite": "cavity",
+   "root": "build\\evidence\\MAT-02\\run1\\cavity",
+   "cases": [
+    {
+     "case": "cavity-x-m11-s1",
+     "steps": 109,
+     "dt_s": 2.536885256804566e-11,
+     "q": 0.99,
+     "elapsed_seconds": 0.2759808,
+     "a": 0,
+     "mode": [
+      1,
+      1
+     ],
+     "s": 1,
+     "continuum_cap": 0.0052,
+     "omega_c": 4576450698.178283,
+     "omega_d": 4572365820.201878,
+     "predicted_continuum_error": 0.0008925864705657816,
+     "omega_measured": 4572365820.201903,
+     "continuum_error": 0.0008925864705601194,
+     "discrete_error": 5.551115123125783e-15,
+     "max_amplitude_error": 6.17735029795341e-14,
+     "max_magnetic_error": 7.064140938872754e-14,
+     "max_normalized_residual": 9.101026746313584e-16,
+     "hb_reference": -0.0013662682258053754,
+     "hc_reference": 0.002275796548069879,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-x-m11-s1-q50",
+     "steps": 215,
+     "dt_s": 1.2812551802043262e-11,
+     "q": 0.5,
+     "elapsed_seconds": 0.5208952,
+     "a": 0,
+     "mode": [
+      1,
+      1
+     ],
+     "s": 1,
+     "continuum_cap": 0.0028,
+     "omega_c": 4576450698.178283,
+     "omega_d": 4570455879.592567,
+     "predicted_continuum_error": 0.001309927492085028,
+     "omega_measured": 4570455879.592579,
+     "continuum_error": 0.0013099274920824744,
+     "discrete_error": 2.4424906541753444e-15,
+     "max_amplitude_error": 2.85119150511548e-14,
+     "max_magnetic_error": 3.173850071647166e-14,
+     "max_normalized_residual": 1.1159297100384471e-15,
+     "hb_reference": -0.0013662682258053793,
+     "hc_reference": 0.0022757965480698856,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-x-m11-s2",
+     "steps": 217,
+     "dt_s": 1.268442628402283e-11,
+     "q": 0.99,
+     "elapsed_seconds": 3.6192866,
+     "a": 0,
+     "mode": [
+      1,
+      1
+     ],
+     "s": 2,
+     "continuum_cap": 0.0013,
+     "omega_c": 4576450698.178283,
+     "omega_d": 4575430260.556551,
+     "predicted_continuum_error": 0.00022297577075136576,
+     "omega_measured": 4575430260.556493,
+     "continuum_error": 0.0002229757707640223,
+     "discrete_error": 1.27675647831893e-14,
+     "max_amplitude_error": 1.4163670236655435e-13,
+     "max_magnetic_error": 1.6199758548496312e-13,
+     "max_normalized_residual": 1.2626432926972777e-15,
+     "hb_reference": -0.0013658323697469032,
+     "hc_reference": 0.002276058156287743,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-x-m11-s4",
+     "steps": 433,
+     "dt_s": 6.342213142011415e-12,
+     "q": 0.99,
+     "elapsed_seconds": 55.4987285,
+     "a": 0,
+     "mode": [
+      1,
+      1
+     ],
+     "s": 4,
+     "continuum_cap": 0.000325,
+     "omega_c": 4576450698.178283,
+     "omega_d": 4576195637.644367,
+     "predicted_continuum_error": 5.573326377517063e-05,
+     "omega_measured": 4576195637.644768,
+     "continuum_error": 5.573326368757403e-05,
+     "discrete_error": 8.748557434046234e-14,
+     "max_amplitude_error": 9.658454591665588e-13,
+     "max_magnetic_error": 1.0985864995483041e-12,
+     "max_normalized_residual": 1.984666368698902e-15,
+     "hb_reference": -0.0013657234656476297,
+     "hc_reference": 0.0022761235046522446,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-x-m12-s1",
+     "steps": 81,
+     "dt_s": 2.536885256804566e-11,
+     "q": 0.99,
+     "elapsed_seconds": 0.2149496,
+     "a": 0,
+     "mode": [
+      1,
+      2
+     ],
+     "s": 1,
+     "continuum_cap": 0.0052,
+     "omega_c": 6129912101.2895975,
+     "omega_d": 6117160734.595132,
+     "predicted_continuum_error": 0.0020801875269602643,
+     "omega_measured": 6117160734.595116,
+     "continuum_error": 0.002080187526962929,
+     "discrete_error": 2.6645352591003757e-15,
+     "max_amplitude_error": 3.047562202596055e-14,
+     "max_magnetic_error": 3.3362201889985954e-14,
+     "max_normalized_residual": 7.644949770077163e-16,
+     "hb_reference": -0.002037082228184244,
+     "hc_reference": 0.0017018327734146428,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-x-m12-s2",
+     "steps": 162,
+     "dt_s": 1.268442628402283e-11,
+     "q": 0.99,
+     "elapsed_seconds": 2.7462453,
+     "a": 0,
+     "mode": [
+      1,
+      2
+     ],
+     "s": 2,
+     "continuum_cap": 0.0013,
+     "omega_c": 6129912101.2895975,
+     "omega_d": 6126727139.977903,
+     "predicted_continuum_error": 0.000519576995406501,
+     "omega_measured": 6126727139.97788,
+     "continuum_error": 0.0005195769954103868,
+     "discrete_error": 3.885780586188048e-15,
+     "max_amplitude_error": 4.6407322429331543e-14,
+     "max_magnetic_error": 5.2383444804071644e-14,
+     "max_normalized_residual": 9.64651757241268e-16,
+     "hb_reference": -0.0020386571017811128,
+     "hc_reference": 0.0016999458857298107,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-x-m12-s4",
+     "steps": 324,
+     "dt_s": 6.342213142011415e-12,
+     "q": 0.99,
+     "elapsed_seconds": 41.2585197,
+     "a": 0,
+     "mode": [
+      1,
+      2
+     ],
+     "s": 4,
+     "continuum_cap": 0.000325,
+     "omega_c": 6129912101.2895975,
+     "omega_d": 6129116041.429171,
+     "predicted_continuum_error": 0.00012986480838106385,
+     "omega_measured": 6129116041.429245,
+     "continuum_error": 0.00012986480836896241,
+     "discrete_error": 1.2212453270876722e-14,
+     "max_amplitude_error": 1.339206523454095e-13,
+     "max_magnetic_error": 1.5344669979100445e-13,
+     "max_normalized_residual": 1.8500932038576954e-15,
+     "hb_reference": -0.0020390500421236537,
+     "hc_reference": 0.0016994745419592419,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-x-m21-s1",
+     "steps": 61,
+     "dt_s": 2.536885256804566e-11,
+     "q": 0.99,
+     "elapsed_seconds": 0.1589275,
+     "a": 0,
+     "mode": [
+      2,
+      1
+     ],
+     "s": 1,
+     "continuum_cap": 0.0052,
+     "omega_c": 8194124882.789243,
+     "omega_d": 8159788542.75703,
+     "predicted_continuum_error": 0.004190360840647278,
+     "omega_measured": 8159788542.757047,
+     "continuum_error": 0.004190360840645169,
+     "discrete_error": 1.9984014443252818e-15,
+     "max_amplitude_error": 2.1871393585115584e-14,
+     "max_magnetic_error": 2.5417168370012178e-14,
+     "max_normalized_residual": 1.467466377035538e-15,
+     "hb_reference": -0.0007665318753170109,
+     "hc_reference": 0.0025413318707274693,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-x-m21-s2",
+     "steps": 121,
+     "dt_s": 1.268442628402283e-11,
+     "q": 0.99,
+     "elapsed_seconds": 2.0805369,
+     "a": 0,
+     "mode": [
+      2,
+      1
+     ],
+     "s": 2,
+     "continuum_cap": 0.0013,
+     "omega_c": 8194124882.789243,
+     "omega_d": 8185557691.495611,
+     "predicted_continuum_error": 0.001045528523933803,
+     "omega_measured": 8185557691.495569,
+     "continuum_error": 0.00104552852393891,
+     "discrete_error": 5.10702591327572e-15,
+     "max_amplitude_error": 5.509134815007144e-14,
+     "max_magnetic_error": 6.156186671546493e-14,
+     "max_normalized_residual": 1.5616645300485548e-15,
+     "hb_reference": -0.0007636866732812163,
+     "hc_reference": 0.0025421883207396257,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-x-m21-s4",
+     "steps": 242,
+     "dt_s": 6.342213142011415e-12,
+     "q": 0.99,
+     "elapsed_seconds": 31.0901415,
+     "a": 0,
+     "mode": [
+      2,
+      1
+     ],
+     "s": 4,
+     "continuum_cap": 0.000325,
+     "omega_c": 8194124882.789243,
+     "omega_d": 8191984145.06364,
+     "predicted_continuum_error": 0.0002612527580705404,
+     "omega_measured": 8191984145.063339,
+     "continuum_error": 0.00026125275810717774,
+     "discrete_error": 3.6637359812630166e-14,
+     "max_amplitude_error": 4.043154699928664e-13,
+     "max_magnetic_error": 4.607182690907763e-13,
+     "max_normalized_residual": 2.4157241376373673e-15,
+     "hb_reference": -0.0007629777193963851,
+     "hc_reference": 0.0025424011864293617,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-y-m11-s1",
+     "steps": 61,
+     "dt_s": 2.536885256804566e-11,
+     "q": 0.99,
+     "elapsed_seconds": 0.15585,
+     "a": 1,
+     "mode": [
+      1,
+      1
+     ],
+     "s": 1,
+     "continuum_cap": 0.0052,
+     "omega_c": 8194124882.789243,
+     "omega_d": 8186685948.931546,
+     "predicted_continuum_error": 0.0009078375011493112,
+     "omega_measured": 8186685948.931538,
+     "continuum_error": 0.0009078375011503104,
+     "discrete_error": 9.992007221626409e-16,
+     "max_amplitude_error": 1.1657341758564144e-14,
+     "max_magnetic_error": 1.2240208846492351e-14,
+     "max_normalized_residual": 1.237252617027773e-15,
+     "hb_reference": -0.0025420874290812373,
+     "hc_reference": 0.000764022444669907,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-y-m11-s1-q50",
+     "steps": 120,
+     "dt_s": 1.2812551802043262e-11,
+     "q": 0.5,
+     "elapsed_seconds": 0.2961117,
+     "a": 1,
+     "mode": [
+      1,
+      1
+     ],
+     "s": 1,
+     "continuum_cap": 0.0028,
+     "omega_c": 8194124882.789243,
+     "omega_d": 8175717894.198649,
+     "predicted_continuum_error": 0.0022463641760275266,
+     "omega_measured": 8175717894.198699,
+     "continuum_error": 0.0022463641760214204,
+     "discrete_error": 5.995204332975845e-15,
+     "max_amplitude_error": 6.775136007775018e-14,
+     "max_magnetic_error": 7.559924908306925e-14,
+     "max_normalized_residual": 1.7738388774591854e-15,
+     "hb_reference": -0.002542087429081219,
+     "hc_reference": 0.0007640224446699014,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-y-m11-s2",
+     "steps": 121,
+     "dt_s": 1.268442628402283e-11,
+     "q": 0.99,
+     "elapsed_seconds": 2.0183531,
+     "a": 1,
+     "mode": [
+      1,
+      1
+     ],
+     "s": 2,
+     "continuum_cap": 0.0013,
+     "omega_c": 8194124882.789243,
+     "omega_d": 8192270485.717356,
+     "predicted_continuum_error": 0.0002263081291062896,
+     "omega_measured": 8192270485.717365,
+     "continuum_error": 0.00022630812910506837,
+     "discrete_error": 1.1102230246251565e-15,
+     "max_amplitude_error": 1.3711254354120683e-14,
+     "max_magnetic_error": 1.61259894326804e-14,
+     "max_normalized_residual": 1.562944064318377e-15,
+     "hb_reference": -0.002542376052325123,
+     "hc_reference": 0.0007630614664730021,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-y-m11-s4",
+     "steps": 242,
+     "dt_s": 6.342213142011415e-12,
+     "q": 0.99,
+     "elapsed_seconds": 30.3474609,
+     "a": 1,
+     "mode": [
+      1,
+      1
+     ],
+     "s": 4,
+     "continuum_cap": 0.000325,
+     "omega_c": 8194124882.789243,
+     "omega_d": 8193661616.098895,
+     "predicted_continuum_error": 5.653644494985066e-05,
+     "omega_measured": 8193661616.098896,
+     "continuum_error": 5.653644494973964e-05,
+     "discrete_error": 2.220446049250313e-16,
+     "max_amplitude_error": 2.525757381022231e-15,
+     "max_magnetic_error": 2.3314683517128287e-15,
+     "max_normalized_residual": 2.482842370912829e-15,
+     "hb_reference": -0.0025424480473120402,
+     "hc_reference": 0.0007628215517219041,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-y-m12-s1",
+     "steps": 32,
+     "dt_s": 2.536885256804566e-11,
+     "q": 0.99,
+     "elapsed_seconds": 0.0853337,
+     "a": 1,
+     "mode": [
+      1,
+      2
+     ],
+     "s": 1,
+     "continuum_cap": 0.0052,
+     "omega_c": 15872706417.06395,
+     "omega_d": 15801228323.986645,
+     "predicted_continuum_error": 0.004503207657168162,
+     "omega_measured": 15801228323.986658,
+     "continuum_error": 0.004503207657167385,
+     "discrete_error": 8.881784197001252e-16,
+     "max_amplitude_error": 1.021405182655144e-14,
+     "max_magnetic_error": 1.2045919817182948e-14,
+     "max_normalized_residual": 1.5671980503462325e-15,
+     "hb_reference": -0.0026244431097821297,
+     "hc_reference": 0.00039779034247869126,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-y-m12-s2",
+     "steps": 63,
+     "dt_s": 1.268442628402283e-11,
+     "q": 0.99,
+     "elapsed_seconds": 1.0757732,
+     "a": 1,
+     "mode": [
+      1,
+      2
+     ],
+     "s": 2,
+     "continuum_cap": 0.0013,
+     "omega_c": 15872706417.06395,
+     "omega_d": 15855030343.005318,
+     "predicted_continuum_error": 0.001113614376413441,
+     "omega_measured": 15855030343.005291,
+     "continuum_error": 0.0011136143764151063,
+     "discrete_error": 1.6653345369377348e-15,
+     "max_amplitude_error": 1.765254609153999e-14,
+     "max_magnetic_error": 2.102354748623192e-14,
+     "max_normalized_residual": 2.4203376119623994e-15,
+     "hb_reference": -0.0026249005906438514,
+     "hc_reference": 0.0003947602845902863,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-y-m12-s4",
+     "steps": 125,
+     "dt_s": 6.342213142011415e-12,
+     "q": 0.99,
+     "elapsed_seconds": 15.8848397,
+     "a": 1,
+     "mode": [
+      1,
+      2
+     ],
+     "s": 4,
+     "continuum_cap": 0.000325,
+     "omega_c": 15872706417.06395,
+     "omega_d": 15868299376.885271,
+     "predicted_continuum_error": 0.00027764894422421804,
+     "omega_measured": 15868299376.885202,
+     "continuum_error": 0.0002776489442285479,
+     "discrete_error": 4.3298697960381105e-15,
+     "max_amplitude_error": 4.5505266221823604e-14,
+     "max_magnetic_error": 5.286743265386917e-14,
+     "max_normalized_residual": 3.99000329040757e-15,
+     "hb_reference": -0.0026250136194105444,
+     "hc_reference": 0.0003940079833727144,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-y-m21-s1",
+     "steps": 55,
+     "dt_s": 2.536885256804566e-11,
+     "q": 0.99,
+     "elapsed_seconds": 0.1756827,
+     "a": 1,
+     "mode": [
+      2,
+      1
+     ],
+     "s": 1,
+     "continuum_cap": 0.0052,
+     "omega_c": 9152901396.356565,
+     "omega_d": 9144238350.226841,
+     "predicted_continuum_error": 0.0009464808757988497,
+     "omega_measured": 9144238350.226849,
+     "continuum_error": 0.0009464808757980725,
+     "discrete_error": 8.881784197001252e-16,
+     "max_amplitude_error": 9.658940314238862e-15,
+     "max_magnetic_error": 1.0408340855860843e-14,
+     "max_normalized_residual": 7.618785664590254e-16,
+     "hb_reference": -0.002276902845606042,
+     "hc_reference": 0.0013644237702133885,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-y-m21-s2",
+     "steps": 109,
+     "dt_s": 1.268442628402283e-11,
+     "q": 0.99,
+     "elapsed_seconds": 1.8218252,
+     "a": 1,
+     "mode": [
+      2,
+      1
+     ],
+     "s": 2,
+     "continuum_cap": 0.0013,
+     "omega_c": 9152901396.356565,
+     "omega_d": 9150743512.003971,
+     "predicted_continuum_error": 0.00023575959787502931,
+     "omega_measured": 9150743512.003992,
+     "continuum_error": 0.00023575959787269785,
+     "discrete_error": 2.220446049250313e-15,
+     "max_amplitude_error": 2.656208586415687e-14,
+     "max_magnetic_error": 3.119032809806299e-14,
+     "max_normalized_residual": 1.0240298980058673e-15,
+     "hb_reference": -0.0022763345829874184,
+     "hc_reference": 0.001365371619504261,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-y-m21-s4",
+     "steps": 217,
+     "dt_s": 6.342213142011415e-12,
+     "q": 0.99,
+     "elapsed_seconds": 27.2487222,
+     "a": 1,
+     "mode": [
+      2,
+      1
+     ],
+     "s": 4,
+     "continuum_cap": 0.000325,
+     "omega_c": 9152901396.356565,
+     "omega_d": 9152362415.689224,
+     "predicted_continuum_error": 5.888631855643922e-05,
+     "omega_measured": 9152362415.689075,
+     "continuum_error": 5.888631857264848e-05,
+     "discrete_error": 1.6209256159527285e-14,
+     "max_amplitude_error": 1.8196555373606316e-13,
+     "max_magnetic_error": 2.065778104132221e-13,
+     "max_normalized_residual": 1.6275636669172609e-15,
+     "hb_reference": -0.0022761926021065515,
+     "hc_reference": 0.0013656083007831566,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-z-m11-s1",
+     "steps": 57,
+     "dt_s": 2.536885256804566e-11,
+     "q": 0.99,
+     "elapsed_seconds": 0.2436349,
+     "a": 2,
+     "mode": [
+      1,
+      1
+     ],
+     "s": 1,
+     "continuum_cap": 0.0052,
+     "omega_c": 8774943646.722118,
+     "omega_d": 8770174416.451662,
+     "predicted_continuum_error": 0.0005435055155297297,
+     "omega_measured": 8770174416.45166,
+     "continuum_error": 0.0005435055155299517,
+     "discrete_error": 2.220446049250313e-16,
+     "max_amplitude_error": 1.582067810090848e-15,
+     "max_magnetic_error": 1.19522447494802e-15,
+     "max_normalized_residual": 8.89602695507721e-16,
+     "hb_reference": -0.001188280030525371,
+     "hc_reference": 0.0023735899734593693,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-z-m11-s1-q50",
+     "steps": 112,
+     "dt_s": 1.2812551802043262e-11,
+     "q": 0.5,
+     "elapsed_seconds": 0.2706815,
+     "a": 2,
+     "mode": [
+      1,
+      1
+     ],
+     "s": 1,
+     "continuum_cap": 0.0028,
+     "omega_c": 8774943646.722118,
+     "omega_d": 8756688684.470816,
+     "predicted_continuum_error": 0.0020803509385637353,
+     "omega_measured": 8756688684.470846,
+     "continuum_error": 0.0020803509385602936,
+     "discrete_error": 3.552713678800501e-15,
+     "max_amplitude_error": 4.281080698276263e-14,
+     "max_magnetic_error": 4.651834473179406e-14,
+     "max_normalized_residual": 7.983613934043681e-16,
+     "hb_reference": -0.0011882800305253662,
+     "hc_reference": 0.0023735899734593597,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-z-m11-s2",
+     "steps": 113,
+     "dt_s": 1.268442628402283e-11,
+     "q": 0.99,
+     "elapsed_seconds": 1.8629747,
+     "a": 2,
+     "mode": [
+      1,
+      1
+     ],
+     "s": 2,
+     "continuum_cap": 0.0013,
+     "omega_c": 8774943646.722118,
+     "omega_d": 8773755298.361727,
+     "predicted_continuum_error": 0.0001354251842785592,
+     "omega_measured": 8773755298.36171,
+     "continuum_error": 0.0001354251842805576,
+     "discrete_error": 1.9984014443252818e-15,
+     "max_amplitude_error": 2.2062213167473033e-14,
+     "max_magnetic_error": 2.478572902475662e-14,
+     "max_normalized_residual": 1.278336938382162e-15,
+     "hb_reference": -0.001187388861187653,
+     "hc_reference": 0.0023740359065059944,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-z-m11-s4",
+     "steps": 226,
+     "dt_s": 6.342213142011415e-12,
+     "q": 0.99,
+     "elapsed_seconds": 28.3850878,
+     "a": 2,
+     "mode": [
+      1,
+      1
+     ],
+     "s": 4,
+     "continuum_cap": 0.000325,
+     "omega_c": 8774943646.722118,
+     "omega_d": 8774646806.111954,
+     "predicted_continuum_error": 3.382820700792433e-05,
+     "omega_measured": 8774646806.111866,
+     "continuum_error": 3.3828207018027356e-05,
+     "discrete_error": 9.992007221626409e-15,
+     "max_amplitude_error": 1.0810796702287462e-13,
+     "max_magnetic_error": 1.2278025818268645e-13,
+     "max_normalized_residual": 1.6438841787878042e-15,
+     "hb_reference": -0.0011871663074907053,
+     "hc_reference": 0.002374147205084647,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-z-m12-s1",
+     "steps": 45,
+     "dt_s": 2.536885256804566e-11,
+     "q": 0.99,
+     "elapsed_seconds": 0.1101586,
+     "a": 2,
+     "mode": [
+      1,
+      2
+     ],
+     "s": 1,
+     "continuum_cap": 0.0052,
+     "omega_c": 11099523305.306322,
+     "omega_d": 11084599722.474077,
+     "predicted_continuum_error": 0.0013445246630646723,
+     "omega_measured": 11084599722.474077,
+     "continuum_error": 0.0013445246630646723,
+     "discrete_error": 0.0,
+     "max_amplitude_error": 1.1102230246251565e-15,
+     "max_magnetic_error": 8.326672684688674e-16,
+     "max_normalized_residual": 6.944085727705223e-16,
+     "hb_reference": -0.001873598135160918,
+     "hc_reference": 0.0018803108309462433,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-z-m12-s2",
+     "steps": 90,
+     "dt_s": 1.268442628402283e-11,
+     "q": 0.99,
+     "elapsed_seconds": 1.4944758,
+     "a": 2,
+     "mode": [
+      1,
+      2
+     ],
+     "s": 2,
+     "continuum_cap": 0.0013,
+     "omega_c": 11099523305.306322,
+     "omega_d": 11095808158.231264,
+     "predicted_continuum_error": 0.00033471230906667593,
+     "omega_measured": 11095808158.231245,
+     "continuum_error": 0.00033471230906834126,
+     "discrete_error": 1.6653345369377348e-15,
+     "max_amplitude_error": 1.8176432581284985e-14,
+     "max_magnetic_error": 2.0650148258027912e-14,
+     "max_normalized_residual": 9.992007221626409e-16,
+     "hb_reference": -0.0018761193779140255,
+     "hc_reference": 0.001877795215902878,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-z-m12-s4",
+     "steps": 179,
+     "dt_s": 6.342213142011415e-12,
+     "q": 0.99,
+     "elapsed_seconds": 22.5927045,
+     "a": 2,
+     "mode": [
+      1,
+      2
+     ],
+     "s": 4,
+     "continuum_cap": 0.000325,
+     "omega_c": 11099523305.306322,
+     "omega_d": 11098595497.801476,
+     "predicted_continuum_error": 8.35898515031408e-05,
+     "omega_measured": 11098595497.801268,
+     "continuum_error": 8.358985152190357e-05,
+     "discrete_error": 1.8762769116165146e-14,
+     "max_amplitude_error": 2.0723006644018938e-13,
+     "max_magnetic_error": 2.3453808339901627e-13,
+     "max_normalized_residual": 1.5016915543541435e-15,
+     "hb_reference": -0.0018767480654182543,
+     "hc_reference": 0.0018771668791030072,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-z-m21-s1",
+     "steps": 31,
+     "dt_s": 2.536885256804566e-11,
+     "q": 0.99,
+     "elapsed_seconds": 0.079159,
+     "a": 2,
+     "mode": [
+      2,
+      1
+     ],
+     "s": 1,
+     "continuum_cap": 0.0052,
+     "omega_c": 16180196612.238869,
+     "omega_d": 16117388697.225021,
+     "predicted_continuum_error": 0.0038817769968467752,
+     "omega_measured": 16117388697.225016,
+     "continuum_error": 0.0038817769968471083,
+     "discrete_error": 3.3306690738754696e-16,
+     "max_amplitude_error": 2.3245294578089215e-15,
+     "max_magnetic_error": 2.220446049250313e-15,
+     "max_normalized_residual": 1.261856428796636e-15,
+     "hb_reference": -0.0006497790669609564,
+     "hc_reference": 0.0025736600313933412,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-z-m21-s2",
+     "steps": 62,
+     "dt_s": 1.268442628402283e-11,
+     "q": 0.99,
+     "elapsed_seconds": 1.0408854,
+     "a": 2,
+     "mode": [
+      2,
+      1
+     ],
+     "s": 2,
+     "continuum_cap": 0.0013,
+     "omega_c": 16180196612.238869,
+     "omega_d": 16164666269.130928,
+     "predicted_continuum_error": 0.0009598364890197608,
+     "omega_measured": 16164666269.130886,
+     "continuum_error": 0.0009598364890223143,
+     "discrete_error": 2.55351295663786e-15,
+     "max_amplitude_error": 2.8504976157250894e-14,
+     "max_magnetic_error": 3.079481114554028e-14,
+     "max_normalized_residual": 1.5961924457777724e-15,
+     "hb_reference": -0.0006452806280256186,
+     "hc_reference": 0.0025747915846039107,
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "cavity-z-m21-s4",
+     "steps": 123,
+     "dt_s": 6.342213142011415e-12,
+     "q": 0.99,
+     "elapsed_seconds": 15.6134062,
+     "a": 2,
+     "mode": [
+      2,
+      1
+     ],
+     "s": 4,
+     "continuum_cap": 0.000325,
+     "omega_c": 16180196612.238869,
+     "omega_d": 16176324642.606321,
+     "predicted_continuum_error": 0.00023930300263586002,
+     "omega_measured": 16176324642.606207,
+     "continuum_error": 0.00023930300264296545,
+     "discrete_error": 7.105427357601002e-15,
+     "max_amplitude_error": 7.771561172376096e-14,
+     "max_magnetic_error": 8.781864124784988e-14,
+     "max_normalized_residual": 2.103897102405643e-15,
+     "hb_reference": -0.0006441630220685481,
+     "hc_reference": 0.0025750714153304245,
+     "failures": [],
+     "status": "pass"
+    }
+   ],
+   "failures": [],
+   "refinement": [
+    {
+     "errors": [
+      0.0008925864705601194,
+      0.0002229757707640223,
+      5.573326368757403e-05
+     ],
+     "orders": [
+      2.0011049880446423,
+      2.0002764070941486
+     ],
+     "failures": [],
+     "status": "pass",
+     "polarization": "x",
+     "mode": [
+      1,
+      1
+     ]
+    },
+    {
+     "errors": [
+      0.004190360840645169,
+      0.00104552852393891,
+      0.00026125275810717774
+     ],
+     "orders": [
+      2.0028420608944444,
+      2.000714248576107
+     ],
+     "failures": [],
+     "status": "pass",
+     "polarization": "x",
+     "mode": [
+      2,
+      1
+     ]
+    },
+    {
+     "errors": [
+      0.002080187526962929,
+      0.0005195769954103868,
+      0.00012986480836896241
+     ],
+     "orders": [
+      2.001304130733492,
+      2.0003270233606227
+     ],
+     "failures": [],
+     "status": "pass",
+     "polarization": "x",
+     "mode": [
+      1,
+      2
+     ]
+    },
+    {
+     "errors": [
+      0.0009078375011503104,
+      0.00022630812910506837,
+      5.653644494973964e-05
+     ],
+     "orders": [
+      2.0041456767816626,
+      2.00103533440317
+     ],
+     "failures": [],
+     "status": "pass",
+     "polarization": "y",
+     "mode": [
+      1,
+      1
+     ]
+    },
+    {
+     "errors": [
+      0.0009464808757980725,
+      0.00023575959787269785,
+      5.888631857264848e-05
+     ],
+     "orders": [
+      2.005256850903219,
+      2.00131211709712
+     ],
+     "failures": [],
+     "status": "pass",
+     "polarization": "y",
+     "mode": [
+      2,
+      1
+     ]
+    },
+    {
+     "errors": [
+      0.004503207657167385,
+      0.0011136143764151063,
+      0.0002776489442285479
+     ],
+     "orders": [
+      2.0157032652876623,
+      2.003915926017708
+     ],
+     "failures": [],
+     "status": "pass",
+     "polarization": "y",
+     "mode": [
+      1,
+      2
+     ]
+    },
+    {
+     "errors": [
+      0.0005435055155299517,
+      0.0001354251842805576,
+      3.3828207018027356e-05
+     ],
+     "orders": [
+      2.004798621926212,
+      2.001197436242058
+     ],
+     "failures": [],
+     "status": "pass",
+     "polarization": "z",
+     "mode": [
+      1,
+      1
+     ]
+    },
+    {
+     "errors": [
+      0.0038817769968471083,
+      0.0009598364890223143,
+      0.00023930300264296545
+     ],
+     "orders": [
+      2.015856674915349,
+      2.003950160271537
+     ],
+     "failures": [],
+     "status": "pass",
+     "polarization": "z",
+     "mode": [
+      2,
+      1
+     ]
+    },
+    {
+     "errors": [
+      0.0013445246630646723,
+      0.00033471230906834126,
+      8.358985152190357e-05
+     ],
+     "orders": [
+      2.006102706967508,
+      2.0015219039032472
+     ],
+     "failures": [],
+     "status": "pass",
+     "polarization": "z",
+     "mode": [
+      1,
+      2
+     ]
+    }
+   ],
+   "status": "pass"
+  },
+  {
+   "suite": "cavity-spectrum",
+   "root": "build\\evidence\\MAT-02\\run1\\cavity-spectrum",
+   "cases": [
+    {
+     "case": "spectrum-s1",
+     "steps": 32768,
+     "dt_s": 2.536885256804566e-11,
+     "q": 0.99,
+     "elapsed_seconds": 91.4925868,
+     "pulse_samples": 53,
+     "source_index": [
+      5,
+      7,
+      9
+     ],
+     "probe_index": [
+      7,
+      9,
+      13
+     ],
+     "analyses": {
+      "full": {
+       "states": 32768,
+       "bin_hz": 1202954.6091272421,
+       "required_lines": 8,
+       "visible_lines": 10,
+       "max_offset_bins": 0.00023866653107023736,
+       "max_height_error": 0.0009978775164104503,
+       "max_continuum_margin": 0.0,
+       "spurious_peaks": [],
+       "peaks_below_cutoff": [
+        [
+         1395816843.90997,
+         1.0
+        ],
+        [
+         1584523634.0458982,
+         0.700268076522928
+        ],
+        [
+         2239394232.333117,
+         0.5887889427224148
+        ],
+        [
+         2037292892.5815792,
+         0.4750702654127246
+        ],
+        [
+         1789579569.0978444,
+         0.27586980500540703
+        ],
+        [
+         1764169125.1318042,
+         0.14954672759191234
+        ],
+        [
+         1917680551.7572646,
+         0.1083920853700677
+        ],
+        [
+         1445562450.9719164,
+         0.07678316454319603
+        ],
+        [
+         2091131922.3479307,
+         0.04451896528333191
+        ],
+        [
+         1392928012.5134978,
+         0.0265720774131032
+        ],
+        [
+         1398686836.1727154,
+         0.026218563695710875
+        ],
+        [
+         1587409704.2757382,
+         0.018402602342435063
+        ],
+        [
+         1581659184.0607076,
+         0.01810280810215976
+        ],
+        [
+         2236505046.3529425,
+         0.015682748380720604
+        ],
+        [
+         2242265723.182376,
+         0.015489166780419917
+        ],
+        [
+         2034404026.741777,
+         0.012626551065809554
+        ],
+        [
+         2040163016.6242995,
+         0.012459732983600477
+        ],
+        [
+         1803991960.7921364,
+         0.011530119364689468
+        ]
+       ],
+       "failures": [],
+       "status": "pass"
+      },
+      "truncated": {
+       "states": 16384,
+       "bin_hz": 2405909.2182544842,
+       "required_lines": 8,
+       "visible_lines": 10,
+       "max_offset_bins": 0.00037873259224741913,
+       "max_height_error": 0.0023860691022647984,
+       "max_continuum_margin": 0.0,
+       "spurious_peaks": [],
+       "peaks_below_cutoff": [
+        [
+         1395816176.722175,
+         1.0
+        ],
+        [
+         1584524229.7488647,
+         0.6985625646500001
+        ],
+        [
+         2239394297.392413,
+         0.5914369230690386
+        ],
+        [
+         2037292981.6770666,
+         0.4770603150719519
+        ],
+        [
+         1789579921.1421425,
+         0.2769057243431227
+        ],
+        [
+         1764169042.4790545,
+         0.14985038083581784
+        ],
+        [
+         1917681135.541565,
+         0.10901948734427828
+        ],
+        [
+         1445563552.2880406,
+         0.07676405646175141
+        ],
+        [
+         2091131555.0615385,
+         0.044569179110724284
+        ],
+        [
+         1401594966.4773097,
+         0.026756810845823882
+        ],
+        [
+         1390066783.882166,
+         0.026487688697316165
+        ],
+        [
+         1578746125.3912218,
+         0.01874517282127272
+        ],
+        [
+         1590278901.4251766,
+         0.01859799349543259
+        ],
+        [
+         2233633246.750099,
+         0.0153038608292838
+        ],
+        [
+         2245112866.9945645,
+         0.015039440601050095
+        ],
+        [
+         2031533585.5497022,
+         0.01232093810474094
+        ],
+        [
+         2043009920.963237,
+         0.012098348512964648
+        ],
+        [
+         1804168493.3700542,
+         0.01158656815139688
+        ]
+       ],
+       "failures": [],
+       "status": "pass"
+      }
+     },
+     "post_pulse_invariant_drift": 6.160917612021635e-16,
+     "growth": {
+      "Ex": {
+       "window_max": 0.04917472207575386,
+       "later_max": 0.05032465315870511,
+       "floor": 1.1166354643422328e-10,
+       "null_component": false,
+       "v1_ratio": 1.0233845975007194
+      },
+      "Ey": {
+       "window_max": 0.03537952135113338,
+       "later_max": 0.04272075669770484,
+       "floor": 1.1166354643422328e-10,
+       "null_component": false,
+       "v1_ratio": 1.2074995665914026
+      },
+      "Ez": {
+       "window_max": 0.11166354643422327,
+       "later_max": 0.13127161472944462,
+       "floor": 1.1166354643422328e-10,
+       "null_component": false,
+       "v1_ratio": 1.1755995481190606
+      },
+      "Hx": {
+       "window_max": 0.00023336284064582563,
+       "later_max": 0.00028103212846962357,
+       "floor": 3.0204689189997636e-13,
+       "null_component": false,
+       "v1_ratio": 1.2042711157092296
+      },
+      "Hy": {
+       "window_max": 0.00030204689189997633,
+       "later_max": 0.0003210436533142177,
+       "floor": 3.0204689189997636e-13,
+       "null_component": false,
+       "v1_ratio": 1.0628934179548921
+      },
+      "Hz": {
+       "window_max": 5.418033499881905e-19,
+       "later_max": 1.3938400901314396e-18,
+       "floor": 3.0204689189997636e-13,
+       "null_component": true,
+       "v1_ratio": 2.572594078943625
+      }
+     },
+     "failures": [],
+     "status": "pass"
+    }
+   ],
+   "failures": [],
+   "status": "pass"
+  },
+  {
+   "suite": "pec",
+   "root": "build\\evidence\\MAT-02\\run1\\pec",
+   "cases": [
+    {
+     "case": "pec-c1-x",
+     "steps": 109,
+     "dt_s": 2.536885256804566e-11,
+     "elapsed_seconds": 0.7853495,
+     "shell_edges": [
+      864,
+      1024,
+      1120
+     ],
+     "cavity": {
+      "case": "pec-c1-x",
+      "steps": 109,
+      "dt_s": 2.536885256804566e-11,
+      "q": 0.99,
+      "elapsed_seconds": 0.7853495,
+      "a": 0,
+      "mode": [
+       1,
+       1
+      ],
+      "s": 1,
+      "continuum_cap": 0.0052,
+      "omega_c": 4576450698.178283,
+      "omega_d": 4572365820.201878,
+      "predicted_continuum_error": 0.0008925864705657816,
+      "omega_measured": 4572365820.201903,
+      "continuum_error": 0.0008925864705601194,
+      "discrete_error": 5.551115123125783e-15,
+      "max_amplitude_error": 6.17735029795341e-14,
+      "max_magnetic_error": 7.064140938872754e-14,
+      "max_normalized_residual": 9.101026746313584e-16,
+      "hb_reference": -0.0013662682258053754,
+      "hc_reference": 0.002275796548069879,
+      "failures": [],
+      "status": "pass"
+     },
+     "max_outside_sample": 0.0,
+     "equivalence_matched": 5830,
+     "equivalence_bitwise": 5830,
+     "equivalence_max_difference": 0.0,
+     "equivalence_reference": "cavity-x-m11-s1",
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "pec-c1-y",
+     "steps": 61,
+     "dt_s": 2.536885256804566e-11,
+     "elapsed_seconds": 0.4558252,
+     "shell_edges": [
+      864,
+      1024,
+      1120
+     ],
+     "cavity": {
+      "case": "pec-c1-y",
+      "steps": 61,
+      "dt_s": 2.536885256804566e-11,
+      "q": 0.99,
+      "elapsed_seconds": 0.4558252,
+      "a": 1,
+      "mode": [
+       1,
+       1
+      ],
+      "s": 1,
+      "continuum_cap": 0.0052,
+      "omega_c": 8194124882.789243,
+      "omega_d": 8186685948.931546,
+      "predicted_continuum_error": 0.0009078375011493112,
+      "omega_measured": 8186685948.931538,
+      "continuum_error": 0.0009078375011503104,
+      "discrete_error": 9.992007221626409e-16,
+      "max_amplitude_error": 1.1657341758564144e-14,
+      "max_magnetic_error": 1.2240208846492351e-14,
+      "max_normalized_residual": 1.237252617027773e-15,
+      "hb_reference": -0.0025420874290812373,
+      "hc_reference": 0.000764022444669907,
+      "failures": [],
+      "status": "pass"
+     },
+     "max_outside_sample": 0.0,
+     "equivalence_matched": 3286,
+     "equivalence_bitwise": 3286,
+     "equivalence_max_difference": 0.0,
+     "equivalence_reference": "cavity-y-m11-s1",
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "pec-c1-z",
+     "steps": 57,
+     "dt_s": 2.536885256804566e-11,
+     "elapsed_seconds": 0.4113219,
+     "shell_edges": [
+      864,
+      1024,
+      1120
+     ],
+     "cavity": {
+      "case": "pec-c1-z",
+      "steps": 57,
+      "dt_s": 2.536885256804566e-11,
+      "q": 0.99,
+      "elapsed_seconds": 0.4113219,
+      "a": 2,
+      "mode": [
+       1,
+       1
+      ],
+      "s": 1,
+      "continuum_cap": 0.0052,
+      "omega_c": 8774943646.722118,
+      "omega_d": 8770174416.451662,
+      "predicted_continuum_error": 0.0005435055155297297,
+      "omega_measured": 8770174416.45166,
+      "continuum_error": 0.0005435055155299517,
+      "discrete_error": 2.220446049250313e-16,
+      "max_amplitude_error": 1.582067810090848e-15,
+      "max_magnetic_error": 1.19522447494802e-15,
+      "max_normalized_residual": 8.89602695507721e-16,
+      "hb_reference": -0.001188280030525371,
+      "hc_reference": 0.0023735899734593693,
+      "failures": [],
+      "status": "pass"
+     },
+     "max_outside_sample": 0.0,
+     "equivalence_matched": 2378,
+     "equivalence_bitwise": 2378,
+     "equivalence_max_difference": 0.0,
+     "equivalence_reference": "cavity-z-m11-s1",
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "pec-c2-inside",
+     "steps": 4096,
+     "dt_s": 2.536885256804566e-11,
+     "elapsed_seconds": 26.6317358,
+     "shell_edges": [
+      864,
+      1024,
+      1120
+     ],
+     "max_silent_sample": 0.0,
+     "max_alive": {
+      "Ex": 1.4744487360775769,
+      "Ey": 1.2167330763761528,
+      "Ez": 1.7913997903939953,
+      "Hx": 0.001512629839231745,
+      "Hy": 0.0017470013581015087,
+      "Hz": 7.602544382811143e-19
+     },
+     "failures": [],
+     "status": "pass"
+    },
+    {
+     "case": "pec-c3-outside",
+     "steps": 4096,
+     "dt_s": 2.536885256804566e-11,
+     "elapsed_seconds": 26.884417,
+     "shell_edges": [
+      864,
+      1024,
+      1120
+     ],
+     "max_silent_sample": 0.0,
+     "max_alive": {
+      "Ex": 1.9349505173846697,
+      "Ey": 1.2899359176594505,
+      "Ez": 1.4533108653620348,
+      "Hx": 0.0015880334180234058,
+      "Hy": 0.002382182987783103,
+      "Hz": 4.707292651788169e-05
+     },
+     "failures": [],
+     "status": "pass"
+    }
+   ],
+   "failures": [],
+   "status": "pass"
+  },
+  {
+   "suite": "resources",
+   "cases": [],
+   "budget_bytes": 2147483648,
+   "failures": [],
+   "status": "pass"
+  }
+ ],
+ "thresholds": {
+  "continuum_cap": {
+   "1": 0.0052,
+   "2": 0.0013,
+   "4": 0.000325
+  },
+  "half_q_cap": 0.0028,
+  "discrete": 1e-09,
+  "structure": 1e-09,
+  "order_range": [
+   1.8,
+   2.2
+  ],
+  "peak_bins": 0.25,
+  "height": 0.15,
+  "strength_floor": 0.05,
+  "f_cut_hz": 2270000000.0,
+  "growth_factor": 1.5,
+  "null_floor": 1e-09,
+  "growth_rule_version": "1.1",
+  "equivalence": 1e-12
+ },
+ "analysis_environment": {
+  "python": "3.9.7",
+  "platform": "Windows-10-10.0.19045-SP0"
+ },
+ "resources": {
+  "schema": "reference-v1-resources-1",
+  "benchmark": "closed-v1",
+  "app": "C:\\Users\\Sina\\Desktop\\kod\\AntennaSim\\build\\MAT-02-release\\antennasim.exe",
+  "app_sha256": "021faf8fb518edfdebb197caea92688cdce176b73205d1da3fcbafd7e51a88e4",
+  "started_utc": "2026-09-18T00:23:25.345837+00:00",
+  "environment": {
+   "platform": "Windows-10-10.0.19045-SP0",
+   "machine": "AMD64",
+   "processor": "AMD64 Family 23 Model 113 Stepping 0, AuthenticAMD",
+   "python": "3.9.7",
+   "psutil": "5.8.0",
+   "cpu_identifier": "AMD64 Family 23 Model 113 Stepping 0, AuthenticAMD"
+  },
+  "suites": {
+   "cavity": {
+    "command": [
+     "C:\\Users\\Sina\\Desktop\\kod\\AntennaSim\\build\\MAT-02-release\\antennasim.exe",
+     "--benchmark",
+     "closed-v1",
+     "--suite",
+     "cavity",
+     "--output",
+     "build\\evidence\\MAT-02\\run1\\cavity"
+    ],
+    "status": 0,
+    "budget_exceeded": false,
+    "budget_bytes": 2147483648,
+    "stdout": "Raw solver output complete; physical acceptance not evaluated.\r\n",
+    "stderr": "",
+    "elapsed_seconds": 288.40337040000003,
+    "peak_working_set_bytes": 29843456
+   },
+   "cavity-spectrum": {
+    "command": [
+     "C:\\Users\\Sina\\Desktop\\kod\\AntennaSim\\build\\MAT-02-release\\antennasim.exe",
+     "--benchmark",
+     "closed-v1",
+     "--suite",
+     "cavity-spectrum",
+     "--output",
+     "build\\evidence\\MAT-02\\run1\\cavity-spectrum"
+    ],
+    "status": 0,
+    "budget_exceeded": false,
+    "budget_bytes": 2147483648,
+    "stdout": "Raw solver output complete; physical acceptance not evaluated.\r\n",
+    "stderr": "",
+    "elapsed_seconds": 91.5928113,
+    "peak_working_set_bytes": 5173248
+   },
+   "pec": {
+    "command": [
+     "C:\\Users\\Sina\\Desktop\\kod\\AntennaSim\\build\\MAT-02-release\\antennasim.exe",
+     "--benchmark",
+     "closed-v1",
+     "--suite",
+     "pec",
+     "--output",
+     "build\\evidence\\MAT-02\\run1\\pec"
+    ],
+    "status": 0,
+    "budget_exceeded": false,
+    "budget_bytes": 2147483648,
+    "stdout": "Raw solver output complete; physical acceptance not evaluated.\r\n",
+    "stderr": "",
+    "elapsed_seconds": 55.21261449999997,
+    "peak_working_set_bytes": 5918720
+   }
+  },
+  "finished_utc": "2026-09-18T00:30:40.583379+00:00"
+ },
+ "source_snapshots": [
+  "f02fbe47c49ba3067e23051e3e10bc22456f1bfd522c5fd767ae20872e4bf61e"
+ ],
+ "status": "pass"
+}

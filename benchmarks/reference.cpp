@@ -1,50 +1,19 @@
 #include "reference.hpp"
+#include "common.hpp"
 #include "antennasim/build_info.hpp"
 
 #include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
-#include <fstream>
-#include <iomanip>
-#include <locale>
 #include <memory>
-#include <numbers>
 #include <thread>
 
 namespace antennasim::benchmark {
 namespace {
-using Index = std::array<std::size_t, 3>;
+using namespace common;
 constexpr double wavelength = 0.3;
-constexpr double pi = std::numbers::pi;
-constexpr std::array names{"Ex", "Ey", "Ez", "Hx", "Hy", "Hz"};
-constexpr std::size_t budget = std::size_t{2} * 1024 * 1024 * 1024;
-constexpr std::size_t overhead = 16 * 1024 * 1024;
-FieldComponent component(std::size_t id) { return static_cast<FieldComponent>(id); }
-template<class Function> void each(Index end, Function function) {
-    for (std::size_t k = 0; k < end[2]; ++k)
-        for (std::size_t j = 0; j < end[1]; ++j)
-            for (std::size_t i = 0; i < end[0]; ++i) function(Index{i,j,k});
-}
-template<class Function> void all(const UniformGrid& grid, Function function) {
-    for (std::size_t id = 0; id < 6; ++id)
-        each(grid.layout(component(id)).extents, [&](Index index) { function(id, index); });
-}
 int orientation(std::size_t a, std::size_t b) { return (a + 1) % 3 == b ? 1 : -1; }
-
-// Independent permutation construction used by fixtures/diagnostics only.
-// No call to production curl_at or family update routines.
-template<class Get> double curl(const UniformGrid& grid, std::size_t target, Index index, Get get) {
-    const bool forward = target >= 3;
-    const std::size_t axis = target % 3, u = (axis+1)%3, v = (axis+2)%3;
-    const auto derivative = [&](std::size_t source_axis, std::size_t direction) {
-        auto high = index, low = index;
-        if (forward) ++high[direction]; else --low[direction];
-        const auto source = source_axis + (forward ? 0U : 3U);
-        return (get(source, high) - get(source, low)) / grid.spacing_m()[direction];
-    };
-    return derivative(v, u) - derivative(u, v);
-}
 double face_distance(const UniformGrid& grid, const std::array<double, 3>& r, std::size_t axis) {
     const double cells = r[axis] / grid.spacing_m()[axis];
     return std::min(cells, static_cast<double>(grid.cells().values()[axis]) - cells);
@@ -129,13 +98,6 @@ Case stability_case(double q, bool driven) {
     return {std::string("stable-")+(q == .5 ? "q50-" : "q99-")+(driven ? "driven" : "initial"),
             grid,dt,driven ? 20008U : 20000U,0,1,24,false,false,driven};
 }
-struct Sum {
-    double total = 0, correction = 0;
-    void add(double value) {
-        const double y = value-correction, t = total+y;
-        correction = (t-total)-y; total = t;
-    }
-};
 struct Diagnostics { double u, q; std::array<double, 6> maxima; };
 Diagnostics diagnostics(const ReferenceStepper& solver) {
     const auto& fields = solver.fields();
@@ -166,31 +128,6 @@ Diagnostics diagnostics(const ReferenceStepper& solver) {
     const double q = u-volume*solver.time_step().seconds()/2*cross.total;
     if (!std::isfinite(u) || !std::isfinite(q)) throw std::runtime_error("Nonfinite energy diagnostic.");
     return {u,q,maxima};
-}
-std::ofstream stream(const std::filesystem::path& path) {
-    std::ofstream out;
-    out.exceptions(std::ios::badbit | std::ios::failbit);
-    out.imbue(std::locale::classic());
-    out.open(path);
-    out << std::setprecision(17);
-    return out;
-}
-template<class Array> void json_array(std::ostream& out, const Array& values) {
-    out << '[';
-    bool first = true;
-    for (auto value : values) { if (!first) out << ','; first = false; out << value; }
-    out << ']';
-}
-void json_string(std::ostream& out, const char* value) {
-    out << '"';
-    for (const char character : std::string(value)) {
-        const auto ch = static_cast<unsigned char>(character);
-        if (ch == '"' || ch == '\\') out << '\\' << static_cast<char>(ch);
-        else if (ch < 32) out << "\\u" << std::hex << std::setw(4) << std::setfill('0')
-                             << static_cast<unsigned>(ch) << std::dec << std::setfill(' ');
-        else out << static_cast<char>(ch);
-    }
-    out << '"';
 }
 void metadata(const Case& config, const std::filesystem::path& path, FixtureChecks checks, double elapsed, bool complete) {
     auto out = stream(path);

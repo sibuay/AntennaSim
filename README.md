@@ -4,16 +4,19 @@ Antenna-focused electromagnetic simulation and design software. The product
 direction and scientific principles are defined in [VISION.md](VISION.md).
 
 **Current status:** C++20 vacuum reference kernel with checked grid/field storage,
-strict CFL selection, H-then-E updates, impressed currents, native probes, and
-reproducible reference benchmark CLI/output, and an independent analyzer. Debug
-and Release pass thirteen CTest tests, including independent equation-level,
-analytical, fixture, sampling, artifact and reduction checks. The version-1
-free-space propagation, impedance, refinement and closed-grid stability
-benchmarks (V01–V03) passed on 2026-09-16 from a clean Release build and were
-reproduced exactly from a second clean build at the Phase 1 gate on 2026-09-17.
-The Phase 2 method note and the V04–V07 benchmark specifications are fixed and
-audited (MAT-01, 2026-09-18); no P2 solver code exists yet, and no PEC,
-material, open-boundary, port or antenna accuracy claim is established.
+strict CFL selection, H-then-E updates, explicit E-edge PEC masks (outer
+closure plus interior `pec_box`/`pec_shell` primitives), impressed currents,
+native probes, reproducible benchmark CLI/output, and independent analyzers.
+Debug and Release pass fifteen CTest tests, including independent
+equation-level, analytical, fixture, sampling, artifact, mask and reduction
+checks. The version-1 free-space propagation, impedance, refinement and
+closed-grid stability benchmarks (V01–V03) passed on 2026-09-16 from a clean
+Release build, were reproduced exactly at the Phase 1 gate on 2026-09-17, and
+again through the mask-capable kernel on 2026-09-18. The version-1 PEC cavity
+benchmarks (V04: exact eigenmode resonance and refinement, driven spectrum
+identification and resolution, interior shell enforcement) passed on
+2026-09-18 from a clean Release build (MAT-02). No material, spectral
+production, open-boundary, port or antenna accuracy claim is established.
 The foundation gate passed on 2026-09-06 and the reference-propagation gate on
 2026-09-17; Phase 2 (materials and closed domains) is in progress.
 
@@ -48,6 +51,8 @@ The foundation gate passed on 2026-09-06 and the reference-propagation gate on
 | [Closed-domain conventions](docs/methods/MAT-01-closed-domain-conventions.md) | PEC edge masks, isotropic dielectric/conductivity update, dissipation identity, spectral conventions, closed-form discrete references |
 | [Closed-domain benchmark specifications](docs/validation/MAT-01-closed-domain-benchmarks.md) | V04–V07 fixtures, comparators, fixed thresholds, S09–S14, analyzer coverage, and resource budgets |
 | [Closed-domain specification review](docs/validation/MAT-01-review.md) | MAT-01 audit calculations, fixture corrections, clean-build regression, and MAT-02 handoff |
+| [PEC mask contract](docs/methods/MAT-02-pec-mask-contract.md) | Mask representation, stepper integration, closed-v1 fixtures/CLI, independent V04 analysis and its validation |
+| [PEC cavity evidence](docs/validation/MAT-02-pec-cavity.md) | MAT-02 S09 checks, V04-A/B/C measurements, V01–V03 zero-tolerance regression, resources, limits, and MAT-03 handoff |
 
 Start each development session with the backlog and the relevant phase gate.
 Update the records at the end of the session. See [AGENTS.md](AGENTS.md) for
@@ -55,12 +60,13 @@ repository working instructions.
 
 ## Immediate objective
 
-Begin MAT-02: implement explicit PEC edge masks in the reference kernel and
-produce the V04 cavity evidence under the fixed MAT-01 specification (exact
-eigenmode, driven-spectrum and interior-enforcement suites with an independent,
-fault-checked analyzer), keeping the vacuum path bitwise identical and all
-thirteen CTests and the V01–V03 suites passing. P0, P1, REF-01 through REF-06,
-and MAT-01 are complete.
+Begin MAT-03: implement the per-cell isotropic dielectric and constant
+conductivity update with four-cell edge averaging under the fixed MAT-01
+conventions, add S10–S13 and the `dielectric`, `interface`, `slab-cavity`,
+`lossy` and `dissipation` suites with the analyzer/oracle extensions, and
+produce the V05/V06 evidence, keeping the vacuum path bitwise identical
+(V06-C) and all fifteen CTests, the V01–V03 and the V04 suites passing. P0,
+P1, REF-01 through REF-06, MAT-01 and MAT-02 are complete.
 
 ## Build and check
 
@@ -95,9 +101,16 @@ the full fixed v1 suites; `scripts/run_reference_benchmarks.py` runs them with
 resource measurement, `scripts/analyze_reference_benchmarks.py` evaluates the
 v1 acceptance independently, and `scripts/compare_reference_analysis.py` compares
 a re-run's summary with the tracked one for reproduction evidence.
-Output includes metadata JSON, signed native probe CSV, stability diagnostics
-CSV, and a final `COMPLETE.json` marker. Completion means raw output finished;
-it does not mean physical acceptance passed. No port or antenna metrics exist.
+`--benchmark closed-v1 --suite cavity|cavity-spectrum|pec|smoke` selects the
+PEC cavity suites (30 exact eigenmode cases, the driven spectrum, and five
+interior-shell cases; smoke runs four short cases), run with
+`scripts/run_reference_benchmarks.py --benchmark closed-v1` and evaluated by
+`scripts/analyze_closed_benchmarks.py`.
+Output includes metadata JSON (with the PEC primitives and masked-edge counts),
+signed native probe CSV, diagnostics CSV (energies, component and region
+maxima where recorded), and a final `COMPLETE.json` marker. Completion means
+raw output finished; it does not mean physical acceptance passed. No material,
+port or antenna metrics exist.
 
 These documents record a work schedule; they do not start background jobs,
 calendar events, or recurring notifications.

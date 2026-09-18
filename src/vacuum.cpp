@@ -51,11 +51,20 @@ std::string location(std::uint64_t n, FieldComponent component, Index index) {
         std::to_string(index[2]) + "]";
 }
 
-void check_divergence(const FieldStorage& fields, bool electric) {
+void check_divergence(const FieldStorage& fields, bool electric, const PecMask& mask) {
     const auto& grid = fields.grid();
     const auto counts = grid.cells().values();
     const Index begin = electric ? Index{1, 1, 1} : Index{0, 0, 0};
     each(begin, counts, [&](Index index) {
+        if (electric) {
+            // Surface charge on PEC faces is implied, not tracked: screen only
+            // nodes whose six surrounding E samples are all unmasked.
+            for (std::size_t a = 0; a < 3; ++a) {
+                auto low = index;
+                --low[a];
+                if (mask.masked(components[a], index) || mask.masked(components[a], low)) { return; }
+            }
+        }
         double divergence = 0;
         double magnitude = 0;
         for (std::size_t a = 0; a < 3; ++a) {
@@ -77,10 +86,13 @@ void check_divergence(const FieldStorage& fields, bool electric) {
     });
 }
 
-UniformGrid checked_initial_grid(const FieldStorage& fields, const VacuumTimeStep& dt) {
+UniformGrid checked_initial_grid(const FieldStorage& fields, const VacuumTimeStep& dt, const PecMask& mask) {
     const auto& grid = fields.grid();
     if (grid.spacing_m() != dt.spacing_m()) {
         throw std::invalid_argument("Time-step spacing does not match the field grid.");
+    }
+    if (mask.grid().cells().values() != grid.cells().values() || mask.grid().spacing_m() != grid.spacing_m()) {
+        throw std::invalid_argument("PEC mask geometry does not match the field grid.");
     }
     for (auto component : components) {
         each({}, grid.layout(component).extents, [&](Index index) {
@@ -88,14 +100,17 @@ UniformGrid checked_initial_grid(const FieldStorage& fields, const VacuumTimeSte
             if (!std::isfinite(value)) {
                 throw std::invalid_argument("Nonfinite initial field: " + location(0, component, index));
             }
-            if ((grid.is_tangential_e_wall(component, index) ||
-                 grid.is_normal_h_wall(component, index)) && value != 0) {
-                throw std::invalid_argument("Incompatible initial wall: " + location(0, component, index));
+            // The outer walls are the closure's masked edges and its enclosed normal H.
+            if (mask.masked(component, index) && value != 0) {
+                throw std::invalid_argument("Incompatible initial PEC edge: " + location(0, component, index));
+            }
+            if (mask.enclosed(component, index) && value != 0) {
+                throw std::invalid_argument("Incompatible initial enclosed H: " + location(0, component, index));
             }
         });
     }
-    check_divergence(fields, true);
-    check_divergence(fields, false);
+    check_divergence(fields, true, mask);
+    check_divergence(fields, false, mask);
     return grid;
 }
 } // namespace
@@ -171,7 +186,10 @@ FieldUpdateError::FieldUpdateError(std::uint64_t step, FieldComponent component,
       step_(step), component_(component), index_(index) {}
 
 ReferenceStepper::ReferenceStepper(const FieldStorage& initial, VacuumTimeStep time_step)
-    : fields_(checked_initial_grid(initial, time_step)), time_step_(time_step) {
+    : ReferenceStepper(initial, time_step, PecMask{initial.grid()}) {}
+
+ReferenceStepper::ReferenceStepper(const FieldStorage& initial, VacuumTimeStep time_step, PecMask mask)
+    : mask_(std::move(mask)), fields_(checked_initial_grid(initial, time_step, mask_)), time_step_(time_step) {
     for (auto component : components) {
         each({}, fields_.grid().layout(component).extents, [&](Index index) {
             fields_.at(component, index) = initial.at(component, index);
@@ -204,6 +222,10 @@ void ReferenceStepper::advance(const ElectricCurrent* current, double amplitude)
                 throw std::invalid_argument("Current/grid mismatch.");
             }
             for (const auto& sample : current->samples()) {
+                if (mask_.masked(sample.component, sample.index)) {
+                    throw std::invalid_argument("Current targets a PEC edge: " +
+                        location(state_index_, sample.component, sample.index));
+                }
                 const double j = amplitude * sample.amperes_per_m2;
                 if (!std::isfinite(j) || !std::isfinite(time_step_.e_scale() * j)) {
                     throw FieldUpdateError(state_index_, sample.component, sample.index);
@@ -211,7 +233,7 @@ void ReferenceStepper::advance(const ElectricCurrent* current, double amplitude)
             }
         }
         detail::advance_h(fields_, time_step_, state_index_);
-        detail::advance_e(fields_, time_step_, state_index_);
+        detail::advance_e(fields_, time_step_, state_index_, mask_);
         if (current != nullptr && amplitude != 0) {
             for (const auto& sample : current->samples()) {
                 auto& value = fields_.at(sample.component, sample.index);
@@ -267,21 +289,37 @@ void advance_h(FieldStorage& fields, const VacuumTimeStep& dt, std::uint64_t n) 
     }
 }
 
-void advance_e(FieldStorage& fields, const VacuumTimeStep& dt, std::uint64_t n) {
+namespace {
+void advance_e_masked(FieldStorage& fields, const VacuumTimeStep& dt, std::uint64_t n, const PecMask* mask) {
     if (dt.spacing_m() != fields.grid().spacing_m()) {
         throw std::invalid_argument("Time-step/grid spacing mismatch.");
     }
+    if (mask != nullptr && (mask->grid().cells().values() != fields.grid().cells().values() ||
+                            mask->grid().spacing_m() != fields.grid().spacing_m())) {
+        throw std::invalid_argument("PEC mask/grid mismatch.");
+    }
     const auto counts = fields.grid().cells().values();
     // Half-open ranges from FND-03; subtract only within valid interior ranges.
+    // Masked interior edges are skipped and therefore stay exactly zero.
     for (const auto component : {Ex, Ey, Ez}) {
         Index begin{1, 1, 1};
         begin[static_cast<std::size_t>(component)] = 0;
         each(begin, counts, [&](Index index) {
+            if (mask != nullptr && mask->masked(component, index)) { return; }
             const auto next = fields.at(component, index) + dt.e_scale() * curl_at(fields, component, index);
             if (!std::isfinite(next)) { throw FieldUpdateError(n, component, index); }
             fields.at(component, index) = next;
         });
     }
+}
+} // namespace
+
+void advance_e(FieldStorage& fields, const VacuumTimeStep& dt, std::uint64_t n) {
+    advance_e_masked(fields, dt, n, nullptr);
+}
+
+void advance_e(FieldStorage& fields, const VacuumTimeStep& dt, std::uint64_t n, const PecMask& mask) {
+    advance_e_masked(fields, dt, n, &mask);
 }
 } // namespace detail
 } // namespace antennasim

@@ -13,9 +13,11 @@ reproduces all 36 propagation and four stability cases from a clean build. C04
 is complete: the [REF-06 gate review](validation/REF-06-reference-propagation-gate.md)
 passed P1 with an exact clean-build reproduction of the physical suites and
 recorded the supported limits. C05 is in progress: MAT-01 (the P2 method note
-and the V04–V07 specifications with fixed, audited tolerances) is complete and
-MAT-02 (explicit PEC edges and V04 cavity evidence) is ready. The P2 and later
-numerical gates remain open. No sequencing or duration assumptions changed.
+and the V04–V07 specifications with fixed, audited tolerances) and MAT-02
+(explicit PEC edge masks with passing V04 cavity evidence from a clean
+Release build) are complete and MAT-03 (dielectric and conductive updates,
+V05/V06) is ready. The P2 and later numerical gates remain open. No
+sequencing or duration assumptions changed.
 
 ## Sequencing policy
 

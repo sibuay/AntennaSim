@@ -11,5 +11,8 @@ namespace antennasim::detail {
                              std::array<std::size_t, 3> index);
 void advance_h(FieldStorage& fields, const VacuumTimeStep& dt, std::uint64_t n);
 void advance_e(FieldStorage& fields, const VacuumTimeStep& dt, std::uint64_t n);
+// Skips masked E samples; the outer closure is already excluded by the ranges,
+// so a mask without interior primitives performs the identical arithmetic.
+void advance_e(FieldStorage& fields, const VacuumTimeStep& dt, std::uint64_t n, const PecMask& mask);
 
 } // namespace antennasim::detail

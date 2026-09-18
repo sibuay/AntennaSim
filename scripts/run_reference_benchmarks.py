@@ -1,4 +1,4 @@
-"""Run the fixed reference-v1 suites serially and record measured resources.
+"""Run the fixed reference-v1 (or closed-v1) suites serially and record measured resources.
 
 Python 3.9+, standard library; optional psutil records the process peak working
 set (Windows high-water value). Writes ROOT/<suite>/ raw artifacts through the
@@ -64,6 +64,7 @@ def main():
     parser.add_argument("--app", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--suites", nargs="+", default=["propagation", "stability"])
+    parser.add_argument("--benchmark", choices=("reference-v1", "closed-v1"), default="reference-v1")
     parser.add_argument("--runtime-path", type=Path, help="directory prepended to PATH for the compiler runtime")
     parser.add_argument("--timeout-hours", type=float, default=12.0)
     args = parser.parse_args()
@@ -76,7 +77,7 @@ def main():
         psutil_version = psutil.__version__
     except ImportError:
         psutil_version = None
-    record = {"schema": "reference-v1-resources-1", "app": str(args.app.resolve()),
+    record = {"schema": "reference-v1-resources-1", "benchmark": args.benchmark, "app": str(args.app.resolve()),
               "app_sha256": hashlib.sha256(args.app.read_bytes()).hexdigest(),
               "started_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
               "environment": {"platform": platform.platform(), "machine": platform.machine(),
@@ -87,7 +88,7 @@ def main():
     failed = False
     for suite in args.suites:
         print("Running suite", suite, flush=True)
-        result = run(args.app.resolve(), ["--benchmark", "reference-v1", "--suite", suite,
+        result = run(args.app.resolve(), ["--benchmark", args.benchmark, "--suite", suite,
                                           "--output", str(args.output/suite)], args.timeout_hours*3600, environment)
         record["suites"][suite] = result
         failed = failed or result["status"] != 0
@@ -100,7 +101,7 @@ def main():
         (args.output/"resources.json").write_text(json.dumps(record, indent=1)+"\n")
     record["finished_utc"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
     (args.output/"resources.json").write_text(json.dumps(record, indent=1)+"\n")
-    print("Raw suites complete; physical acceptance is evaluated separately by analyze_reference_benchmarks.py")
+    print("Raw suites complete; physical acceptance is evaluated separately by the independent analyzer")
     return 1 if failed else 0
 
 

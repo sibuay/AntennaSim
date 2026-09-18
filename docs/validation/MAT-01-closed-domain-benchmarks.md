@@ -1,6 +1,7 @@
 # MAT-01 — Closed-domain benchmark specifications (V04–V07, S09–S14)
 
-Version 1, 2026-09-18. **Author-reviewed; thresholds fixed for this version.**
+Version 1, 2026-09-18; revision 1.1 of the V04-B growth rule on 2026-09-18
+(MAT-02, see V04-B). **Author-reviewed; thresholds fixed for this version.**
 No P2 benchmark has run and no PEC, material, or spectral accuracy is
 established. This contract fixes the Phase 2 acceptance before any MAT-02,
 MAT-03, or MAT-04 solver code exists; the [MAT-01 review](MAT-01-review.md)
@@ -120,7 +121,19 @@ lines (strength `>=0.05` of the strongest) are
 | Relative peak height versus predicted strength (both normalized to the largest) | abs difference <= 0.15 |
 | Spurious peaks: detected peaks below `f_cut` with height >= 0.05 of the largest and farther than 0.25 bin from every predicted line (strength >= 0.01) | none |
 | Continuum resonance of each required peak `abs(f_peak/f_c-1)` | <= dispersion prediction + 0.25 bin/f_c (reported per line; the resolution term dominates: 8.6e-4 full, 1.7e-3 truncated) |
-| Fields | finite at every state; no growth of the six maxima after the pulse beyond 1.5 times their maximum over the first 4096 post-pulse states |
+| Fields | finite at every state; no growth of the six maxima after the pulse beyond 1.5 times their maximum over the first 4096 post-pulse states; **version 1.1 (MAT-02, 2026-09-18):** a component whose post-pulse window maximum is below `1e-9` times the largest window maximum of its family (E or H) is analytically null and must instead stay below that floor at every later state |
+
+Revision 1.1 of the growth rule: the version-1 wording had no absolute floor,
+contrary to the validation plan's policy for ill-conditioned relative
+comparisons, and the first measurement (MAT-02) failed it on `Hz`, which is
+analytically zero for a z-directed edge current (the excited fields are TM
+to z; discretely the mixed differences `d/dx d/dy` of `Ez` cancel exactly) and
+therefore stays at roundoff (`5.4e-19` A/m in the window, `1.4e-18` A/m later,
+against `3.0e-4` A/m for `Hx`/`Hy`) while the invariant `Q` was constant to
+`6.2e-16`. The version-1 result is preserved as a failure in the
+[MAT-02 evidence](MAT-02-pec-cavity.md); the other five components and every
+identification limit were unaffected. The floor `1e-9` is nine orders above
+the observed roundoff and seven below the smallest physical component.
 
 The line pair (1,2,4)/(1,1,5) near 2.31 GHz is 1.6 bins apart and is excluded by
 `f_cut`; the visible lines below `f_cut` are at least 12 bins (full record) and

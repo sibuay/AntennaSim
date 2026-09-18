@@ -17,7 +17,7 @@ function(antennasim_target_defaults target)
 endfunction()
 
 configure_file(src/version.hpp.in generated/antennasim/version.hpp @ONLY)
-add_library(antennasim_core STATIC src/build_info.cpp src/grid.cpp src/fields.cpp src/vacuum.cpp src/run.cpp)
+add_library(antennasim_core STATIC src/build_info.cpp src/grid.cpp src/fields.cpp src/vacuum.cpp src/pec.cpp src/run.cpp)
 add_library(AntennaSim::core ALIAS antennasim_core)
 target_include_directories(antennasim_core
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
@@ -38,7 +38,7 @@ foreach(input IN LISTS snapshot_inputs)
 endforeach()
 string(SHA256 source_snapshot "${snapshot_text}")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/source-snapshot.txt" "${snapshot_text}")
-add_library(antennasim_benchmarks STATIC benchmarks/reference.cpp)
+add_library(antennasim_benchmarks STATIC benchmarks/reference.cpp benchmarks/closed.cpp)
 target_include_directories(antennasim_benchmarks PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/benchmarks")
 target_link_libraries(antennasim_benchmarks PUBLIC AntennaSim::core)
 target_compile_definitions(antennasim_benchmarks PRIVATE
@@ -98,6 +98,12 @@ if(BUILD_TESTING)
     add_test(NAME reference.run COMMAND antennasim_run_check)
     set_tests_properties(reference.run PROPERTIES LABELS "reference_structural" TIMEOUT 120)
 
+    add_executable(antennasim_pec_check tests/pec_check.cpp)
+    target_link_libraries(antennasim_pec_check PRIVATE antennasim_benchmarks)
+    antennasim_target_defaults(antennasim_pec_check)
+    add_test(NAME reference.pec COMMAND antennasim_pec_check)
+    set_tests_properties(reference.pec PROPERTIES LABELS "reference_structural;closed_domain" TIMEOUT 120)
+
     add_test(NAME reference.yee_conventions COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_yee_conventions.py")
     add_test(NAME reference.benchmark_specification COMMAND "${Python3_EXECUTABLE}"
@@ -121,4 +127,10 @@ if(BUILD_TESTING)
         --app "$<TARGET_FILE:antennasim>" --output-root "${CMAKE_CURRENT_BINARY_DIR}/ref05-audits")
     set_tests_properties(reference.analysis_reductions PROPERTIES
         LABELS "reference_structural;analytical_audit" TIMEOUT 300)
+
+    add_test(NAME reference.closed_analysis COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_closed_analysis.py"
+        --app "$<TARGET_FILE:antennasim>" --output-root "${CMAKE_CURRENT_BINARY_DIR}/mat02-audits")
+    set_tests_properties(reference.closed_analysis PROPERTIES
+        LABELS "reference_structural;analytical_audit;closed_domain" TIMEOUT 600)
 endif()

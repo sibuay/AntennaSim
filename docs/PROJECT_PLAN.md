@@ -75,9 +75,13 @@ eigenwaves in a reflecting box at the declared grids and durations. Phase 2 is
 **in progress**: MAT-01 fixed the P2 conventions and the V04–V07 specifications
 ([method note](methods/MAT-01-closed-domain-conventions.md),
 [specification](validation/MAT-01-closed-domain-benchmarks.md),
-[audit review](validation/MAT-01-review.md)) and MAT-02 is ready. All later
-phases are **not started**; PEC, material, open-boundary and antenna accuracy
-remain unvalidated.
+[audit review](validation/MAT-01-review.md)); MAT-02 implemented the explicit
+E-edge PEC mask and passed the V04 cavity benchmarks
+([contract](methods/MAT-02-pec-mask-contract.md),
+[evidence](validation/MAT-02-pec-cavity.md)); MAT-03 is ready. All later
+phases are **not started**; material, open-boundary and antenna accuracy
+remain unvalidated, and PEC accuracy is established only for the declared
+cavity envelope.
 The milestone column maps this plan to the original vision. Later phases are
 broken into detailed work items only when their prerequisites are understood.
 
