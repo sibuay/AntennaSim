@@ -15,7 +15,9 @@ Release build, were reproduced exactly at the Phase 1 gate on 2026-09-17, and
 again through the mask-capable kernel on 2026-09-18. The version-1 PEC cavity
 benchmarks (V04: exact eigenmode resonance and refinement, driven spectrum
 identification and resolution, interior shell enforcement) passed on
-2026-09-18 from a clean Release build (MAT-02). No material, spectral
+2026-09-18 from a clean Release build (MAT-02), and were re-confirmed on
+2026-09-22 under specification revisions 1.2 and 1.3, which strengthened the
+V04-C driven acceptance after review. No material, spectral
 production, open-boundary, port or antenna accuracy claim is established.
 The foundation gate passed on 2026-09-06 and the reference-propagation gate on
 2026-09-17; Phase 2 (materials and closed domains) is in progress.

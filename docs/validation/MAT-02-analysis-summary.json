@@ -1389,6 +1389,16 @@
       "Hy": 0.0017470013581015087,
       "Hz": 7.602544382811143e-19
      },
+     "drive_prediction": 7.22927367150017e-08,
+     "excitation_floor": 0.17344677198144254,
+     "drive_first_state": 7.229273671500122e-08,
+     "drive_error": 6.772360450213455e-15,
+     "excitation_peak": 1.7913997903939953,
+     "excitation_ratio": 1.0328239435817586,
+     "post_pulse_invariant": 3.001002225713993e-17,
+     "post_pulse_invariant_drift": 4.107278408014423e-16,
+     "source_probe_first_state": -7.229273671500122e-08,
+     "source_probe_error": 6.772360450213455e-15,
      "failures": [],
      "status": "pass"
     },
@@ -1411,6 +1421,16 @@
       "Hy": 0.002382182987783103,
       "Hz": 4.707292651788169e-05
      },
+     "drive_prediction": 7.22927367150017e-08,
+     "excitation_floor": 0.17344677198144254,
+     "drive_first_state": 7.229273671500122e-08,
+     "drive_error": 6.772360450213455e-15,
+     "excitation_peak": 1.9349505173846697,
+     "excitation_ratio": 1.115587505769029,
+     "post_pulse_invariant": 2.0601078498437212e-18,
+     "post_pulse_invariant_drift": 3.739474017408042e-16,
+     "source_probe_first_state": -7.229273671500122e-08,
+     "source_probe_error": 6.772360450213455e-15,
      "failures": [],
      "status": "pass"
     }
@@ -1446,7 +1466,11 @@
   "growth_factor": 1.5,
   "null_floor": 1e-09,
   "growth_rule_version": "1.1",
-  "equivalence": 1e-12
+  "equivalence": 1e-12,
+  "drive": 1e-12,
+  "excitation_floor": 0.1,
+  "invariant": 1e-12,
+  "excitation_rule_version": "1.4"
  },
  "analysis_environment": {
   "python": "3.9.7",

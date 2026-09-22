@@ -1,7 +1,11 @@
 # MAT-01 — Closed-domain benchmark specifications (V04–V07, S09–S14)
 
 Version 1, 2026-09-18; revision 1.1 of the V04-B growth rule on 2026-09-18
-(MAT-02, see V04-B). **Author-reviewed; thresholds fixed for this version.**
+(MAT-02, see V04-B); revision 1.2 of the V04-C driven acceptance on 2026-09-22
+(MAT-02 review, see V04-C); revisions 1.3 and 1.4 of the V04-C driven
+acceptance and the probe-record completeness rule on 2026-09-22 (MAT-02 review
+follow-ups, see V04-C). **Author-reviewed; thresholds fixed for this
+version.**
 No P2 benchmark has run and no PEC, material, or spectral accuracy is
 established. This contract fixes the Phase 2 acceptance before any MAT-02,
 MAT-03, or MAT-04 solver code exists; the [MAT-01 review](MAT-01-review.md)
@@ -167,10 +171,105 @@ C2 source and must make both cases fail before stepping (S09).
   that set written by the run); the run reports the masked-edge counts.
 - C2 (source inside, exterior silent): the V04-B pulse on edge `(8,10,12)`
   inside the shell, 4096 steps: every sample not strictly inside the open box
-  exactly zero, interior fields finite.
+  exactly zero, interior fields finite and, under version 1.2, driven. The case
+  records `Ez` at its own source edge and at the shifted V04-B probe
+  `(10,12,16)` (`V04B_PROBE_INDEX` plus the three-cell margin).
 - C3 (source outside, interior shielded): the same pulse on edge `(1,1,1)` in
   the margin, 4096 steps: every sample not strictly outside the closed box
-  exactly zero, exterior fields finite.
+  exactly zero, exterior fields finite and, under version 1.2, driven. The case
+  records `Ez` at its own source edge and at the shielded cavity centre
+  `(9,11,13)` (the margin plus half the base cells).
+
+Under version 1.4 those two pairs are the prescribed probe sets: the
+specification audit computes them from the fixture, confirms both interior
+edges are strictly inside the shell and unmasked, and the analysis compares
+them with what each artifact declares and records.
+
+**Version 1.2 (MAT-02 review, 2026-09-22): the driven side must carry the
+pulse.** C2 and C3 additionally require the following of the live region, with
+`g_m` the fixed 53-sample pulse, `dt` the v1 cavity step and `eps0` the vacuum
+permittivity. `scripts/check_material_benchmarks.py` computes the two deposits
+(`pulse_drive`) before any candidate output exists; neither uses solver output.
+
+| Requirement | Limit |
+| --- | --- |
+| The largest electric region maximum at state 1 equals the closed-form deposit `(dt/eps0) abs(g_0)` = `7.2292736715001706e-08` V/m | 1e-12 relative |
+| No other electric or magnetic maximum of that region is nonzero at state 1 (the first update of a zero state touches only the driven edge) | exactly zero |
+| The largest electric region maximum over the run reaches a fraction of the largest single-step deposit `(dt/eps0) max abs(g_m)` = `1.7344677198144254` V/m | >= 0.1 of it, i.e. `0.17344677198144254` V/m |
+| The invariant `Q` is zero at state 0, positive at the first state after the pulse, and constant from there to the last state | relative drift <= 1e-12 |
+| `dt` equals the v1 cavity definition | 5e-15 relative |
+
+Revision 1.2 of the C2/C3 acceptance: the version-1 wording required only that
+the driven side stay finite, and a region that received nothing is finite, so a
+run in which the pulse was never injected — or was injected and then discarded
+— satisfied version 1 exactly. The shielding half of each case (the silent
+region exactly zero at every state) is trivially satisfied by the same run, so
+neither half of the version-1 criterion could separate enforcement from
+inaction. The MAT-02 review found this by feeding the analyzer an
+identically-zero C2/C3 record, which passed. The state-1 requirement is exact
+rather than a tolerance: a zero initial state has no curl contribution, so the
+driven edge takes `(dt/eps0) g_0` and nothing else moves. The `0.1` fraction is
+a conservative dead-region floor, not a sharp bound on the field: it sits more
+than fourteen orders above the roundoff of the peak deposit and one order below
+the deposit itself. The invariant requirement is the dissipationless statement
+V04-B already makes for the open cavity, applied to the masked domain.
+
+No solver, fixture, geometry, cap or identification limit changed, and no
+recorded measurement changed value; the revision only adds requirements. The
+MAT-02 runs were re-analyzed under it without re-running the solver and pass
+with the margins reported in the [MAT-02 evidence](MAT-02-pec-cavity.md).
+
+**Version 1.3 (MAT-02 review follow-up, 2026-09-22): the deposit must be in
+the component and on the edge the source drives.** Revision 1.2 compared the
+*largest* of the three electric region maxima with the closed-form deposit, so
+a deposit in `Ex` or `Ey` satisfied it; region maxima are also unsigned and
+carry no location, so no revision-1.2 requirement referred to the driven edge
+itself. C2 and C3 additionally require:
+
+| Requirement | Limit |
+| --- | --- |
+| The `Ez` region maximum at state 1 — not merely the largest electric one — equals the closed-form deposit `(dt/eps0) abs(g_0)` = `7.2292736715001706e-08` V/m | 1e-12 relative |
+| Every other component is zero at state 1 in the driven region and over the whole domain, and the whole-domain `Ez` maximum equals the driven region's | exactly zero / exact equality |
+| The native `Ez` sample of the prescribed source edge, which C2 and C3 both record, equals the signed deposit `-(dt/eps0) J0 g_0` = `-7.2292736715001706e-08` V/m at state 1 | 1e-12 relative |
+| Every probe is `Ez` at a prescribed index, the source edge is among them, and the remaining prescribed probes are zero at states 0 and 1 | exactly zero |
+
+The sign is the update equation itself: `E^1 = E^0 + (dt/eps0)(C H - J)` on a
+zero state with `C H = 0`, so the driven edge takes `-(dt/eps0) J0 g_0` while
+its unsigned region maximum is the revision-1.2 deposit. This is the first
+V04-C requirement that fixes *which* edge was driven rather than how much
+field appeared somewhere in a region.
+
+The MAT-02 review demonstrated the gap on copies of the retained C2/C3
+records: exchanging the `Ex` and `Ez` maxima at state 1 and zeroing the `Ez`
+source probe left both the structural audit and the full PEC reduction
+passing, for both driven cases. That mutation now fails three requirements in
+each case. As with revision 1.2, no solver, fixture, geometry, cap or
+identification limit changed and no recorded measurement changed value; the
+retained runs pass revision 1.3 unchanged, with source-edge samples of
+`-7.22927367e-08` V/m at `6.77e-15` relative.
+
+**Version 1.4 (MAT-02 review follow-up, 2026-09-22): an absent sample is a
+missing measurement, not a zero.** Revisions 1 to 1.3 checked that every state
+carried the *same number* of probe rows, which a prescribed probe that is
+absent from every state satisfies, and the reductions read a missing sample as
+zero through a defaulting lookup. Deleting all 4,097 samples of the second
+prescribed probe from copies of both driven cases left the structural audit and
+the complete PEC reduction passing. The record is therefore required to be
+complete, and the C2/C3 requirement is anchored to the fixture rather than to
+the candidate artifact's own declaration:
+
+| Requirement | Limit |
+| --- | --- |
+| Every state records the same set of probe keys (component and index), and a source case records exactly the `Ez` edges its own `probe_indices` declares — no fewer and no more (structural audit, every closed-v1 case) | exact set equality |
+| For C2/C3 the declared and recorded set equals the version-1 fixture set, `{(10,12,16),(8,10,12)}` and `{(1,1,1),(9,11,13)}`, computed by the specification audit — an artifact cannot define its own coverage | exact set equality |
+| The C2/C3 reduction reads `(steps+1) * probes` prescribed samples with no duplicate state/edge pair, and each sample it requires at states 0 and 1 is present rather than defaulted | exact count; presence required |
+
+This is a completeness rule, not a tolerance: it states that the artifact
+contains the measurements the specification asked for. It applies to every
+closed-v1 case, including the mode cases whose recorded keys are the three
+native lines. No solver, fixture, geometry, cap or identification limit
+changed, no recorded measurement changed value, and the retained runs pass
+revision 1.4 unchanged.
 
 ## V05 — Dielectric propagation, interface, and slab-loaded cavity
 

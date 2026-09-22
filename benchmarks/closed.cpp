@@ -190,8 +190,9 @@ void metadata(const Case& config, const std::filesystem::path& path, FixtureChec
     out << ",\"region\":" << (config.region ? "true" : "false") << ",\"diagnostics\":" << (config.diagnostics ? "true" : "false");
     if (config.kind == Kind::Mode) {
         out << ",\n\"amplitude_V_per_m\":" << amplitude << ",\"omega_c\":" << reference.omega_c << ",\"omega_d\":" << reference.omega_d
+            // The value at -dt/2, not the amplitude H_s=-C E_s/(mu0 Omega): H^(-1/2)=-H_s sin(omega_d dt/2).
             << ",\n\"initialization\":\"exact discrete standing mode: E_a=A sin(k_b r_b) sin(k_c r_c) at t=0; "
-               "H=-C E_s/(mu0 Omega) sin(omega_d dt/2) at -dt/2 by permutation curl\",\n\"source\":\"J=0\"";
+               "H=+(C E_s) sin(omega_d dt/2)/(mu0 Omega) at -dt/2 by permutation curl\",\n\"source\":\"J=0\"";
     } else {
         out << ",\n\"source_index\":"; json_array(out, config.source);
         out << ",\"J0_A_per_m2\":1,\"tau_s\":" << tau_s << ",\"pulse_half_samples\":" << (samples.size() - 1) / 2

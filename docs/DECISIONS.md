@@ -26,6 +26,9 @@ baseline. They do not imply completed implementation.
 | D017 | Evaluate physical acceptance only through an independent artifact analyzer whose reductions are validated by synthetic fault injection and a separately transcribed oracle before results are read; run full suites manually from clean Release builds, keep smoke-length reductions in CTest/CI | Separates solver output from its judgement, catches analysis defects before they can mask or fabricate a pass, and keeps the fast suite bounded; see REF-05 contract/evidence | Suite runtime, hosted-runner capacity, or a new observable that the synthetic/oracle coverage does not exercise |
 | D018 | Fix the P2 conventions before any P2 code: per-cell isotropic `eps_r>=1`/`sigma>=0` with `mu0`, four-cell arithmetic edge averaging, time-centred conductivity coefficients that reproduce the vacuum kernel bitwise, the unchanged vacuum CFL policy justified by the eps-weighted dissipation identity, E-edge PEC masks with the outer closure as a special case, `exp(-i omega t)*dt` transforms with rectangular/Hann windows, and closed-form discrete comparators for V04–V07 | Keeps P1 evidence valid by construction, makes implementation and discretization errors separable, and fixes caps from exact predictions with a 24–35 percent margin; see the MAT-01 method note, specification and review | A material, boundary, or spectral requirement outside the declared scope (magnetic or dispersive media, subcell conductors, constant loss tangent, oblique interfaces) or a failed P2 measurement that traces to a convention rather than an implementation |
 | D019 | Represent PEC as an owned per-E-sample byte mask inside the reference stepper (outer closure always present, `pec_box`/`pec_shell` primitives by exact index arithmetic), screen initial data on masked E and enclosed H samples, skip masked edges in the unchanged FND-03 update ranges, reject currents on masked edges at the step, and keep the V04 evidence in a separate `closed-v1` benchmark library with an independent analyzer that imports the MAT-01 audit's closed-form predictions | Keeps the vacuum arithmetic bitwise identical (closure-only mask performs the same operations), makes enforcement exact rather than approximate, keeps solver code free of fixtures/CLI, and lets a V04 failure be attributed to implementation (discrete comparators) or discretization (continuum caps); see the MAT-02 contract and evidence | A conductor model that is not a set of full E edges (thin sheets, subcell/conformal surfaces, finite conductivity), a memory constraint that requires a bit mask, or a measured V04 failure traced to the mask semantics |
+| D020 | Require the V04-C driven cases to carry their pulse, not merely stay finite: the first electric state of the driven region equals the closed-form deposit `(dt/eps0) g_0` within 1e-12 with the rest of that region exactly zero, its peak reaches 0.1 of the largest single-step deposit, and the invariant `Q` is zero at state 0, positive after the pulse and constant to 1e-12 (MAT-01 specification revision 1.2) | A criterion satisfied by a run that injected nothing cannot distinguish enforcement from inaction; the deposits come from the specification audit, so acceptance stays independent of solver output, and the smoke path now fails a driven case that stops carrying its pulse; see D020 detail and the MAT-02 addendum | A driven closed-domain case whose source is not a single prescribed edge current, or an update ordering in which more than the driven edge moves at state 1 |
+| D021 | Name the component and the edge in the V04-C driven acceptance: the first deposit is required in `Ez`, with every other component zero at state 1 in the driven region and over the whole domain, and the native `Ez` sample of the prescribed source edge must equal the signed `-(dt/eps0) J0 g_0` at state 1 while the other prescribed probes stay zero (MAT-01 specification revision 1.3); pin the emitted `initialization` description to the specified form, admitting the one historical mode string only with the source snapshot that emitted it | Region maxima are unsigned and carry no location, so revision 1.2's largest-of-three comparison accepted an `Ex` deposit and no requirement referred to the driven edge; the probe record already contains the source edge, so the stronger check needs no new observable and no solver output; pinning the description keeps a run reproducible from its own metadata without rewriting retained raw evidence | A driven case whose source component or edge is not fixed by the specification, or a second historical metadata string that has to be admitted |
+| D022 | Require the probe record to be complete rather than uniform: every state must record the same set of probe keys, a source case must record exactly the `Ez` edges its own `probe_indices` declares, the C2/C3 declared and recorded sets must equal the version-1 fixture sets computed by the specification audit, and a reduction must read a prescribed sample as present rather than defaulting an absent one to zero (MAT-01 specification revision 1.4) | Counting rows per state accepts a prescribed probe that is absent from every state, because the count stays uniform; a defaulting lookup then silently converts the missing measurement into a passing zero, so deleting a whole probe left both the audit and the reduction passing | A case whose recorded probe set legitimately varies between states, which no closed-v1 case does |
 
 ## Open decisions
 
@@ -64,6 +67,132 @@ must produce, so its method/reference study is due at that gate. The
 under D010–D017 without a new decision; it fixes no P2 method or tolerance.
 MAT-01 (2026-09-18) adds D018; none of O005–O010 is due before MAT-02.
 MAT-02 (2026-09-18) adds D019; none of O005–O010 is due before MAT-03.
+
+## D022 detail — probe-record completeness on 2026-09-22
+
+Status: implemented; the MAT-02 runs were re-analyzed under it and pass. See
+[MAT-01 revision 1.4](validation/MAT-01-closed-domain-benchmarks.md) and the
+[MAT-02 addendum](validation/MAT-02-pec-cavity.md). Same-author review.
+
+Question: the structural audit checked that every state carried the same
+*number* of probe rows, and the revision-1.3 reduction read the prescribed
+samples through a defaulting lookup. Neither can see a probe that is missing
+from the whole record: the count stays uniform, and the absent samples are read
+as the zeros the requirements expect. Deleting all 4,097 samples of the second
+prescribed probe from copies of both driven cases left the audit and the full
+PEC reduction passing. What should the record be required to contain?
+
+Considered: requiring only a total row count `(steps+1) * probes` (rejected:
+it admits a record that compensates one probe's absence with another's
+duplicate, and the audit's per-row uniqueness rule is what would have to catch
+that). Considered comparing against a fixed per-case expectation in the
+analyzer (rejected: the prescribed indices are already in each artifact's own
+metadata, and deriving them twice would drift). Chosen: compare the recorded
+`(component, index)` key set — identical at every state, and for a source case
+exactly equal to the `probe_indices` the artifact declares — and, in the
+reduction, require each sample it reads to be present. The audit rule is
+expressed as a pure function over the per-state key sets so its faults can be
+injected without fabricating an artifact directory. Because that rule compares
+an artifact with its own declaration, the V04-C reduction adds the second
+layer the review asked for: the specification audit derives the C2/C3 probe
+pairs from the fixture (`(10,12,16)`/`(8,10,12)` and `(1,1,1)`/`(9,11,13)`,
+with both interior edges confirmed strictly inside the shell and unmasked) and
+the reduction requires the declared and recorded sets to equal them, so a run
+that also trimmed its `probe_indices` cannot define its own coverage.
+
+Consequences: the rule applies to every closed-v1 case, mode cases included,
+and is a completeness statement rather than a tolerance. The retained V04 raw
+runs pass unchanged and every tracked value is bit-identical; the only summary
+change is the rule version. `reference.closed_analysis` grows from 709 to 726
+checks, including the deletion that previously passed and a duplicated sample
+standing in for a missing one. Revisit if a case is
+added whose recorded probe set legitimately varies between states.
+
+## D021 detail — V04-C component/edge identity and metadata description on 2026-09-22
+
+Status: implemented; the MAT-02 runs were re-analyzed under it and pass. See
+[MAT-01 revision 1.3](validation/MAT-01-closed-domain-benchmarks.md), the
+[review report](validation/MAT-02-review-2026-09-22.md) and the
+[MAT-02 addendum](validation/MAT-02-pec-cavity.md). Same-author review.
+
+Question: revision 1.2 anchored the driven side to a closed-form deposit, but
+compared it with the *largest* of the three electric region maxima, and region
+maxima are unsigned aggregates over a whole region. Two things therefore
+remained unpinned: the component the fixed `J_z` source drives, and the edge it
+drives. A separate finding concerned metadata rather than acceptance: every
+mode case emitted an `initialization` description carrying the amplitude
+`H_s = -C E_s/(mu0 Omega)` where the field written at `-dt/2` is
+`H^(-1/2) = -H_s sin(omega_d dt/2)`, the positive form the initializer, the
+specification and the independent oracle all use. Reconstructing the fixture
+from that description reverses the magnetic field.
+
+Considered for the acceptance: adding a region maximum per component
+(rejected: still unsigned and still region-wide, so it fixes the component but
+never the edge). Considered recording a new per-edge observable (rejected: C2
+and C3 already probe their source edge, so the artifact contains the sample and
+no run has to be repeated). Chosen: require the `Ez` region maximum
+specifically, require every other component to be zero at state 1 both in the
+region and over the whole domain, and check the native source-edge sample
+against the *signed* `-(dt/eps0) J0 g_0`, which also fixes the sign convention
+of the update equation. Considered for the metadata: rewriting the retained
+artifacts (rejected: raw evidence is not edited after the fact) and leaving the
+description uncontrolled (rejected: it is the only record of the initial
+condition inside a run). Chosen: correct the emitter, pin the description in
+the structural audit, and admit the single historical string only together with
+the source snapshot `f02fbe47…` that produced it.
+
+Consequences: the analyzer gained a component-explicit excitation check and a
+source-probe reduction; `reference.closed_analysis` grows from 684 to 709
+checks, including the exact mutation that revision 1.2 accepted. The retained
+V04 raw runs pass unchanged and every previously tracked number is bit-identical;
+the summary diff is the two new source-probe metrics per driven case and the
+rule version. The metadata correction changes `benchmarks/closed.cpp`, so the
+source fingerprint moves from `f02fbe47…` to `706af2e4…`; no computed field
+changed, and the retained runs keep their own fingerprint and their historical
+description. Revisit if a driven case is added whose source component or edge
+is not fixed by the specification, or if another historical metadata string
+has to be admitted.
+
+## D020 detail — V04-C driven acceptance on 2026-09-22
+
+Status: implemented; the MAT-02 runs were re-analyzed under it and pass. See
+[MAT-01 revision 1.2](validation/MAT-01-closed-domain-benchmarks.md) and the
+[MAT-02 addendum](validation/MAT-02-pec-cavity.md). Same-author review.
+
+Question: the version-1 V04-C acceptance for the driven cases required the
+silent side to be exactly zero and the driven side to be finite. Both halves
+are satisfied by a run that injects nothing, so the criterion could not fail
+on a dead or decoupled region. What positive requirement should replace
+finiteness, and where should it come from?
+
+Considered: leaving the specification alone and treating the existing
+coverage as sufficient (rejected: the C1 equivalence and the four-state oracle
+cover `pec-c1-*` and `pec-c3-outside` at smoke length only, and
+`pec-c2-inside` had no positive-field coverage at any length). Considered a
+purely relative check against a previously measured peak (rejected: it would
+make the acceptance depend on a solver result rather than on the
+specification, and the validation plan requires absolute floors where relative
+comparison is ill-conditioned). Considered requiring only the energy invariant
+(rejected: it detects a dead region but says nothing about whether the field
+that exists is the one the prescribed source deposits). Chosen: an exact
+closed-form anchor plus a coarse floor plus the invariant — the first electric
+state equals `(dt/eps0) g_0` with the rest of the region exactly zero, the
+driven peak reaches 0.1 of the largest single-step deposit, and `Q` is zero at
+state 0, positive after the pulse and constant to 1e-12 thereafter. The
+deposits are computed by the specification audit from the fixed pulse and time
+step, so the acceptance and the specification keep sharing one set of
+predictions, as D019 already established for the V04 comparators.
+
+Consequences: no solver, fixture, geometry, cap or identification limit
+changed and no recorded measurement changed value; the tracked summary diff is
+purely additive. `reference.closed_analysis` grows from 665 to 684 checks and
+the smoke path now also verifies the deposit, so a driven case that stops
+carrying its pulse fails in CI rather than only in the manual suites. The
+`0.1` fraction is a dead-region floor and not an accuracy claim; the state-1
+equality is the sharp part. Revisit if a driven closed-domain case is added
+whose source is not a single prescribed edge current, or if a valid
+implementation orders the first update so that more than the driven edge moves
+at state 1.
 
 ## D019 detail — MAT-02 PEC mask and V04 evidence decisions on 2026-09-18
 

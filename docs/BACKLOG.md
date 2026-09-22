@@ -1,6 +1,6 @@
 # Backlog and project status
 
-Last updated: 2026-09-18.
+Last updated: 2026-09-22.
 
 ## Current position
 
@@ -29,7 +29,9 @@ Last updated: 2026-09-18.
   cavity resonance (exact eigenmodes at three resolutions with second-order
   refinement and the magnetic relation), driven-cavity mode identification and
   resolution, and interior shell enforcement within the MAT-01 V04 envelope,
-  as measured in the [MAT-02 evidence](validation/MAT-02-pec-cavity.md). No
+  as measured in the [MAT-02 evidence](validation/MAT-02-pec-cavity.md) and
+  re-confirmed on 2026-09-22 under specification revisions 1.2, 1.3 and 1.4 of
+  the V04-C driven acceptance and probe-record completeness. No
   material, spectral-production, open-boundary, oblique/broadband, port, or
   antenna capability is validated.
 - **Active implementation item:** none.
@@ -69,7 +71,7 @@ prerequisites; the chosen sequence may be stricter to keep work focused.
 | REF-05 | P1 | Measure propagation, impedance, stability, and refinement behavior | REF-04 | Done | [Measurement contract](methods/REF-05-measurement-contract.md); [36/36 propagation, 4/4 stability, refinement/enlarged evidence](validation/REF-05-reference-measurements.md); [compact metrics](validation/REF-05-analysis-summary.json); D017 |
 | REF-06 | P1 | Review reference-propagation gate | REF-05 | Done | [P1 gate: pass; supported limits; clean-build exact reproduction](validation/REF-06-reference-propagation-gate.md) |
 | MAT-01 | P2 | Specify PEC, dielectric, conductivity, and spectral conventions | REF-06 | Done | [Method note](methods/MAT-01-closed-domain-conventions.md); [V04–V07/S09–S14 specification](validation/MAT-01-closed-domain-benchmarks.md); [audit/review evidence, 13/13 CTests](validation/MAT-01-review.md); D018 |
-| MAT-02 | P2 | Implement and validate explicit PEC boundaries/cavity | MAT-01 | Done | [Contract](methods/MAT-02-pec-mask-contract.md); [S09 209550 checks, V04-A/B/C measured pass, V01–V03 zero-tolerance reproduction, 15/15 CTests](validation/MAT-02-pec-cavity.md); [compact metrics](validation/MAT-02-analysis-summary.json); D019 |
+| MAT-02 | P2 | Implement and validate explicit PEC boundaries/cavity | MAT-01 | Done | [Contract](methods/MAT-02-pec-mask-contract.md); [S09 209550 checks, V04-A/B/C measured pass, V01–V03 zero-tolerance reproduction, 15/15 CTests, 2026-09-22 addenda: V04-C driven acceptance strengthened to specification revisions 1.2-1.4 and re-analyzed, mode metadata sign corrected, probe records required complete](validation/MAT-02-pec-cavity.md); [compact metrics](validation/MAT-02-analysis-summary.json); D019, D020, D021, D022 |
 | MAT-03 | P2 | Implement and validate dielectric and conductive updates | MAT-02 | Ready | V05–V06 evidence and existing regressions |
 | MAT-04 | P2 | Implement spectral processing and validate sampling/normalization | MAT-03 | Planned | V07 and cavity spectral evidence |
 | MAT-05 | P2 | Review materials/closed-domain gate | MAT-04 | Planned | P2 gate record and P3 breakdown |
@@ -99,6 +101,179 @@ an ID, dependencies, a completion test, and an evidence location before starting
 | P13 | Justified MoM scope and multi-solver support | Planned |
 
 ## Session handoff
+
+**2026-09-22 — MAT-02 completion re-review passed**
+
+- No new actionable finding in the PEC implementation, acceptance checks or
+  evidence. Earlier R1/R2/R3 fixes verified. See the third completion review in
+  [the review record](validation/MAT-02-review-2026-09-22.md).
+- Fresh Clang 20.1.7 Debug/Release builds have no warnings; approved CTest runs
+  pass 15/15 each (137.78/135.79 s), including 209550 PEC and 726
+  reduction/oracle checks. Sandbox compiler/startup failures and successful
+  final runs are retained in `build/MAT-02-final-review-*` logs.
+- Retained V04 re-analysis reproduces the tracked summary byte for byte.
+  A fresh deletion of both driven cases' secondary probes is rejected by the
+  audit and reduction. Retained V01–V03 re-analysis passes and reproduces all
+  1,211 compared values; the comparator flags only the documented fingerprint
+  change. All 59 manifest entries matched before documentation updates.
+- Changed only the review record, this handoff and their manifest hashes.
+  Full physical solver runs, hosted CI, sanitizers and another machine were
+  not repeated. No new numerical or architecture decision was needed.
+- MAT-02 remains Done within its stated PEC-cavity scope. P2 remains open.
+  Next exact action: MAT-03; no schedule or implementation scope change.
+
+### Previous handoff (historical)
+
+**2026-09-22 — MAT-02 review finding R3 resolved (revision 1.4)**
+
+- R3 is fixed. The structural audit compared probe *rows per state*, which a
+  probe absent from every state satisfies, and `source_probe_checks` read the
+  prescribed samples through a defaulting lookup, so the absent samples were
+  read as the expected zeros. Reproduced independently before fixing: deleting
+  all 4,097 second-probe samples from copies of both driven cases (8,194 rows
+  to 4,097) left the audit and the full PEC analysis passing with empty failure
+  lists.
+- MAT-01 carries specification revision 1.4 in two layers. The audit compares
+  the recorded `(component, index)` key set — identical at every state and, for
+  a source case, exactly the `Ez` edges the artifact declares — through the
+  pure `probe_coverage` rule. Because that compares an artifact with itself,
+  the V04-C reduction uses the fixture instead: the specification audit derives
+  the C2/C3 probe pairs `(10,12,16)`/`(8,10,12)` and `(1,1,1)`/`(9,11,13)`,
+  confirms both interior edges are strictly inside the shell and unmasked, and
+  the reduction requires the declared and recorded sets to equal them and every
+  sample it reads to be present. D022.
+- `reference.closed_analysis` grows from 709 to 726 checks, the last two
+  covering a short declared probe set and a duplicated sample standing in for a
+  missing one. The review's own
+  `recheck-probe-completeness.py` now stops at the audit, and the reduction
+  reports 4097 of 8194 prescribed samples with both absent states named. That
+  re-run regenerated `signoff-missing-probe/result.json` with the post-fix
+  result; the pre-fix `pass` survives in the review report and in
+  `review-missing-probe/`.
+- Re-analysis of the retained raw run passes all four suites and reproduces the
+  tracked summary byte for byte. Fresh Debug and Release
+  (`build/MAT-02-r14-{debug,release}`) configure, build without warnings and
+  pass 15/15 CTests; no C++ or CMake input changed, so the fingerprint stays
+  `706af2e4…`.
+- Not repeated: a full physical re-run of V01–V04, hosted CI, and validation on
+  a second machine. MAT-02 stays Done; P2 remains open. Next exact action:
+  MAT-03.
+
+**2026-09-22 — MAT-02 second completion review: R3 open**
+
+- Reviewed `cc74055` plus the existing revision-1.3 changes; R1/R2 are fixed.
+  The [review report](validation/MAT-02-review-2026-09-22.md) records one new
+  acceptance defect: deleting all secondary-probe samples from C2/C3 still
+  passes the artifact audit and the complete PEC reduction, because absent
+  required zero-valued samples default to zero and the audit checks only a
+  constant row count. No incorrect solver field was found.
+- Fresh Debug and Release each passed 15/15 CTests; re-analysis of the original V04 evidence
+  reproduces the tracked summary exactly; all 59 manifest entries matched at
+  review start. The report contains the reproduction, logs and checks not
+  repeated. Existing implementation changes and original evidence are intact.
+- The historical Done decision above is preserved; unqualified sign-off now
+  awaits R3. Next exact action: require the complete prescribed C2/C3 probe
+  set at every state and add missing-record fault coverage before MAT-03.
+  P2 remains open; no phase or implementation item was advanced.
+
+**2026-09-22 — MAT-02 review follow-up resolved (revision 1.3 and the metadata sign)**
+
+- Both findings of the [review report](validation/MAT-02-review-2026-09-22.md)
+  are fixed. R1: the V04-C first-deposit check compared the largest of the
+  three electric region maxima with the closed-form deposit, so a deposit in
+  `Ex` or `Ey` passed the requirement for the fixed `J_z` source, and no
+  requirement referred to the driven edge. R2: every mode case emitted an
+  `initialization` description with the opposite initial-H sign (the amplitude
+  `H_s` in place of its value at `-dt/2`); the initializer, the specification
+  and the independent oracle were always positive, so no computed field was
+  affected.
+- MAT-01 carries specification revision 1.3: the `Ez` region maximum at state 1
+  equals the closed-form deposit with every other component zero in the driven
+  region and over the whole domain, and the native `Ez` sample of the
+  prescribed source edge equals the signed `-(dt/eps0) J0 g_0` =
+  -7.2292736715001706e-08 V/m while the other prescribed probes stay zero at
+  states 0 and 1. The structural audit now also pins the emitted
+  `initialization` description, admitting the historical mode string only with
+  the source snapshot `f02fbe47…` that emitted it, so retained raw evidence
+  stays auditable without being rewritten. D021.
+- `benchmarks/closed.cpp` emits the corrected description; the source
+  fingerprint moves from `f02fbe47…` to `706af2e4…`. No solver, fixture,
+  geometry or limit changed. `reference.closed_analysis` grows from 684 to 709
+  checks, including the exact mutation the review used: an `Ex` deposit with
+  the `Ez` source record zeroed now fails three requirements in both driven
+  cases, where before it passed the audit and the full reduction.
+- Re-analyzed the retained `build/evidence/MAT-02/run1` without re-running the
+  solver: all four suites pass, every previously tracked value is bit-identical,
+  and the summary gains only the two source-probe metrics per driven case and
+  the rule version. Fresh Debug and Release (`build/MAT-02-r13-{debug,release}`)
+  configure, build without warnings and pass 15/15 CTests.
+- Records updated: MAT-01 specification (revision 1.3), MAT-02 contract and
+  evidence addendum, the review report's resolution section, VALIDATION,
+  DECISIONS (D021), README, SCHEDULE and the source manifest, which gains the
+  review report and now has 59 entries, all verified.
+- Not repeated: a full physical re-run of V01–V04 under the new fingerprint,
+  hosted CI, and validation on a second machine. MAT-02 stays Done; P2 remains
+  open. Next exact action: MAT-03.
+
+**2026-09-22 — MAT-02 completion review follow-up**
+
+- Reviewed `cc74055` and the existing uncommitted revision-1.2 correction;
+  preserved those changes and the original evidence. The
+  [review report](validation/MAT-02-review-2026-09-22.md) records two open
+  findings: the C2/C3 first-deposit check accepts the wrong electric component,
+  and mode metadata describes the initial H field with the opposite sign.
+- Fresh Debug and Release each pass all 15 CTests; re-analysis reproduces the tracked V04
+  summary exactly and all 58 source-manifest entries matched at review start.
+  Build-environment failures, Debug results, and checks not repeated are
+  recorded in the report. No solver or analyzer fix was made during review.
+- The historical MAT-02 completion remains recorded above; an unqualified
+  sign-off awaits R1/R2. Next exact action: resolve those findings and refresh
+  affected validation/evidence before starting MAT-03. P2 remains open.
+
+**2026-09-22 — MAT-02 review: V04-C driven acceptance strengthened (revision 1.2)**
+
+- Reviewed the closed MAT-02 item against its evidence. Confirmed the S09
+  count (209550), the reduction/oracle test, the 58-entry source manifest, the
+  tracked V04-A/B/C results and provenance, and a clean worktree. Found one
+  real defect: the version-1 V04-C acceptance for the driven cases
+  `pec-c2-inside` and `pec-c3-outside` required only that the driven side stay
+  *finite*, which an identically-zero region satisfies. A synthetic C2/C3
+  record with every region maximum, `U` and `Q` set to zero passed the
+  analyzer with an empty failure list. No measured result was wrong; the
+  criterion could not have failed on a dead run.
+- MAT-01 carries specification revision 1.2 of the C2/C3 acceptance: the
+  largest electric region maximum at state 1 equals the closed-form deposit
+  `(dt/eps0) abs(g_0)` = 7.2292736715001706e-08 V/m within 1e-12 relative with
+  every other component of that region exactly zero; the driven peak reaches
+  at least 0.1 of the largest single-step deposit (0.17344677198144254 V/m);
+  `Q` is zero at state 0, positive after the 53-sample pulse and constant to
+  1e-12 relative thereafter; `dt` matches the v1 cavity definition. The
+  predictions come from `pulse_drive` in the specification audit and use no
+  solver output. The revision only adds requirements.
+- `scripts/analyze_closed_benchmarks.py` enforces them (new
+  `excitation_checks`, new metrics and report table, thresholds recorded in
+  the summary); `scripts/check_closed_analysis.py` gained a `driven_rows`
+  fixture and eight fault injections per driven case, including the
+  identically-zero record, which now fails three separate requirements.
+  `reference.closed_analysis` grows from 665 to 684 checks.
+- Re-analyzed the retained `build/evidence/MAT-02/run1` without re-running the
+  solver (`ANTENNASIM_SOURCE_SNAPSHOT` covers only C++/CMake inputs, none of
+  which changed; both fresh builds reproduce `f02fbe47…`). All four suites
+  pass: deposit error 6.77e-15 against 1e-12, driven peaks 1.033x and 1.116x
+  the largest deposit against a floor of 0.1, invariant drift 4.11e-16 and
+  3.74e-16 against 1e-12. Every previously recorded value in the tracked
+  summary is unchanged; the diff is purely additive.
+- Checks: fresh `build/MAT-02-r12-release` and `build/MAT-02-r12-debug`
+  configured from absent directories, built without warnings, 15/15 CTests
+  (107.26 s and 118.55 s), `reference.pec` 209550 and
+  `reference.closed_analysis` 684 in both. Not re-run: the manual V04/V01–V03
+  physical suites, which need no re-run because no solver input changed.
+- Records updated: MAT-01 specification (revision 1.2), MAT-02 evidence
+  (addendum, V04-C excitation table, regression matrix), tracked summary,
+  validation plan, backlog, schedule, decision log (D020), source manifest.
+- Next exact action: unchanged — MAT-03, as in the previous handoff.
+
+### Previous handoff (historical)
 
 **2026-09-18 — MAT-02 explicit PEC edges and V04 cavity evidence complete**
 
@@ -405,6 +580,9 @@ an ID, dependencies, a completion test, and an evidence location before starting
 | 2026-09-18 | MAT-01 complete | P2 method note and V04–V07/S09–S14 specifications fixed with audited caps; new analytical audit registered; fresh Debug/Release 13/13 without warnings; D018; C05 in progress; MAT-02 ready; no P2 physics validated |
 | 2026-09-18 | MAT-01 review correction | Two fixture contradictions (V04-C solid box, V06-A lossless start) found in review and fixed; `pec_shell` primitive added; audit extended to enumerate the V04-C mask and the lossy modal recursion; 13/13 CTests still pass; MAT-01 remains Done, MAT-02 ready |
 | 2026-09-18 | MAT-02 complete | Explicit E-edge PEC mask, S09, closed-v1 suites and independent analyzer; V04-A/B/C pass from a clean Release build with V01–V03 reproduced at zero tolerance; fresh Debug/Release 15/15 without warnings; V04-B growth rule revised to 1.1 with the failing v1 analysis retained; D019; MAT-03 ready; P2 open |
+| 2026-09-22 | MAT-02 review correction | Review found the V04-C driven acceptance could not fail on a dead run (finiteness only); specification revision 1.2 adds the closed-form deposit, the excitation floor and the post-pulse invariant; analyzer and reduction test enforce them (665 to 684 checks); retained runs re-analyzed without a solver re-run and pass with 10x–2400x margins; fresh Debug/Release 15/15 without warnings; D020; MAT-02 remains Done; MAT-03 still the next action |
+| 2026-09-22 | MAT-02 review follow-up resolved | Review findings R1/R2 fixed: specification revision 1.3 names the driven component and checks the prescribed source edge's signed native sample, and the audit pins the emitted initial-condition description after the mode metadata sign was corrected in `benchmarks/closed.cpp` (fingerprint `f02fbe47…` to `706af2e4…`, no computed field affected); 684 to 709 checks including the mutation that previously passed; retained runs re-analyzed without a solver re-run, all tracked values bit-identical; fresh Debug/Release 15/15 without warnings; D021; MAT-02 remains Done; MAT-03 still the next action |
+| 2026-09-22 | MAT-02 review: probe completeness | Second completion review found a prescribed probe absent from every state passing both the audit (uniform row count) and the reduction (defaulting lookup); specification revision 1.4 requires the recorded key set to match the declaration at every state and pins the C2/C3 sets to the fixture-derived pairs, with every read sample required present; 709 to 726 checks including the deletion that previously passed; retained runs re-analyzed without a solver re-run, summary reproduced byte for byte; fresh Debug/Release 15/15 without warnings; D022; MAT-02 remains Done; MAT-03 still the next action |
 
 Add concise entries for work-item/cycle reviews, gate outcomes, material blockers,
 and sequencing changes. Keep detailed measurements in validation reports and link them.

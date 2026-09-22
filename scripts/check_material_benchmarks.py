@@ -392,6 +392,32 @@ def audit_v04_spectrum():
 V04C_MARGIN = 3
 V04C_SOURCE_INSIDE = (8, 10, 12)   # Ez edge index
 V04C_SOURCE_OUTSIDE = (1, 1, 1)    # Ez edge index
+# Revision 1.4: the prescribed C2/C3 probe sets, derived from the fixed fixture
+# rather than read back from a candidate artifact. C2 records the shifted V04-B
+# probe and its own source; C3 records its source in the margin and the centre
+# of the shielded cavity.
+V04C_PROBE_INSIDE = tuple(p + V04C_MARGIN for p in V04B_PROBE_INDEX)
+V04C_PROBE_SHIELDED = tuple(V04C_MARGIN + c // 2 for c in V04_BASE_CELLS)
+V04C_PROBES_INSIDE = (V04C_PROBE_INSIDE, V04C_SOURCE_INSIDE)
+V04C_PROBES_OUTSIDE = (V04C_SOURCE_OUTSIDE, V04C_PROBE_SHIELDED)
+# Revision 1.2 of the C2/C3 acceptance (see the specification): the driven side
+# must carry the pulse it was given, not merely stay finite.
+V04C_DRIVE_LIMIT = 1e-12           # relative agreement with the closed-form first deposit
+V04C_EXCITATION_FLOOR = 0.1        # fraction of the largest single-step deposit the driven peak must reach
+V04C_INVARIANT_LIMIT = 1e-12       # post-pulse relative drift of the invariant Q
+
+
+def pulse_drive():
+    """Closed-form electric deposit of the V04-B pulse on its own edge.
+
+    The first E update of a zero initial state has no curl contribution, so the
+    driven edge takes exactly `(dt/eps0) g_0`; the largest single-step deposit
+    is `(dt/eps0) max|g_m|`. Both follow from the fixed pulse and time step and
+    use no solver output. Returns `(dt, first, peak, pulse_length)`.
+    """
+    dt = cavity(1)[3]
+    samples = pulse_samples(dt, V04B_TAU)
+    return dt, dt / EPS0 * abs(samples[0]), dt / EPS0 * max(abs(g) for g in samples), len(samples)
 
 
 def e_edges(cells, component):
@@ -447,6 +473,16 @@ def audit_v04_enforcement():
     require(pec_marked(2, V04C_SOURCE_INSIDE, box, False), "C2 source must be masked by the solid box")
     require(any(V04C_SOURCE_OUTSIDE[axis] < box[axis][0] for axis in range(3)) and
             not pec_marked(2, V04C_SOURCE_OUTSIDE, box, True), "C3 source must be outside")
+    # Revision 1.4: each case records its own source edge and one edge on the
+    # other side of the shell, both unmasked; these are the prescribed probes.
+    for probe in (V04C_PROBE_INSIDE, V04C_PROBE_SHIELDED):
+        require(all(box[axis][0] < probe[axis] < box[axis][1] for axis in range(3))
+                and not pec_marked(2, probe, box, True),
+                "C2/C3 interior probe must be strictly inside and unmasked")
+    require(V04C_SOURCE_INSIDE in V04C_PROBES_INSIDE and V04C_SOURCE_OUTSIDE in V04C_PROBES_OUTSIDE,
+            "each driven case must record its own source edge")
+    require(len(set(V04C_PROBES_INSIDE)) == 2 and len(set(V04C_PROBES_OUTSIDE)) == 2,
+            "each driven case records two distinct edges")
     # The outer closure equals the shell of the whole domain.
     whole = tuple((0, c) for c in cells)
     for a in range(3):
@@ -457,6 +493,20 @@ def audit_v04_enforcement():
           "sources inside=%s outside=%s" % (cells, box, sum(counts["shell"]), counts["shell"],
                                             sum(counts["box"]), conflicts["box"], V04C_SOURCE_INSIDE,
                                             V04C_SOURCE_OUTSIDE))
+    print("V04-C prescribed probes: C2 %s, C3 %s" % (V04C_PROBES_INSIDE, V04C_PROBES_OUTSIDE))
+    # Revision 1.2: the excitation predictions the C2/C3 acceptance compares against.
+    dt, first, peak, length = pulse_drive()
+    floor = V04C_EXCITATION_FLOOR * peak
+    require(0 < first < peak, "the first deposit must be positive and below the largest one")
+    require(length == len(pulse_samples(dt, V04B_TAU)) and length % 2 == 1, "pulse length")
+    # The floor separates a driven region from a dead one by many orders: it sits
+    # far above the roundoff of the peak and far below the peak itself.
+    require(floor / (peak * 2.3e-16) > 1e12, "excitation floor is not clear of roundoff")
+    require(V04C_DRIVE_LIMIT >= 1e-13 and V04C_INVARIANT_LIMIT >= 1e-13,
+            "drive/invariant limits must stay above binary64 accumulation")
+    print("V04-C drive: dt=%.17g first deposit=%.17g V/m, largest=%.17g V/m, pulse=%d samples; "
+          "excitation floor=%.17g V/m (%.2g of the largest); drive limit=%g; invariant limit=%g"
+          % (dt, first, peak, length, floor, V04C_EXCITATION_FLOOR, V04C_DRIVE_LIMIT, V04C_INVARIANT_LIMIT))
     return sum(counts["shell"])
 
 

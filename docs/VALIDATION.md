@@ -62,10 +62,19 @@ V01–V03 have status **Version 1 measured and passed (REF-05, 2026-09-16);
 P1 gate passed and measurements reproduced exactly from a clean build (REF-06,
 2026-09-17)**. They are permanent regressions: any change to the kernel, fixtures,
 or analyzer must keep them passing with their fixed limits.
-V04 has status **Version 1 measured and passed (MAT-02, 2026-09-18)** from a
-clean Release build with the independent, fault-checked closed-v1 analyzer;
-it is a permanent regression through the `closed-v1` suites and their smoke
-subset. V05–V07 have status **Version 1 specified (MAT-01, 2026-09-18); not
+V04 has status **Version 1 measured and passed (MAT-02, 2026-09-18);
+re-confirmed under specification revisions 1.2, 1.3 and 1.4 of the V04-C
+driven acceptance and probe-record completeness (2026-09-22)** from a clean Release build with the independent, fault-checked
+closed-v1 analyzer; it is a permanent regression through the `closed-v1`
+suites and their smoke subset. Revision 1.2 followed a review finding that the
+version-1 C2/C3 criterion required only finiteness of the driven side and so
+could not fail on a run that injected nothing, and revision 1.3 a follow-up
+finding that the strengthened criterion still accepted the deposit in the
+wrong electric component and never referred to the driven edge, and revision
+1.4 a third finding that a prescribed probe absent from every state passed both
+the audit and the reduction, which read its missing samples as zero; the same
+raw runs pass all three revisions with the margins in the
+[MAT-02 evidence](validation/MAT-02-pec-cavity.md). V05–V07 have status **Version 1 specified (MAT-01, 2026-09-18); not
 run**: fixtures, closed-form discrete and continuum comparators, fixed caps,
 resource budgets, and the S10–S14 structural extensions are in the
 [MAT-01 specification](validation/MAT-01-closed-domain-benchmarks.md). V08–V15
@@ -103,11 +112,23 @@ samples, bitwise agreement of the closure-only mask with the vacuum kernel and
 stepper, and the rejection matrix (inverted/out-of-range primitives, mask/grid
 mismatch, nonzero masked or enclosed initial samples, a current on a masked
 edge, the V04-C mode and C2 source inside a solid box). `reference.closed_analysis`
-(MAT-02) adds 665 checks: synthetic exact modes on all 30 V04-A configurations
+(MAT-02) adds 726 checks: synthetic exact modes on all 30 V04-A configurations
 with the specified fault injections, the V04-B modal-sum record with shifted,
 spurious, missing, truncated, growing and nonfinite faults, synthetic V04-C
 C1/C2/C3 with region-leak, interior-deviation, missing-reference and mask-count
-faults, and the four-step closed-v1 smoke suite reproduced by a pure-Python
+faults, under specification revision 1.2 the driven-excitation faults
+(an identically-zero record, a perturbed first deposit, a second component
+moving at state 1, a peak below the floor, a drifting invariant, a nonzero
+start and a wrong time step), under revision 1.3 the wrong-component and
+wrong-edge faults (the deposit moved to `Ex`, a wrong-sign or dead source
+sample, a leaking second probe, a non-`Ez` or relocated probe, an unprobed
+source edge, and the mutation revision 1.2 accepted) together with the
+emitted initial-condition description, under revision 1.4 the probe-record
+coverage faults (a uniformly absent probe, an extra probe, a set that varies
+between states, a missing state, an empty record, a deleted second probe, a
+single deleted state, a deleted source sample, a short declared probe set and
+a duplicate standing in for a missing sample), and the four-step closed-v1 smoke suite
+reproduced by a pure-Python
 oracle with an independently enumerated mask (probes, `U`, `Q`, component and
 region maxima within 1e-12), including the shell case reproducing the open
 cavity bitwise.

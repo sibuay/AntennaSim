@@ -25,7 +25,9 @@ from check_material_benchmarks import (cavity_mode, cavity_lines, pulse_samples,
                                        V04_DISCRETE_LIMIT, V04_STRUCTURE_LIMIT, V04_BASE_CELLS, V04B_STEPS,
                                        V04B_SHORT_STEPS, V04B_SOURCE_INDEX, V04B_PROBE_INDEX, V04B_TAU, V04B_FCUT,
                                        V04B_STRENGTH_FLOOR, V04B_PEAK_BIN_LIMIT, V04B_HEIGHT_LIMIT, V04C_MARGIN,
-                                       V04C_SOURCE_INSIDE, V04C_SOURCE_OUTSIDE)
+                                       V04C_SOURCE_INSIDE, V04C_SOURCE_OUTSIDE, V04C_PROBES_INSIDE,
+                                       V04C_PROBES_OUTSIDE, pulse_drive,
+                                       V04C_DRIVE_LIMIT, V04C_EXCITATION_FLOOR, V04C_INVARIANT_LIMIT)
 from check_reference_runs import read_json, C0, MU0, EPS0, ETA0, NAMES
 
 SCHEMA = "closed-v1-raw-1"
@@ -44,10 +46,37 @@ MODES = ((1, 1), (2, 1), (1, 2))
 AXES = "xyz"
 V04C_BOX = [[V04C_MARGIN, V04C_MARGIN + c] for c in V04_BASE_CELLS]
 REGIONS = ("interior", "surface", "exterior")
+# The emitted initial-condition descriptions, checked against the MAT-01
+# convention so that a run can be reproduced from its own metadata. Revision
+# 1.3 (MAT-02 finding R2) corrected the mode sign: the description printed the
+# amplitude `H_s=-C E_s/(mu0 Omega)` where the emitted field is its value at
+# -dt/2, `H^(-1/2)=-H_s sin(omega_d dt/2)`. The initializer was always positive.
+# The historical string is accepted only for the exact source snapshot that
+# emitted it, so the retained V04 raw evidence stays auditable while any other
+# description fails.
+MODE_INITIALIZATION = ("exact discrete standing mode: E_a=A sin(k_b r_b) sin(k_c r_c) at t=0; "
+                       "H=+(C E_s) sin(omega_d dt/2)/(mu0 Omega) at -dt/2 by permutation curl")
+SOURCE_INITIALIZATION = "zero fields"
+HISTORICAL_MODE_INITIALIZATION = ("exact discrete standing mode: E_a=A sin(k_b r_b) sin(k_c r_c) at t=0; "
+                                  "H=-C E_s/(mu0 Omega) sin(omega_d dt/2) at -dt/2 by permutation curl")
+HISTORICAL_SNAPSHOT = "f02fbe47c49ba3067e23051e3e10bc22456f1bfd522c5fd767ae20872e4bf61e"
 
 
 def finite(value):
     return isinstance(value, float) and math.isfinite(value)
+
+
+def initialization_accepted(meta):
+    """True when the emitted initial-condition description is the specified one.
+
+    The one historical mode description (the revision 1.3 sign typo) is accepted
+    only together with the source snapshot that emitted it.
+    """
+    description = meta["initialization"]
+    if description == (MODE_INITIALIZATION if meta["kind"] == "mode" else SOURCE_INITIALIZATION):
+        return True
+    return (meta["kind"] == "mode" and description == HISTORICAL_MODE_INITIALIZATION
+            and meta["source_snapshot_sha256"] == HISTORICAL_SNAPSHOT)
 
 
 def has_failure(metrics, text):
@@ -116,6 +145,31 @@ def shell_counts(cells, box):
     return counts
 
 
+def probe_coverage(meta, per_state):
+    """Revision 1.4: the probe record must be complete, not merely uniform.
+
+    ``per_state`` maps each state to the set of `(component id, index)` keys
+    recorded for it. Counting rows per state, as revisions 1–1.3 did, accepts a
+    prescribed probe that is absent from *every* state, because the count stays
+    uniform; the reductions then read the missing samples as zero. Every state
+    must therefore record the same keys, and a source case must record exactly
+    the `Ez` edges its own metadata prescribes.
+    """
+    if sorted(per_state) != list(range(meta["steps"] + 1)):
+        return "probe states"
+    recorded = {frozenset(keys) for keys in per_state.values()}
+    if len(recorded) != 1:
+        return "probe keys differ between states"
+    keys = next(iter(recorded))
+    if not keys:
+        return "no probe samples"
+    if meta["kind"] == "source":
+        prescribed = frozenset((NAMES.index("Ez"), tuple(index)) for index in meta["probe_indices"])
+        if keys != prescribed:
+            return "recorded probes differ from the prescribed indices"
+    return None
+
+
 def load_case(directory):
     meta = read_json(directory / "metadata.json")
     with (directory / "probes.csv").open(newline="") as handle:
@@ -146,6 +200,8 @@ def audit_closed(root, suite):
             raise ValueError("metadata identity")
         if meta["case_status"] != "raw_complete" or meta["fixture_checks_status"] != "passed":
             raise ValueError("incomplete case metadata")
+        if meta["kind"] not in ("mode", "source") or not initialization_accepted(meta):
+            raise ValueError("initial condition description")
         if len(meta["source_snapshot_sha256"]) != 64:
             raise ValueError("source fingerprint")
         if not (meta["c0"] == C0 and meta["mu0"] == MU0 and meta["epsilon0"] == EPS0 and meta["eta0"] == ETA0):
@@ -193,7 +249,7 @@ def audit_closed(root, suite):
             if not (0 <= n <= steps and key not in seen):
                 raise ValueError("unique state/sample")
             seen.add(key)
-            per_state[n] = per_state.get(n, 0) + 1
+            per_state.setdefault(n, set()).add((id, index))
             for a, name in enumerate(("x_m", "y_m", "z_m")):
                 half = .5 if (a == id if id < 3 else a != id - 3) else 0
                 expected_position = (index[a] + half) * spacing[a]
@@ -201,8 +257,9 @@ def audit_closed(root, suite):
                 if not (0 <= index[a] < extents[id][a] and
                         abs(position - expected_position) <= 5e-15 * max(spacing[a], abs(expected_position))):
                     raise ValueError("native location")
-        if sorted(per_state) != list(range(steps + 1)) or len(set(per_state.values())) != 1:
-            raise ValueError("probe rows per state")
+        error = probe_coverage(meta, per_state)
+        if error is not None:
+            raise ValueError(error)
         with (directory / "diagnostics.csv").open(newline="") as handle:
             energy = list(csv.DictReader(handle))
         if len(energy) != (steps + 1 if meta["diagnostics"] else 0):
@@ -538,6 +595,108 @@ def region_checks(rows, zero_regions, finite_regions):
     return worst_zero, failures
 
 
+def excitation_checks(values, region, metrics, fixed_suite):
+    """V04-C revision 1.2: the driven side must carry the pulse it was given.
+
+    The references are the closed-form electric deposits of the fixed pulse on
+    its own edge and the dissipationless invariant; none uses solver output.
+    Finiteness alone cannot separate a shielded driven region from a dead one.
+
+    Revision 1.3 (MAT-02 finding R1) names the component: the fixed source is
+    `J_z` on an Ez edge, so the first deposit belongs to Ez alone. Sorting the
+    three electric maxima, as revision 1.2 did, accepted an Ex or Ey deposit.
+    """
+    failures = []
+    _, drive, largest, pulse_length = pulse_drive()
+    metrics["drive_prediction"] = drive
+    metrics["excitation_floor"] = V04C_EXCITATION_FLOOR * largest
+    if len(values) < 2:
+        return ["driven case has no state after the first update"]
+    first = values[1]
+    driven = first[region + "_Ez"]
+    metrics["drive_first_state"] = driven
+    metrics["drive_error"] = abs(driven / drive - 1)
+    if metrics["drive_error"] > V04C_DRIVE_LIMIT:
+        failures.append("first driven Ez sample %.17g differs from the closed-form deposit %.17g by %.3g"
+                        % (driven, drive, metrics["drive_error"]))
+    # Both the driven region and the whole domain: at state 1 only Ez has moved.
+    moved = [name for name in NAMES
+             if name != "Ez" and (first[region + "_" + name] != 0 or first["max_" + name] != 0)]
+    if moved or first["max_Ez"] != driven:
+        failures.append("the first update touched more than the driven Ez edge: %s"
+                        % (", ".join(moved) if moved else "Ez outside the driven region"))
+    peak = max(metrics["max_alive"][name] for name in NAMES[:3])
+    metrics["excitation_peak"] = peak
+    metrics["excitation_ratio"] = peak / largest
+    if not fixed_suite:
+        return failures                  # a smoke-length run has no post-pulse record
+    if peak < metrics["excitation_floor"]:
+        failures.append("driven region peak E %.3g is below the excitation floor %.3g"
+                        % (peak, metrics["excitation_floor"]))
+    after = [row["Q_J"] for row in values[pulse_length:]]
+    if not after or after[0] <= 0:
+        failures.append("the invariant Q is not positive after the pulse")
+    else:
+        drift = max(abs(q - after[0]) / after[0] for q in after)
+        metrics["post_pulse_invariant"] = after[0]
+        metrics["post_pulse_invariant_drift"] = drift
+        if drift > V04C_INVARIANT_LIMIT:
+            failures.append("the invariant Q drifts by %.3g after the pulse" % drift)
+    return failures
+
+
+def source_probe_checks(probes, source, indices, steps, metrics):
+    """V04-C revision 1.3: the prescribed source edge itself, from the native record.
+
+    Region maxima are unsigned and carry no location, so they cannot show which
+    edge was driven. The C2/C3 configurations record the source edge among their
+    Ez probes: the first E update of a zero state has no curl contribution, so
+    that sample is exactly `-(dt/eps0) J0 g_0` (negative: the update subtracts
+    the current), and every other prescribed probe is still zero.
+
+    ``source`` and ``indices`` are the version-1 fixture's own edges (revision
+    1.4), not the candidate artifact's declaration, so a run that records or
+    declares fewer probes than the specification prescribes cannot define its
+    own coverage.
+    """
+    failures = []
+    _, drive, _, _ = pulse_drive()
+    samples = {}
+    for row in probes:
+        if row["component"] != "Ez":
+            failures.append("probe component %s is not the driven Ez" % row["component"])
+            continue
+        index = tuple(int(row[key]) for key in "ijk")
+        if index not in indices:
+            failures.append("probe %s is not a prescribed index" % (index,))
+            continue
+        key = int(row["state"]), index
+        if key in samples:
+            failures.append("probe %s has a duplicate state %d sample" % (index, key[0]))
+        samples[key] = float(row["value"])
+    # Revision 1.4: an absent sample is a missing measurement, never a zero.
+    expected = (steps + 1) * len(indices)
+    if len(samples) != expected:
+        failures.append("the record holds %d prescribed probe samples, expected %d (%d probes over %d states)"
+                        % (len(samples), expected, len(indices), steps + 1))
+    if (1, source) not in samples:
+        failures.append("the source edge has no state 1 sample")
+    else:
+        value = samples[1, source]
+        metrics["source_probe_first_state"] = value
+        metrics["source_probe_error"] = abs(value / (-drive) - 1)
+        if metrics["source_probe_error"] > V04C_DRIVE_LIMIT:
+            failures.append("the state 1 source sample %.17g differs from the signed closed-form deposit "
+                            "%.17g by %.3g" % (value, -drive, metrics["source_probe_error"]))
+    for index in indices:
+        for state in (0, 1) if index != source else (0,):
+            if (state, index) not in samples:
+                failures.append("probe %s has no state %d sample" % (index, state))
+            elif samples[state, index] != 0:
+                failures.append("probe %s is not zero at state %d" % (index, state))
+    return failures
+
+
 def analyze_pec(meta, probes, diagnostics, reference=None, fixed_suite=True):
     """V04-C reductions; ``reference`` is the (meta, probes) of the matching cavity case for C1."""
     name = meta["case"]
@@ -596,10 +755,16 @@ def analyze_pec(meta, probes, diagnostics, reference=None, fixed_suite=True):
     else:
         inside = name == "pec-c2-inside"
         expected_source = list(V04C_SOURCE_INSIDE if inside else V04C_SOURCE_OUTSIDE)
+        expected_probes = [tuple(index) for index in (V04C_PROBES_INSIDE if inside else V04C_PROBES_OUTSIDE)]
         if meta["kind"] != "source" or meta["source_index"] != expected_source:
             failures.append("source edge differs from v1")
+        if sorted(tuple(index) for index in meta["probe_indices"]) != sorted(expected_probes):
+            failures.append("probe indices %s differ from the v1 set %s"
+                            % (meta["probe_indices"], [list(index) for index in expected_probes]))
         if fixed_suite and meta["steps"] != 4096:
             failures.append("steps %d differ from v1 4096" % meta["steps"])
+        if abs(meta["dt_s"] / pulse_drive()[0] - 1) > 5e-15:
+            failures.append("dt differs from the v1 cavity definition")
         zero = ("surface", "exterior") if inside else ("interior", "surface")
         alive = ("interior",) if inside else ("exterior",)
         worst_zero, region_failures = region_checks(rows, zero, alive)
@@ -610,10 +775,13 @@ def analyze_pec(meta, probes, diagnostics, reference=None, fixed_suite=True):
             if any(not math.isfinite(v) for r in values for v in r.values()):
                 failures.append("nonfinite diagnostic value")
             metrics["max_alive"] = {name_: max(r[alive[0] + "_" + name_] for r in values) for name_ in NAMES}
-            if values[0]["U_J"] != 0:
+            if values[0]["U_J"] != 0 or values[0]["Q_J"] != 0:
                 failures.append("driven case does not start from zero fields")
+            failures.extend(excitation_checks(values, alive[0], metrics, fixed_suite))
         if any(not math.isfinite(float(row["value"])) for row in probes):
             failures.append("nonfinite probe sample")
+        failures.extend(source_probe_checks(probes, tuple(expected_source), sorted(expected_probes),
+                                            meta["steps"], metrics))
         trace = []
     metrics["failures"] = failures
     metrics["status"] = "pass" if not failures else "fail"
@@ -760,6 +928,18 @@ def report(summary):
                     fmt(c.get("max_outside_sample", c.get("max_silent_sample")), 3),
                     fmt(c.get("equivalence_max_difference"), 3), c.get("equivalence_bitwise", "n/a"),
                     c.get("equivalence_matched", "n/a"), c["status"]))
+            driven = [c for c in suite["cases"] if c.get("drive_prediction") is not None]
+            if driven:
+                lines += ["", "| Driven case | first Ez sample | closed-form deposit | relative error | "
+                          "source edge sample | signed error | peak E | floor | ratio | invariant drift |",
+                          "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+                for c in driven:
+                    lines.append("| %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |" % (
+                        c["case"], fmt(c.get("drive_first_state"), 9), fmt(c["drive_prediction"], 9),
+                        fmt(c.get("drive_error"), 3), fmt(c.get("source_probe_first_state"), 9),
+                        fmt(c.get("source_probe_error"), 3), fmt(c.get("excitation_peak"), 4),
+                        fmt(c.get("excitation_floor"), 4), fmt(c.get("excitation_ratio"), 4),
+                        fmt(c.get("post_pulse_invariant_drift"), 3)))
         for c in suite["cases"]:
             for failure in c.get("failures", []):
                 lines.append("- FAIL %s: %s" % (c["case"], failure))
@@ -793,7 +973,9 @@ def main():
                               "height": V04B_HEIGHT_LIMIT, "strength_floor": V04B_STRENGTH_FLOOR,
                               "f_cut_hz": V04B_FCUT, "growth_factor": GROWTH_FACTOR,
                               "null_floor": NULL_FLOOR, "growth_rule_version": "1.1",
-                              "equivalence": EQUIVALENCE_LIMIT},
+                              "equivalence": EQUIVALENCE_LIMIT, "drive": V04C_DRIVE_LIMIT,
+                              "excitation_floor": V04C_EXCITATION_FLOOR, "invariant": V04C_INVARIANT_LIMIT,
+                              "excitation_rule_version": "1.4"},
                "analysis_environment": {"python": sys.version.split()[0], "platform": platform.platform()}}
     trace, peaks = [], []
     cavity_cases = {}

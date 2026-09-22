@@ -21,9 +21,11 @@ import tempfile
 from pathlib import Path
 
 from analyze_closed_benchmarks import (analyze_cavity, analyze_pec, analyze_spectrum, audit_closed, closure_counts,
-                                       line_specification, load_case, parse_cavity_name, refinement, AXES, MODES,
-                                       REGIONS, V04C_BOX)
-from check_material_benchmarks import (cavity_lines, cavity_mode, cyclic, pec_marked, pulse_samples, V04B_STEPS,
+                                       initialization_accepted, line_specification, load_case, parse_cavity_name,
+                                       probe_coverage, refinement, AXES, MODES, REGIONS, V04C_BOX,
+                                       HISTORICAL_MODE_INITIALIZATION, HISTORICAL_SNAPSHOT, MODE_INITIALIZATION,
+                                       SOURCE_INITIALIZATION)
+from check_material_benchmarks import (cavity_lines, cavity_mode, cyclic, pec_marked, pulse_samples, pulse_drive, V04B_STEPS,
                                        V04B_SHORT_STEPS, V04B_SOURCE_INDEX, V04B_PROBE_INDEX, V04B_TAU, V04B_FCUT,
                                        V04_BASE_CELLS, V04C_MARGIN, V04C_SOURCE_OUTSIDE)
 from check_reference_analysis import Oracle, half_offsets, close, MU0, EPS0, PI
@@ -254,6 +256,64 @@ def region_rows(steps, dt, alive, silent_value=0.0, silent_at=None, silent_regio
     return rows
 
 
+def driven_rows(steps, dt, alive, silent_value=0.0, silent_at=None, silent_region=None,
+                drive_factor=1.0, peak_factor=1.0, invariant=1e-17, invariant_drift=0.0,
+                start_energy=0.0, first_extra=0.0, deposit="Ez"):
+    """Region maxima of an idealized C2/C3 record: zero fields, the closed-form
+    first deposit on the driven edge alone, the pulse peak, then a constant
+    invariant. The factors inject the revision 1.2 faults; ``deposit`` moves the
+    first deposit to another component (the revision 1.3 wrong-component fault)."""
+    _, drive, largest, pulse_length = pulse_drive()
+    extra = "Ey" if deposit == "Ex" else "Ex"
+    rows = []
+    for n in range(steps + 1):
+        energy = 0.0
+        if n >= pulse_length:
+            energy = invariant * (1 + invariant_drift) if n > pulse_length else invariant
+        elif n == 0:
+            energy = start_energy
+        row = {"state": str(n), "e_time_s": repr(n * dt), "h_time_s": repr((n - 0.5) * dt),
+               "U_J": repr(energy), "Q_J": repr(energy)}
+        for name in NAMES:
+            values = {region: 0.0 for region in REGIONS}
+            if n == 1:
+                values[alive] = drive * drive_factor if name == deposit else (first_extra if name == extra else 0.0)
+            elif n > 1:
+                values[alive] = largest * peak_factor / (1.0 if name[0] == "E" else ETA0)
+            if silent_at == n and silent_region is not None:
+                values[silent_region] = silent_value
+            row["max_" + name] = repr(max(values.values()))
+            for region in REGIONS:
+                row[region + "_" + name] = repr(values[region])
+        rows.append(row)
+    return rows
+
+
+def driven_probes(steps, dt, source, silent, spacing=(0.01, 0.015, 0.02), first=None, silent_first=0.0,
+                  component="Ez", shift=False, omit=()):
+    """Native probe record of an idealized C2/C3 run: the signed closed-form
+    deposit `-(dt/eps0) J0 g_0` on the source edge at state 1, zero elsewhere.
+    ``first``, ``silent_first``, ``component`` and ``shift`` inject the revision
+    1.3 wrong-sign, leaking-probe, wrong-component and wrong-location faults;
+    ``omit`` holds `(role, state)` pairs to delete, with `state=None` deleting
+    that probe from every state (the revision 1.4 missing-record fault)."""
+    _, drive, _, _ = pulse_drive()
+    first = -drive if first is None else first
+    recorded = (source[0], source[1], source[2] + 1) if shift else source
+    rows = []
+    for n in range(steps + 1):
+        for index, value, name, role in ((recorded, first, component, "source"),
+                                         (silent, silent_first, "Ez", "quiet")):
+            if (role, None) in omit or (role, n) in omit:
+                continue
+            position = [(index[t] + (0.5 if t == 2 else 0.0)) * spacing[t] for t in range(3)]
+            rows.append({"state": str(n), "component": name, "i": str(index[0]), "j": str(index[1]),
+                         "k": str(index[2]), "x_m": repr(position[0]), "y_m": repr(position[1]),
+                         "z_m": repr(position[2]), "time_s": repr(n * dt),
+                         "value": repr(value if n == 1 else 0.0)})
+    return rows
+
+
 def synthetic_pec_checks():
     checks = 0
     reference = synthetic_cavity(0, 1, 1, 1)
@@ -280,22 +340,134 @@ def synthetic_pec_checks():
     checks += 3
     _, dt, _, _, _ = cavity_lines(1)
     cells = [c + 2 * V04C_MARGIN for c in V04_BASE_CELLS]
-    for name, source, alive in (("pec-c2-inside", (8, 10, 12), "interior"), ("pec-c3-outside", V04C_SOURCE_OUTSIDE, "exterior")):
+    for name, source, quiet, alive in (("pec-c2-inside", (8, 10, 12), (10, 12, 16), "interior"),
+                                       ("pec-c3-outside", V04C_SOURCE_OUTSIDE, (9, 11, 13), "exterior")):
         meta = base_meta(name, "pec", "source", cells, (0.01, 0.015, 0.02), dt, 4096, pad=V04C_MARGIN)
-        meta.update({"source_index": list(source), "a": 2})
-        probes = [{"state": str(n), "component": "Ez", "i": "1", "j": "1", "k": "1", "x_m": "0.01", "y_m": "0.015",
-                   "z_m": "0.03", "time_s": repr(n * dt), "value": "0.0"} for n in range(4097)]
-        metrics, _ = analyze_pec(meta, probes, region_rows(4096, dt, alive), None)
+        meta.update({"source_index": list(source), "probe_indices": [list(quiet), list(source)], "a": 2})
+        probes = driven_probes(4096, dt, source, quiet)
+        metrics, _ = analyze_pec(meta, probes, driven_rows(4096, dt, alive), None)
         require(metrics["status"] == "pass", "synthetic %s: %s" % (name, metrics["failures"]))
         silent = [r for r in REGIONS if r != alive]
         for region in silent:
-            metrics, _ = analyze_pec(meta, probes, region_rows(4096, dt, alive, 1e-300, 4000, region), None)
+            metrics, _ = analyze_pec(meta, probes, driven_rows(4096, dt, alive, 1e-300, 4000, region), None)
             require(has_failure(metrics, "%s Ex nonzero" % region), "%s leak undetected in %s" % (region, name))
-        metrics, _ = analyze_pec(dict(meta, source_index=[2, 2, 2]), probes, region_rows(4096, dt, alive), None)
+        metrics, _ = analyze_pec(dict(meta, source_index=[2, 2, 2]), probes, driven_rows(4096, dt, alive), None)
         require(has_failure(metrics, "source edge"), "wrong source undetected")
         checks += 4
+        # Revision 1.2: a driven case that carries no pulse must not pass.
+        excitation_faults = [
+            ({"drive_factor": 0.0, "peak_factor": 0.0, "invariant": 0.0}, "closed-form deposit"),
+            ({"drive_factor": 0.0, "peak_factor": 0.0, "invariant": 0.0}, "below the excitation floor"),
+            ({"drive_factor": 0.0, "peak_factor": 0.0, "invariant": 0.0}, "not positive after the pulse"),
+            ({"drive_factor": 1 + 1e-11}, "closed-form deposit"),
+            ({"first_extra": 1e-300}, "more than the driven Ez edge"),
+            ({"peak_factor": 0.05}, "below the excitation floor"),
+            ({"invariant_drift": 1e-11}, "drifts"),
+            ({"start_energy": 1e-300}, "does not start from zero fields"),
+            # Revision 1.3: the deposit must be in Ez, not merely in some E component.
+            ({"deposit": "Ex"}, "more than the driven Ez edge"),
+            ({"deposit": "Ex"}, "closed-form deposit"),
+        ]
+        for kwargs, text in excitation_faults:
+            metrics, _ = analyze_pec(meta, probes, driven_rows(4096, dt, alive, **kwargs), None)
+            require(has_failure(metrics, text), "undetected in %s: %s" % (name, text))
+            checks += 1
+        metrics, _ = analyze_pec(dict(meta, dt_s=meta["dt_s"] * (1 + 1e-13)), probes,
+                                 driven_rows(4096, dt, alive), None)
+        require(has_failure(metrics, "dt differs"), "wrong dt undetected in %s" % name)
+        checks += 1
+        # Revision 1.3: the native record of the prescribed source edge itself.
+        _, drive, _, _ = pulse_drive()
+        probe_faults = [
+            (dict(first=drive), "signed closed-form deposit"),
+            (dict(first=0.0), "signed closed-form deposit"),
+            (dict(silent_first=1e-300), "is not zero at state 1"),
+            (dict(component="Ex"), "is not the driven Ez"),
+            (dict(shift=True), "is not a prescribed index"),
+            # Revision 1.4: an absent sample is a missing measurement, not a zero.
+            (dict(omit=(("quiet", None),)), "expected 8194"),
+            (dict(omit=(("quiet", None),)), "has no state 0 sample"),
+            (dict(omit=(("quiet", 1),)), "has no state 1 sample"),
+            (dict(omit=(("source", 1),)), "the source edge has no state 1 sample"),
+        ]
+        for kwargs, text in probe_faults:
+            metrics, _ = analyze_pec(meta, driven_probes(4096, dt, source, quiet, **kwargs),
+                                     driven_rows(4096, dt, alive), None)
+            require(has_failure(metrics, text), "undetected in %s: %s" % (name, text))
+            checks += 1
+        # A duplicated sample must not stand in for a missing one.
+        duplicated = driven_probes(4096, dt, source, quiet, omit=(("quiet", 7),))
+        duplicated.append(dict(duplicated[0]))
+        metrics, _ = analyze_pec(meta, duplicated, driven_rows(4096, dt, alive), None)
+        require(has_failure(metrics, "duplicate state") and has_failure(metrics, "expected 8194"),
+                "duplicate standing in for a missing sample undetected in %s" % name)
+        checks += 1
+        # Revision 1.4: the prescribed set comes from the fixture, so an artifact
+        # that declares fewer probes cannot define its own coverage.
+        metrics, _ = analyze_pec(dict(meta, probe_indices=[list(quiet)]), probes,
+                                 driven_rows(4096, dt, alive), None)
+        require(has_failure(metrics, "differ from the v1 set"), "short declared probe set undetected in %s" % name)
+        # The MAT-02 R1 reproduction: an Ex deposit with the Ez source record zeroed.
+        metrics, _ = analyze_pec(meta, driven_probes(4096, dt, source, quiet, first=0.0),
+                                 driven_rows(4096, dt, alive, deposit="Ex"), None)
+        require(metrics["status"] == "fail" and has_failure(metrics, "more than the driven Ez edge")
+                and has_failure(metrics, "signed closed-form deposit"), "R1 reproduction undetected in %s" % name)
+        checks += 2
     print("PASS synthetic V04-C enforcement: %d checks" % checks)
     return checks
+
+
+def probe_coverage_checks():
+    """Revision 1.4: the structural rule for the recorded probe keys.
+
+    Revisions 1–1.3 counted probe rows per state, which a prescribed probe that
+    is absent from every state satisfies. The rule is exercised here directly
+    because the audit it belongs to needs a whole artifact directory.
+    """
+    meta = {"kind": "source", "steps": 3, "probe_indices": [[1, 1, 1], [9, 11, 13]]}
+    keys = {(2, (1, 1, 1)), (2, (9, 11, 13))}
+    states = range(meta["steps"] + 1)
+    require(probe_coverage(meta, {n: set(keys) for n in states}) is None, "complete source record rejected")
+    faults = [
+        ({n: {(2, (1, 1, 1))} for n in states}, "recorded probes differ from the prescribed indices"),
+        ({n: set(keys) | {(2, (2, 2, 2))} for n in states}, "recorded probes differ from the prescribed indices"),
+        ({n: (set(keys) if n else {(2, (1, 1, 1))}) for n in states}, "probe keys differ between states"),
+        ({n: set(keys) for n in range(meta["steps"])}, "probe states"),
+        ({n: set() for n in states}, "no probe samples"),
+    ]
+    for per_state, text in faults:
+        require(probe_coverage(meta, per_state) == text, "undetected probe-coverage fault: " + text)
+    mode = {"kind": "mode", "steps": 1, "probe_indices": []}
+    lines = {n: {(0, (1, 1, 1)), (4, (1, 1, 1)), (5, (1, 1, 1))} for n in range(mode["steps"] + 1)}
+    require(probe_coverage(mode, lines) is None, "mode native-line record rejected")
+    print("PASS probe-record coverage: 7 checks")
+    return 7
+
+
+def initialization_checks():
+    """Revision 1.3: the emitted initial-condition description must be the specified one.
+
+    A run has to be reproducible from its own metadata, so the audit pins the
+    description. The single historical mode string (the corrected sign typo) is
+    admissible only with the source snapshot that emitted it.
+    """
+    fresh = "0" * 64
+    mode = {"kind": "mode", "initialization": MODE_INITIALIZATION, "source_snapshot_sha256": fresh}
+    source = {"kind": "source", "initialization": SOURCE_INITIALIZATION, "source_snapshot_sha256": fresh}
+    historical = dict(mode, initialization=HISTORICAL_MODE_INITIALIZATION)
+    require(initialization_accepted(mode), "current mode description rejected")
+    require(initialization_accepted(source), "source description rejected")
+    require(initialization_accepted(dict(historical, source_snapshot_sha256=HISTORICAL_SNAPSHOT)),
+            "retained V04 evidence rejected")
+    require(not initialization_accepted(historical), "historical sign typo accepted for a new snapshot")
+    require(not initialization_accepted(dict(mode, initialization=MODE_INITIALIZATION.replace("H=+(C", "H=-(C"))),
+            "flipped mode sign accepted")
+    require(not initialization_accepted(dict(mode, initialization=SOURCE_INITIALIZATION)),
+            "source description accepted for a mode case")
+    require(not initialization_accepted(dict(source, initialization=MODE_INITIALIZATION)),
+            "mode description accepted for a source case")
+    print("PASS initial-condition description: 7 checks")
+    return 7
 
 
 class MaskedOracle(Oracle):
@@ -419,7 +591,8 @@ def main():
     parser.add_argument("--app", type=Path)
     parser.add_argument("--output-root", type=Path)
     args = parser.parse_args()
-    checks = synthetic_cavity_checks() + synthetic_spectrum_checks() + synthetic_pec_checks()
+    checks = (synthetic_cavity_checks() + synthetic_spectrum_checks() + synthetic_pec_checks()
+              + probe_coverage_checks() + initialization_checks())
     if args.app is None:
         print("PASS %d synthetic reduction checks; LIMIT: no solver output examined (pass --app)" % checks)
         return
@@ -449,6 +622,8 @@ def main():
     outside = load_case(evidence / "smoke" / "pec-c3-outside")
     metrics, _ = analyze_pec(outside[0], outside[1], outside[2], None, fixed_suite=False)
     require(metrics["status"] == "pass", "smoke exterior-source case: %s" % metrics["failures"])
+    print("PASS smoke exterior-source case: first driven sample %.17g equals the closed-form deposit %.17g "
+          "to %.3g relative" % (metrics["drive_first_state"], metrics["drive_prediction"], metrics["drive_error"]))
     spectrum = load_case(evidence / "smoke" / "spectrum-s1")
     metrics, _ = analyze_spectrum(spectrum[0], spectrum[1], spectrum[2], fixed_suite=False)
     require(metrics["status"] == "pass", "smoke spectrum case: %s" % metrics["failures"])

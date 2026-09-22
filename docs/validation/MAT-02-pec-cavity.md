@@ -1,6 +1,8 @@
 # MAT-02 — Explicit PEC edge masks and V04 cavity evidence
 
-2026-09-18. **MAT-02 status: see the decision at the end.** This is the first
+2026-09-18; addenda 2026-09-22 (V04-C driven acceptance strengthened after
+review; then the driven component and edge named and the mode metadata sign
+corrected; then the probe record required to be complete). **MAT-02 status: see the decision at the end.** This is the first
 measured physical evidence for V04 and the first P2 solver capability. Same
 collaborator implemented, ran and reviewed the work; no independent reviewer
 is claimed. The [MAT-02 contract](../methods/MAT-02-pec-mask-contract.md)
@@ -48,7 +50,8 @@ are internal-consistency checks.
 
 ## Reduction validation before physical acceptance
 
-`reference.closed_analysis` passes in Debug and Release (665 checks):
+`reference.closed_analysis` passes in Debug and Release (726 checks after the
+third 2026-09-22 revision; 709, 684 and 665 before it):
 
 | Check | Result |
 | --- | --- |
@@ -56,6 +59,7 @@ are internal-consistency checks.
 | Injected V04-A faults | Frequency 3e-9, amplitude 3e-9, H sign, phase 1e-6, relocated line, missing sample, extra line, step count, geometry, mixed times, continuum 1 percent, refinement orders: all detected |
 | Synthetic V04-B modal-sum record | Both analyses pass (worst offset 0.0004 bin); shifted line (0.6 bin), spurious line (0.1 strength), missing required line, truncated record, dominant growth, null-component growth above the floor, nonzero start, nonfinite maxima: all detected |
 | Synthetic V04-C | C1/C2/C3 pass; nonzero exterior/surface/interior region maxima, a 1e-11 interior deviation from the reference cavity, a missing reference and a wrong mask count: all detected |
+| Synthetic V04-C excitation (revision 1.2) | An identically-zero driven record (detected three ways: deposit, floor, invariant), a 1e-11 relative error in the first deposit, a second component moving at state 1, a driven peak at 0.05 of the largest deposit, a 1e-11 post-pulse drift of `Q`, a nonzero start and a 1e-13 relative `dt` error: all detected, for both C2 and C3 |
 | Pure-Python oracle versus the four-step closed-v1 smoke suite | Independently enumerated mask counts agree; every probe, `U`, `Q`, the six component maxima and the eighteen region maxima agree within 1e-12 relative at states 0–4 for `cavity-x-m11-s1`, `spectrum-s1`, `pec-c1-x` and `pec-c3-outside` |
 | Analyzer on the smoke cases | Four-step cavity: continuum error 0.000892586471 (cap 0.0052), discrete 1.1e-14, amplitude 2.4e-15, magnetic 3.9e-16; the shell case reproduces the open cavity bitwise (265/265 samples) with silent maximum 0 |
 
@@ -159,14 +163,26 @@ cap changed.
 | pec-c1-x | 109 | 864/1024/1120 | 0 (surface and exterior, every state) | 5,830 of 5,830 samples bitwise; max difference 0 |
 | pec-c1-y | 61 | 864/1024/1120 | 0 | 3,286 of 3,286 bitwise; 0 |
 | pec-c1-z | 57 | 864/1024/1120 | 0 | 2,378 of 2,378 bitwise; 0 |
-| pec-c2-inside | 4096 | 864/1024/1120 | 0 (surface and exterior) | interior finite |
-| pec-c3-outside | 4096 | 864/1024/1120 | 0 (interior and surface) | exterior finite |
+| pec-c2-inside | 4096 | 864/1024/1120 | 0 (surface and exterior) | driven; see the excitation table |
+| pec-c3-outside | 4096 | 864/1024/1120 | 0 (interior and surface) | driven; see the excitation table |
+
+Driven-side excitation under specification revision 1.2 (measured by the
+re-analysis of 2026-09-22 described in the addendum; the same raw run):
+
+| Case | First driven state | Closed-form deposit | Relative error (limit 1e-12) | Peak E | Floor (0.1 of the largest deposit) | Ratio | Post-pulse `Q` drift (limit 1e-12) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| pec-c2-inside | 7.22927367e-08 V/m | 7.22927367e-08 V/m | 6.77e-15 | 1.791 V/m | 0.1734 V/m | 1.033 | 4.11e-16 |
+| pec-c3-outside | 7.22927367e-08 V/m | 7.22927367e-08 V/m | 6.77e-15 | 1.935 V/m | 0.1734 V/m | 1.116 | 3.74e-16 |
+
+No other component of the driven region is nonzero at state 1 in either case.
 
 The three shifted modes pass the full V04-A reductions inside the shell with
 identical metrics to the open cavity, every sample outside the open box is
 exactly zero at every state, and the pulses inside and outside the shell leave
-the other side exactly zero, so the interior primitive enforces the same
-boundary as the outer closure and shields both ways.
+the other side exactly zero while the driven side reproduces the closed-form
+deposit of the source and conserves the invariant, so the interior primitive
+enforces the same boundary as the outer closure, shields both ways, and does
+so while the shielded side is actually carrying a field.
 
 ## V01–V03 regression through the mask-capable kernel
 
@@ -192,6 +208,21 @@ no compiler warnings. Commands as at REF-06 with `B=build/MAT-02-{release,debug}
 | --- | --- | --- | --- | --- |
 | Fresh `build/MAT-02-release` | Pass | Pass, no warnings | 15/15 pass | 107.12 s |
 | Fresh `build/MAT-02-debug` | Pass | Pass, no warnings | 15/15 pass | 113.42 s |
+| Fresh `build/MAT-02-r12-release` (2026-09-22) | Pass | Pass, no warnings | 15/15 pass | 107.26 s |
+| Fresh `build/MAT-02-r12-debug` (2026-09-22) | Pass | Pass, no warnings | 15/15 pass | 118.55 s |
+| Fresh `build/MAT-02-r13-release` (2026-09-22) | Pass | Pass, no warnings | 15/15 pass | 111.69 s |
+| Fresh `build/MAT-02-r13-debug` (2026-09-22) | Pass | Pass, no warnings | 15/15 pass | 123.02 s |
+| Fresh `build/MAT-02-r14-release` (2026-09-22) | Pass | Pass, no warnings | 15/15 pass | 114.92 s |
+| Fresh `build/MAT-02-r14-debug` (2026-09-22) | Pass | Pass, no warnings | 15/15 pass | 128.16 s |
+
+The two `MAT-02-r12` runs are the regression matrix of the first addendum's
+revision (the `MAT-02-r13` rows belong to the second addendum below):
+both configure from an absent directory, build without warnings and pass the
+same fifteen tests, now including 684 `reference.closed_analysis` checks. Both
+reproduce the source fingerprint `f02fbe47…` exactly, which is the mechanical
+confirmation that no C++ or CMake input changed. Retained ignored logs:
+`build/MAT-02-r12-{release,debug}-{configure,build,test}.log` and
+`build/MAT-02-r12-{release,debug}-LastTest.log`.
 
 The fifteen tests are the thirteen of MAT-01 plus `reference.pec` and
 `reference.closed_analysis`. The Release executable's SHA-256 is `021faf8f…`.
@@ -230,10 +261,54 @@ python scripts/compare_reference_analysis.py --reference docs/validation/REF-05-
 python scripts/check_closed_analysis.py --app build/windows-local-release/antennasim.exe --output-root build/evidence/MAT-02-audit
 ```
 
+The 2026-09-22 re-analysis reuses the retained raw run and needs no solver:
+
+```powershell
+python scripts/analyze_closed_benchmarks.py --input build/evidence/MAT-02/run1 --output build/evidence/MAT-02/analysis-r12
+```
+
 The tracked compact record is [MAT-02-analysis-summary.json](MAT-02-analysis-summary.json)
 (the closed analyzer's `metrics.json`); raw probes, diagnostics, per-state
 modal traces and the peak tables remain under the ignored `build/evidence/MAT-02/`
 tree.
+
+## Addendum 2026-09-22 — V04-C driven acceptance strengthened after review
+
+A later same-author review pass over this closed item found that the version-1
+C2/C3 acceptance could not fail on a dead run. The criterion required the
+driven side to be *finite*, and an identically-zero region is finite. Fed a
+synthetic C2/C3 record whose every region maximum, `U` and `Q` are zero, the
+analyzer returned `status: pass` with an empty failure list for both cases:
+the silent-region requirement is satisfied by zeros, the finiteness
+requirement is satisfied by zeros, and `max_alive` was recorded as a metric
+but never compared against anything. No measured result was wrong — the
+recorded peaks are 1.47–1.79 V/m (C2) and 1.29–1.94 V/m (C3) — and two other
+checks would have caught a fully dead solver (the C1 equivalence against the
+live V04-A cavity, and the four-state oracle comparison, which covers
+`pec-c3-outside`). `pec-c2-inside` had no positive-field coverage anywhere,
+and neither driven case had any at the fixed 4,096-step length. The gap was in
+the acceptance criterion, not in the analyzer's implementation of it.
+
+Resolution: MAT-01 [revision 1.2](MAT-01-closed-domain-benchmarks.md) adds the
+excitation requirements (closed-form first deposit, an exact-zero rest of the
+region at state 1, a dead-region floor on the driven peak, and the
+dissipationless invariant after the pulse), all computed by the specification
+audit from the fixed pulse and time step. The analyzer enforces them and the
+reduction test injects eight faults per driven case, including the
+identically-zero record that exposed the gap, which now fails three separate
+requirements.
+
+The raw runs were re-analyzed under revision 1.2 without re-running the
+solver: `ANTENNASIM_SOURCE_SNAPSHOT` fingerprints only the C++ and CMake
+inputs, none of which changed, so the retained `build/evidence/MAT-02/run1`
+remains output of the same executable and carries the same `f02fbe47…`
+fingerprint. All four suites pass; the measured margins are in the V04-C
+excitation table above (deposit error 6.8e-15 against 1e-12, driven peak 10.3x
+and 11.2x the floor, invariant drift 4.1e-16 and 3.7e-16 against 1e-12). The
+tracked [summary](MAT-02-analysis-summary.json) is the re-analysis and records
+`excitation_rule_version: 1.2`. `scripts/check_material_benchmarks.py`,
+`scripts/analyze_closed_benchmarks.py` and `scripts/check_closed_analysis.py`
+changed; no solver source, fixture, cap, identification limit or geometry did.
 
 ## Failures, limits, and next action
 
@@ -241,6 +316,12 @@ tree.
   reason (V04-B growth rule, version 1.1); the failing analysis is retained.
   No solver, fixture, cap or identification limit changed, and the revision
   adds an absolute floor rather than widening a tolerance.
+- One acceptance criterion was too weak to fail rather than wrong: the V04-C
+  driven cases required only finiteness of the driven side, which a dead run
+  satisfies. Found by review after this item was first closed, not by a
+  measurement; see the addendum. Specification revision 1.2 adds the
+  excitation requirements, the runs were re-analyzed under them and pass, and
+  no recorded measurement changed value.
 - Two defects in new test/audit code were corrected before any physical run
   and are not solver findings: the S09 pulse check summed the samples naively
   instead of checking the mirrored pairs (and assumed the wrong sign of the
@@ -254,7 +335,8 @@ tree.
   about one sixteenth of the field payload, 30.7 MiB at `p=96`); the measured
   peaks below include it and stay far under 2 GiB. The `closed-v1` budget
   counts the mask. Correct the reference budget when MAT-03 adds material arrays.
-- Limits: same-author review; physical suites ran on one Windows/Clang
+- Limits: same-author review, including the 2026-09-22 review pass and the
+  revision it produced; physical suites ran on one Windows/Clang
   machine while hosted CI runs the smoke-length reductions; the supported PEC
   envelope is grid-aligned full-edge boxes and shells on the declared cavity
   grids, exact-mode and single-edge-pulse excitation, and 32,768-step
@@ -264,5 +346,142 @@ tree.
   the V04-B identification was performed by the independent analyzer as the
   backlog allows, and MAT-04 must reproduce it.
 
-Decision: **MAT-02 complete.** The explicit PEC capability is validated for the
-declared cavity envelope; P2 remains open. Next exact action: MAT-03.
+
+## Addendum 2026-09-22 (second) — driven component and edge named; metadata sign corrected
+
+A follow-up review of the first addendum's work found two defects, both
+recorded in the [review report](MAT-02-review-2026-09-22.md).
+
+**R1 — the strengthened acceptance still accepted the wrong component.**
+Revision 1.2 compared the *largest* of the three electric region maxima with
+the closed-form deposit. Region maxima are unsigned and carry no location, so
+the requirement was satisfied by a deposit in `Ex` or `Ey`, and nothing in the
+reduction referred to the edge the source drives. Demonstrated on copies of
+the retained C2/C3 records: exchanging the `Ex` and `Ez` maxima at state 1 —
+globally and in the live region — and zeroing the recorded `Ez` source probe
+left both the structural artifact audit and the complete PEC reduction
+returning `pass` with empty failure lists for both driven cases. The original
+evidence was not modified; the reproduction is retained at
+`build/evidence/MAT-02/review-faults.py` with its mutated copies and results in
+`build/evidence/MAT-02/review-wrong-component/`.
+
+Resolution: MAT-01 [revision 1.3](MAT-01-closed-domain-benchmarks.md) requires
+the deposit in `Ez` specifically, requires every other component to be zero at
+state 1 both in the driven region and over the whole domain, and checks the
+native `Ez` sample of the prescribed source edge — which C2 and C3 already
+record — against the signed closed-form value `-(dt/eps0) J0 g_0`. The same
+mutation now fails three requirements in each driven case. Measured on the
+retained raw run:
+
+| Case | Source edge | State-1 source sample | Signed closed-form deposit | Relative error (limit 1e-12) |
+| --- | --- | --- | --- | --- |
+| pec-c2-inside | (8,10,12) | -7.22927367e-08 V/m | -7.22927367e-08 V/m | 6.77e-15 |
+| pec-c3-outside | (1,1,1) | -7.22927367e-08 V/m | -7.22927367e-08 V/m | 6.77e-15 |
+
+**R2 — mode metadata recorded the opposite initial H sign.** Every mode case
+emitted `H=-C E_s/(mu0 Omega) sin(omega_d dt/2) at -dt/2` into
+`configuration.json` and `metadata.json`. That expression is the amplitude
+`H_s` multiplied by `sin(omega_d dt/2)`, but the field written at `-dt/2` is
+`H^(-1/2) = -H_s sin(omega_d dt/2)`, the positive form the initializer, the
+MAT-01 and MAT-02 specifications and the independent pure-Python oracle all
+use. This was a metadata defect only: no computed field, fixture check or
+measurement was affected, and the eigenvector and divergence fixture checks,
+the V04-A modal results and the oracle comparison all confirm the implemented
+sign. Its consequence is that the initial condition could not be reconstructed
+faithfully from the description the run carries.
+
+Resolution: `benchmarks/closed.cpp` emits
+`H=+(C E_s) sin(omega_d dt/2)/(mu0 Omega) at -dt/2 by permutation curl`, and
+the structural audit now checks the emitted `initialization` description
+against the two prescribed forms. The retained raw evidence is not rewritten:
+the historical mode description is admitted only together with the source
+snapshot `f02fbe47…` that emitted it, so those runs stay auditable while any
+other description fails. Because a C++ input changed, the source fingerprint
+moves to `706af2e4…`; the retained runs keep `f02fbe47…`, and the next full
+physical run supersedes them under the new fingerprint.
+
+**Verification.** `reference.closed_analysis` grows from 684 to 709 checks: the
+wrong-component and wrong-edge faults for both driven cases (deposit moved to
+`Ex`, wrong-sign source sample, dead source edge, leaking second probe, a
+non-`Ez` probe, a relocated probe, an unprobed source edge, and the R1
+mutation itself) and the initial-condition description against its current,
+historical and flipped-sign forms. Re-analysis of the retained raw run passes
+all four suites with every previously tracked value bit-identical; the tracked
+summary gains only `source_probe_first_state`/`source_probe_error` per driven
+case and the rule version. The smoke path exercises the corrected emitter
+end to end: the audit reads freshly emitted artifacts carrying the new
+description, and `pec-c3-outside` passes the source-edge check against the
+real solver.
+
+| Build | Configure | Build | CTest | Total test time |
+| --- | --- | --- | --- | --- |
+| Fresh `build/MAT-02-r13-release` (2026-09-22) | Pass | Pass, no warnings | 15/15 pass | 111.69 s |
+| Fresh `build/MAT-02-r13-debug` (2026-09-22) | Pass | Pass, no warnings | 15/15 pass | 123.02 s |
+
+Both configure from an absent directory and reproduce the new fingerprint
+`706af2e4…`. Retained CTest logs:
+`build/MAT-02-r13-{release,debug}/Testing/Temporary/LastTest.log`. The
+re-analysis reuses the retained raw run and needs no solver:
+
+```powershell
+python scripts/analyze_closed_benchmarks.py --input build/evidence/MAT-02/run1 --output build/evidence/MAT-02/analysis-r13
+```
+
+Not repeated: a full physical re-run of V01–V04 under the new fingerprint,
+hosted CI, and validation on a second machine.
+
+## Addendum 2026-09-22 (third) — the probe record must be complete
+
+A third review pass found that a prescribed probe missing from the entire
+record passed both the structural audit and the V04-C reduction. The audit
+compared the *number* of probe rows per state, which stays uniform when a probe
+is absent from every state, and the revision-1.3 reduction read its prescribed
+samples through a defaulting lookup, so the missing samples were read as the
+zeros the requirements expect.
+
+Demonstrated on copies of the retained C2/C3 records: deleting all 4,097
+samples of the second prescribed probe (the shielded-side edge) from each
+driven case — 8,194 rows down to 4,097 — left the artifact audit and the
+complete PEC analysis returning `pass` with empty failure lists for both cases.
+The original evidence was not modified. Two reproductions are retained: the
+review's own `build/evidence/MAT-02/recheck-probe-completeness.py` with
+`signoff-missing-probe/`, and `review-missing-probe/` from the fix. Re-running
+the review's script after the fix stops at the audit, which now rejects the
+mutated copies; its `result.json` was regenerated by that run and records the
+post-fix outcome, so the pre-fix `pass` it originally held is preserved only in
+the quoted finding of the [review report](MAT-02-review-2026-09-22.md).
+
+Resolution: MAT-01 [revision 1.4](MAT-01-closed-domain-benchmarks.md) requires
+the record to be complete, in two layers. The structural audit compares the
+recorded `(component, index)` key set: identical at every state, and for a
+source case exactly the `Ez` edges the artifact's own `probe_indices` declares.
+Because that compares an artifact with itself, the V04-C reduction derives the
+C2/C3 probe pairs from the fixture instead — `(10,12,16)`/`(8,10,12)` and
+`(1,1,1)`/`(9,11,13)`, computed and geometrically checked by the specification
+audit — and requires the declared and recorded sets to equal them. The
+reduction then requires `(steps+1) * probes` prescribed samples and reads each
+sample it needs as present rather than defaulted. The same deletion now fails
+the audit with `recorded probes differ from the prescribed indices`, and the
+reduction with the sample count and both missing states, in both cases:
+
+| Mutation | Before | After |
+| --- | --- | --- |
+| Second probe deleted from every state (C2 and C3) | audit pass, reduction pass, no failures | audit rejects; reduction reports 4097 of 8194 prescribed samples and the two absent states |
+
+`reference.closed_analysis` grows from 709 to 726 checks: the coverage rule
+against a uniformly absent probe, an extra probe, a key set that varies between
+states, a missing state and an empty record, and the reduction against a
+deleted second probe, a single deleted state, a deleted source sample, a short
+declared probe set and a duplicated sample standing in for a missing one.
+Re-analysis of the retained raw run passes all four suites with every
+previously tracked value bit-identical; the only tracked-summary change is the
+rule version. Fresh Debug and Release (`build/MAT-02-r14-{debug,release}`)
+configure, build without warnings and pass 15/15 CTests, 726
+`reference.closed_analysis` checks in each, in 114.92 s and 128.16 s. No
+solver, fixture, geometry, cap or identification limit changed, and the source
+fingerprint stays `706af2e4…` because no C++ or CMake input changed.
+
+Decision: **MAT-02 complete** (2026-09-18; re-confirmed on 2026-09-22 under
+specification revisions 1.2, 1.3 and 1.4 after the review findings in the three
+addenda). The explicit PEC capability is validated for the declared cavity
+envelope; P2 remains open. Next exact action: MAT-03.
