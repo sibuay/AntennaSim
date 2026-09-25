@@ -53,8 +53,8 @@ Last updated: 2026-09-25.
 - **Blockers:** none for MAT-04. The compiler ran inside the ordinary session
   sandbox on 2026-09-16 through 2026-09-18; standalone Windows CLI runs still
   need the compiler runtime directory on the process PATH. Commits after
-  `b98bc4c` are local until the owner pushes `main`, so their hosted CI result
-  is pending.
+  `b98bc4c` were pushed on 2026-09-25; hosted run 5 (`1d3f537`) passed Debug
+  and Release on Ubuntu/GCC with Python 3.13.
 
 Status vocabulary: **Ready**, **Planned**, **In progress**, **Blocked**, **Done**.
 Ready means prerequisites are satisfied. Done requires linked evidence, not just
@@ -83,7 +83,7 @@ prerequisites; the chosen sequence may be stricter to keep work focused.
 | REF-06 | P1 | Review reference-propagation gate | REF-05 | Done | [P1 gate: pass; supported limits; clean-build exact reproduction](validation/REF-06-reference-propagation-gate.md) |
 | MAT-01 | P2 | Specify PEC, dielectric, conductivity, and spectral conventions | REF-06 | Done | [Method note](methods/MAT-01-closed-domain-conventions.md); [V04–V07/S09–S14 specification](validation/MAT-01-closed-domain-benchmarks.md); [audit/review evidence, 13/13 CTests](validation/MAT-01-review.md); D018 |
 | MAT-02 | P2 | Implement and validate explicit PEC boundaries/cavity | MAT-01 | Done | [Contract](methods/MAT-02-pec-mask-contract.md); [S09 209550 checks, V04-A/B/C measured pass, V01–V03 zero-tolerance reproduction, 15/15 CTests, 2026-09-22 addenda: V04-C driven acceptance strengthened to specification revisions 1.2-1.4 and re-analyzed, mode metadata sign corrected, probe records required complete](validation/MAT-02-pec-cavity.md); [compact metrics](validation/MAT-02-analysis-summary.json); D019, D020, D021, D022 |
-| MAT-03 | P2 | Implement and validate dielectric and conductive updates | MAT-02 | Done | [Contract](methods/MAT-03-material-update-contract.md); [S10–S13 (9554/1034/19/611 checks), 2655 reduction/oracle checks, V05-A 18/18, V05-B 7/7 under specification revision 1.5 (version-1 purity failure retained), V05-C 18/18, V06-A 26/26, V06-B 2/2, V01–V03 and V04 reproduced at zero tolerance, 20/20 CTests, peak 1.267 GiB, 2026-09-25 review and hosted-CI addenda](validation/MAT-03-dielectric-conductivity.md); [compact metrics](validation/MAT-03-analysis-summary.json); D023, D024, D025 |
+| MAT-03 | P2 | Implement and validate dielectric and conductive updates | MAT-02 | Done | [Contract](methods/MAT-03-material-update-contract.md); [S10–S13 (9554/1034/19/611 checks), 2655 reduction/oracle checks, V05-A 18/18, V05-B 7/7 under specification revision 1.5 (version-1 purity failure retained), V05-C 18/18, V06-A 26/26, V06-B 2/2, V01–V03 and V04 reproduced at zero tolerance, 20/20 CTests locally and on hosted Ubuntu/GCC (run 5), peak 1.267 GiB, 2026-09-25 review and hosted-CI addenda](validation/MAT-03-dielectric-conductivity.md); [compact metrics](validation/MAT-03-analysis-summary.json); D023, D024, D025 |
 | MAT-04 | P2 | Implement spectral processing and validate sampling/normalization | MAT-03 | Ready | V07 and cavity spectral evidence |
 | MAT-05 | P2 | Review materials/closed-domain gate | MAT-04 | Planned | P2 gate record and P3 breakdown |
 
@@ -128,9 +128,11 @@ an ID, dependencies, a completion test, and an evidence location before starting
   A simulated one-ulp glibc sine reproduced the failure and confirmed the fix.
   2655 checks.
   See the [CI addendum](validation/MAT-03-dielectric-conductivity.md#hosted-ci-addendum-2026-09-25).
-- The rest of `closed_analysis` has not yet run on Linux; the next hosted run
-  is its evidence.
-- **Next exact action:** confirm the hosted run is green, then MAT-04.
+- Hosted run 5 (`1d3f537`) passed: Debug and Release on Ubuntu/GCC, 20/20
+  CTests each, including the full `closed_analysis` self-test and smoke oracle.
+  This is the first hosted evidence for REF-05 through MAT-03.
+  ([run 5](https://github.com/sibuay/AntennaSim/actions/runs/36153028594))
+- **Next exact action:** MAT-04.
 
 **2026-09-25 — MAT-03 second review (owner-requested, before the first commit)**
 
@@ -730,7 +732,7 @@ an ID, dependencies, a completion test, and an evidence location before starting
 | 2026-09-23 | MAT-03 complete | Material map, D023 coefficient table and lossy kernel behind every stepper (vacuum bitwise); S10–S13 and golden states; V05-A/C and V06-A/B pass at their exact discrete predictions; V05-B passes under specification revision 1.5 after the version-1 purity rule failed on roundoff at carrier zero crossings (failure retained, D025, general failure-handling rule); V01–V04 reproduced at zero tolerance; fresh Debug/Release 20/20 without warnings; peak 1.267 GiB; D023–D025; MAT-04 ready; P2 open |
 | 2026-09-25 | MAT-03 completion review | Fresh Debug/Release 20/20 without warnings from the evidence source snapshot; retained material run re-analysed to the tracked summary; V05-B purity-floor scope corrected in the specification, D025 and the records (about 42% of states under the floor; the pass stands); a NaN hidden by the purity maximum and a defaulting plateau-report read fixed with new faults (2636 to 2641 checks); minor gaps recorded; MAT-03 remains Done; MAT-04 next |
 | 2026-09-25 | MAT-03 second review | Owner-requested review with planted-bug checks; fresh Debug/Release 20/20 without warnings, snapshot unchanged; V06-B monotonicity applied at every state, NaN-safe maxima/limits, V06-A H floor 0.5 A/eta, faults for six unexercised checks (11/11 mutants detected), S10 sigma-independent maps and transcribed P1 driven step (3022 to 9554 checks), 2641 to 2654 reduction checks; retained run re-analyses to the tracked summary; no recorded result changes; MAT-03 remains Done; MAT-04 next |
-| 2026-09-25 | Hosted CI after push | First hosted run of REF-05 to MAT-03 (Ubuntu/GCC, Python 3.13): 19/20 in both configurations; a V05-B self-test case assumed sin(pi/4) == sin(3 pi/4) in binary64 (true on Windows, not in glibc); case made platform-independent and a near-cancelling case added (2654 to 2655 checks); no solver or measurement change; hosted re-run pending |
+| 2026-09-25 | Hosted CI after push | First hosted run of REF-05 to MAT-03 (Ubuntu/GCC, Python 3.13): 19/20 in both configurations; a V05-B self-test case assumed sin(pi/4) == sin(3 pi/4) in binary64 (true on Windows, not in glibc); case made platform-independent and a near-cancelling case added (2654 to 2655 checks); no solver or measurement change; hosted run 5 (`1d3f537`) passed Debug/Release 20/20 |
 
 Add concise entries for work-item/cycle reviews, gate outcomes, material blockers,
 and sequencing changes. Keep detailed measurements in validation reports and link them.

@@ -78,7 +78,8 @@ material kernel.
 ## Reduction validation before physical acceptance
 
 `reference.closed_analysis` grows from 726 to 2636 checks (2641 after the
-first 2026-09-25 review addendum, 2654 after the second):
+first 2026-09-25 review addendum, 2654 after the second, 2655 after the
+hosted-CI fix):
 
 | Check | Result |
 | --- | --- |
@@ -530,14 +531,17 @@ the old pair. Both new cases gave the same result with either sine.
 - The remaining checks compare integers, apply `1e-12` tolerances, or compare
   the solver with itself, so none should depend on the platform's `sin`
   rounding.
-- The next hosted run is the evidence.
+- Hosted run 5 (`1d3f537`) ran them: Debug and Release pass 20/20 CTests on
+  Ubuntu/GCC with Python 3.13, including the full `reference.closed_analysis`
+  and the material smoke oracle
+  ([run 5](https://github.com/sibuay/AntennaSim/actions/runs/36153028594)).
 - `reference.closed_analysis` has 2655 checks.
 
 ## Limits
 
-- Same-author review. The physical suites ran on one Windows/Clang machine;
-  hosted CI runs the smoke-length reductions only (Ubuntu/GCC has not built
-  this code yet).
+- Same-author review. The physical suites ran on one Windows/Clang machine.
+  Hosted CI runs only the smoke-length reductions and the structural tests;
+  Ubuntu/GCC passed them in run 5. No full physical suite has run on GCC.
 - The validated material envelope:
   - homogeneous `eps_r = 4` eigenwaves on the V01 grids at `p=24/48/96`;
   - the node-averaged planar interface between vacuum and `eps_r = 4` for the
