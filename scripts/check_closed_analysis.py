@@ -1,4 +1,4 @@
-"""MAT-02 reduction validation before V04 physical results are accepted.
+"""MAT-02/MAT-03 reduction validation before V04-V06 physical results are accepted.
 
 1. Synthetic pass/failure-detection checks of the closed-v1 analyzer's
    V04-A/B/C reductions on prescribed data (no solver output).
@@ -7,6 +7,8 @@
    transcription of the FND-03 update equations extended by the E-edge PEC
    mask, the exact-mode fixture and the pulse; then apply the analyzer to the
    smoke cases and require the shell case to reproduce the open cavity.
+3. MAT-03 (check_material_analysis.py): synthetic V05/V06 and coefficient-table
+   checks, and with --app the material oracle on the five material smoke cases.
 
 Python 3.9+, standard library. No production operator is imported.
 """
@@ -30,6 +32,7 @@ from check_material_benchmarks import (cavity_lines, cavity_mode, cyclic, pec_ma
                                        V04_BASE_CELLS, V04C_MARGIN, V04C_SOURCE_OUTSIDE)
 from check_reference_analysis import Oracle, half_offsets, close, MU0, EPS0, PI
 from check_reference_runs import NAMES, C0, ETA0
+import check_material_analysis
 
 
 def require(condition, message):
@@ -592,7 +595,7 @@ def main():
     parser.add_argument("--output-root", type=Path)
     args = parser.parse_args()
     checks = (synthetic_cavity_checks() + synthetic_spectrum_checks() + synthetic_pec_checks()
-              + probe_coverage_checks() + initialization_checks())
+              + probe_coverage_checks() + initialization_checks() + check_material_analysis.synthetic_checks())
     if args.app is None:
         print("PASS %d synthetic reduction checks; LIMIT: no solver output examined (pass --app)" % checks)
         return
@@ -605,7 +608,8 @@ def main():
                             creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
     require(result.returncode == 0 and result.stderr == "", "Smoke CLI failed: " + result.stdout + result.stderr)
     directories = audit_closed(evidence / "smoke", "smoke")
-    require([d.name for d in directories] == ["cavity-x-m11-s1", "pec-c1-x", "pec-c3-outside", "spectrum-s1"], "smoke identity")
+    require([d.name for d in directories] == sorted(["cavity-x-m11-s1", "pec-c1-x", "pec-c3-outside", "spectrum-s1"]
+                                                    + list(check_material_analysis.MATERIAL_SMOKE)), "smoke identity")
     checks += oracle_against_smoke(evidence / "smoke") + 1
     cavity = load_case(evidence / "smoke" / "cavity-x-m11-s1")
     metrics, _ = analyze_cavity(cavity[0], cavity[1], fixed_suite=False)
@@ -628,8 +632,11 @@ def main():
     metrics, _ = analyze_spectrum(spectrum[0], spectrum[1], spectrum[2], fixed_suite=False)
     require(metrics["status"] == "pass", "smoke spectrum case: %s" % metrics["failures"])
     checks += 4
+    checks += check_material_analysis.oracle_material_smoke(evidence / "smoke")
+    checks += check_material_analysis.analyze_material_smoke(evidence / "smoke")
+    checks += check_material_analysis.fixture_report_checks(evidence / "smoke")
     print("PASS %d reduction/oracle checks; evidence: %s" % (checks, evidence))
-    print("LIMIT: smoke-length runs only; V04 acceptance requires the full fixed suites")
+    print("LIMIT: smoke-length runs only; V04-V06 acceptance requires the full fixed suites")
 
 
 if __name__ == "__main__":

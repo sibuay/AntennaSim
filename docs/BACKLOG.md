@@ -1,11 +1,11 @@
 # Backlog and project status
 
-Last updated: 2026-09-22.
+Last updated: 2026-09-25.
 
 ## Current position
 
 - **Active phase:** P2 — Materials and closed domains (in progress; P0 and
-  P1 gates passed; MAT-01 and MAT-02 complete).
+  P1 gates passed; MAT-01, MAT-02 and MAT-03 complete).
 - **Completed capability:** planning records, a verified C++20/CMake build scaffold,
   reviewed reference Yee-grid conventions, fixed initial benchmark specifications,
   structurally checked core grid metadata/input/allocation validation, and six
@@ -21,7 +21,12 @@ Last updated: 2026-09-22.
   the explicit E-edge PEC mask (outer closure plus `pec_box`/`pec_shell`
   primitives) in the reference stepper with the S09 structural test, the
   `closed-v1` cavity/spectrum/pec suites and CLI, the independent fault-checked
-  V04 analyzer and oracle, and the measured V04 report.
+  V04 analyzer and oracle, and the measured V04 report; the per-cell
+  `MaterialMap`, deduplicated edge-coefficient table and lossy material kernel
+  through which every stepper constructor now runs (vacuum bitwise P1), S10–S13,
+  the `dielectric`/`interface`/`slab-cavity`/`lossy`/`dissipation` suites, the
+  extended analyzer, self-test and material oracle, and the measured V05/V06
+  report.
 - **Validated numerical capability:** axis-aligned vacuum eigenwave propagation,
   signed impedance, second-order refinement, and closed-grid long-time stability
   within the FND-04 v1 envelope, as bounded in the
@@ -31,15 +36,21 @@ Last updated: 2026-09-22.
   resolution, and interior shell enforcement within the MAT-01 V04 envelope,
   as measured in the [MAT-02 evidence](validation/MAT-02-pec-cavity.md) and
   re-confirmed on 2026-09-22 under specification revisions 1.2, 1.3 and 1.4 of
-  the V04-C driven acceptance and probe-record completeness. No
-  material, spectral-production, open-boundary, oblique/broadband, port, or
-  antenna capability is validated.
+  the V04-C driven acceptance and probe-record completeness; homogeneous
+  dielectric eigenwaves, the node-averaged planar dielectric interface (TE_1),
+  the slab-loaded TE cavity, constant-conductivity decay and phase for
+  `x = sigma dt/(2 eps) <= 0.045` and the closed-grid dissipation identity
+  within the MAT-01 V05/V06 envelope, as measured in the
+  [MAT-03 evidence](validation/MAT-03-dielectric-conductivity.md) (V05-B mode
+  purity under specification revision 1.5). No spectral-production,
+  open-boundary, oblique/curved-interface, dispersive/magnetic material,
+  loss-tangent, port, or antenna capability is validated.
 - **Active implementation item:** none.
-- **Next ready item:** MAT-03 — per-cell isotropic dielectric and constant
-  conductivity updates with V05/V06 evidence under the fixed MAT-01
-  specification.
+- **Next ready item:** MAT-04 — production spectral processing validated on
+  synthetic signals (V07) and against the independently analysed V04-B cavity
+  spectrum, under the fixed MAT-01 specification.
 - **Scheduling rule:** milestone-based, with no assumed dates or durations.
-- **Blockers:** none for MAT-03. The compiler ran inside the ordinary session
+- **Blockers:** none for MAT-04. The compiler ran inside the ordinary session
   sandbox on 2026-09-16 through 2026-09-18; standalone Windows CLI runs still
   need the compiler runtime directory on the process PATH. Commits after
   `b98bc4c` are local until the owner pushes `main`, so their hosted CI result
@@ -72,8 +83,8 @@ prerequisites; the chosen sequence may be stricter to keep work focused.
 | REF-06 | P1 | Review reference-propagation gate | REF-05 | Done | [P1 gate: pass; supported limits; clean-build exact reproduction](validation/REF-06-reference-propagation-gate.md) |
 | MAT-01 | P2 | Specify PEC, dielectric, conductivity, and spectral conventions | REF-06 | Done | [Method note](methods/MAT-01-closed-domain-conventions.md); [V04–V07/S09–S14 specification](validation/MAT-01-closed-domain-benchmarks.md); [audit/review evidence, 13/13 CTests](validation/MAT-01-review.md); D018 |
 | MAT-02 | P2 | Implement and validate explicit PEC boundaries/cavity | MAT-01 | Done | [Contract](methods/MAT-02-pec-mask-contract.md); [S09 209550 checks, V04-A/B/C measured pass, V01–V03 zero-tolerance reproduction, 15/15 CTests, 2026-09-22 addenda: V04-C driven acceptance strengthened to specification revisions 1.2-1.4 and re-analyzed, mode metadata sign corrected, probe records required complete](validation/MAT-02-pec-cavity.md); [compact metrics](validation/MAT-02-analysis-summary.json); D019, D020, D021, D022 |
-| MAT-03 | P2 | Implement and validate dielectric and conductive updates | MAT-02 | Ready | V05–V06 evidence and existing regressions |
-| MAT-04 | P2 | Implement spectral processing and validate sampling/normalization | MAT-03 | Planned | V07 and cavity spectral evidence |
+| MAT-03 | P2 | Implement and validate dielectric and conductive updates | MAT-02 | Done | [Contract](methods/MAT-03-material-update-contract.md); [S10–S13 (9554/1034/19/611 checks), 2654 reduction/oracle checks, V05-A 18/18, V05-B 7/7 under specification revision 1.5 (version-1 purity failure retained), V05-C 18/18, V06-A 26/26, V06-B 2/2, V01–V03 and V04 reproduced at zero tolerance, 20/20 CTests, peak 1.267 GiB, 2026-09-25 review addenda](validation/MAT-03-dielectric-conductivity.md); [compact metrics](validation/MAT-03-analysis-summary.json); D023, D024, D025 |
+| MAT-04 | P2 | Implement spectral processing and validate sampling/normalization | MAT-03 | Ready | V07 and cavity spectral evidence |
 | MAT-05 | P2 | Review materials/closed-domain gate | MAT-04 | Planned | P2 gate record and P3 breakdown |
 
 MAT-02 can use an independently checked analysis script for initial cavity
@@ -101,6 +112,120 @@ an ID, dependencies, a completion test, and an evidence location before starting
 | P13 | Justified MoM scope and multi-solver support | Planned |
 
 ## Session handoff
+
+**2026-09-25 — MAT-03 second review (owner-requested, before the first commit)**
+
+- Three reviewers (separate sessions of the same assistant, not an independent
+  human) read the solver, benchmark library and analysis scripts. Two of them
+  planted bugs in scratch copies to test the checks. No defect lets a recorded
+  V05/V06 result pass wrongly. MAT-03 remains Done.
+- Fresh `build/MAT-03-indep-review-{debug,release}` trees: 0 warnings, 20/20,
+  source snapshot `1621d840…` (unchanged, because no solver or benchmark source
+  changed).
+- Corrected, in the analysis and tests only:
+  - V06-B monotonicity now applies at every state, not only where `Q_n > 0`.
+  - Case-level maxima and limits are NaN-safe.
+  - The V06-A H floor is the V01 `0.5 A/eta`; the smallest measured value is
+    `0.760`.
+  - Faults were added for six enforced checks that nothing exercised; a
+    mutation run of 11 mutants detected all 11.
+  - S10 adds maps whose `sigma` does not follow `eps_r`, and a transcribed P1
+    driven step compared bit for bit. S10 now has 9554 checks.
+  - The golden generator no longer relies on `assert`.
+  - The contract text now matches the code.
+  - `reference.closed_analysis` now has 2654 checks. The retained run
+    re-analyses to the tracked summary.
+- Recorded, not changed: fixture checks that don't apply to a case are written
+  as 0, and the divergence fixture check cannot fail on the version-1
+  fixtures. See the
+  [second addendum](validation/MAT-03-dielectric-conductivity.md#second-review-addendum-2026-09-25).
+- Still local and uncommitted, awaiting the owner. Hosted CI is pending.
+- **Next exact action:** unchanged, MAT-04.
+
+**2026-09-25 — MAT-03 completion review (before the first commit)**
+
+- Same-author review with three read-only code passes. The work was
+  re-verified with fresh `build/MAT-03-audit-{debug,release}` trees: 0
+  warnings, 20/20 CTests, and a source snapshot identical to the evidence build
+  (`1621d840…`). The retained material run re-analyses to the tracked summary.
+  No defect lets a V05/V06 limit pass wrongly. MAT-03 remains Done.
+- Corrected:
+  - The V05-B purity-floor scope. The floor covers about 42% of states and is
+    up to about 450 times looser than version 1 between `2.2e-7` and `1e-4` of
+    the peak. The specification, D025, the contract, the evidence and the
+    failure-handling rule are updated. The pass stands.
+  - A NaN that vanished from the purity maximum.
+  - A defaulting `fixture_max_plateau_error` read in the audit.
+  - The S10/S12 by-construction wording.
+  - `reference.closed_analysis` goes from 2636 to 2641 checks. The affected
+    CTests pass in both trees.
+- Minor gaps recorded but not changed (smoke `--steps` limit, metadata `phi`,
+  `omega_d`, V04 `diagnostic_bytes`, the duplicate map, the `dt` binding): see
+  the [review addendum](validation/MAT-03-dielectric-conductivity.md#review-addendum-2026-09-25).
+- Still local and uncommitted at the time of writing, awaiting the owner. The
+  hosted CI result is pending.
+- **Next exact action:** unchanged, MAT-04.
+
+**2026-09-23 — MAT-03 dielectric and conductive updates complete**
+
+- The [MAT-03 contract](methods/MAT-03-material-update-contract.md) was written
+  before any code. It covers the API, errors, D023 storage, fixtures, metadata
+  (material summary and coefficient provenance) and the analysis contract.
+- Library:
+  - `MaterialMap`: per-cell finite `eps_r >= 1` and `sigma >= 0`, exact shape,
+    validated before storage; `uniform` validates before it allocates.
+  - `EdgeCoefficients`: the four-cell relative mean times `epsilon0`, the
+    MAT-01 `Ca`/`Cb`, a deduplicated table with a `uint32` index, and
+    finite/`Cb > 0` checks before any field copy.
+  - Every `ReferenceStepper` constructor runs the material kernel, with the
+    vacuum table as the default. The source term is `E - Cb (amplitude J)`.
+    The E screening is `div(eps_r,e E) = 0`. The vacuum CFL policy is
+    unchanged. `-ffp-contract=off` holds on every target.
+- Tests: S10–S13 as four CTests plus an exact-rational golden generator, for
+  20 CTests. Suites: `dielectric`, `interface`, `slab-cavity`, `lossy`,
+  `dissipation` and a nine-case smoke. The analyzer, self-test and oracle were
+  extended: 726 checks become 2636, and the oracle reproduces every material
+  smoke probe/`U`/`Q`/`D`/maximum within `1e-12`.
+- Measured from fresh Release (`1621d840…`; fresh Debug likewise, 20/20, no
+  warnings):
+  - V05-A, V05-C and V06-A equal their exact discrete predictions at nine
+    digits, with orders of about 2.0.
+  - V05-B `abs(R)` errors equal the specification predictions, discrete
+    `R`/`T` agree within `1.3e-5`, the `b` planes are bitwise equal and the
+    orientations bitwise identical.
+  - V06-B balances to `6.5e-16`.
+  - V01–V03 (1211 values) and V04 (1021 values) reproduce at zero tolerance,
+    and the smoke CSVs are byte-identical.
+  - Peak memory is 1.267 GiB against 2 GiB.
+  - See the [evidence](validation/MAT-03-dielectric-conductivity.md).
+- One criterion failed as written: the V05-B version-1 purity rule
+  (1.5e-9/5.1e-8/1.3e-7 against 1e-9). It failed only at carrier zero
+  crossings, below `1e-6` of the peak, where the residual is roundoff
+  (at most `1.7e-15` of the peak).
+  - The owner delegated the fix on condition of no quality loss.
+  - Revision 1.5 normalizes by `max(abs(a_n), 1e-4 peak)`. The limit is
+    unchanged at states with `abs(a_n) >= 1e-4 peak` (about 58%). The rest
+    are bounded by `1e-13` of the peak, which is looser than version 1 by up
+    to about 450 times between `2.2e-7` and `1e-4` of the peak (scope
+    corrected in the 2026-09-25 review). Faults at `2e-9 a_n`/`3e-13 peak`
+    are detected.
+  - It passes at `1.58e-11`. The failing analysis is retained.
+  - D025, and a general rule in the validation plan's failure handling.
+- Errata recorded before the runs: the V05-C spacing (audit `2`, not `1.5`),
+  the V05-B line recorded every state, and the S10 clipping. The MAT-01 budget
+  was corrected for coefficients and the map (D023). Decisions D023/D024/D025.
+- Not done: hosted CI (GCC has not built this code), a second machine,
+  sanitizers.
+- MAT-03 is Done within its envelope. P2 remains open. Commits after `b98bc4c`,
+  plus this item, are local and unpushed.
+- **Next exact action:** MAT-04. Write the production spectral contract (the
+  `exp(-i omega t) dt` direct sum at requested frequencies with E/H native
+  times, rectangular/Hann windows, the S14 running DFT), implement it, validate
+  on the V07 synthetic items, and reproduce the independent V04-B peaks within
+  `1e-6` bin and `1e-9` height and the V04-B/V05-B direct sums within `1e-12`
+  of the peak. Preserve all twenty CTests.
+
+### Previous handoff (historical)
 
 **2026-09-22 — MAT-02 completion re-review passed**
 
@@ -583,6 +708,9 @@ an ID, dependencies, a completion test, and an evidence location before starting
 | 2026-09-22 | MAT-02 review correction | Review found the V04-C driven acceptance could not fail on a dead run (finiteness only); specification revision 1.2 adds the closed-form deposit, the excitation floor and the post-pulse invariant; analyzer and reduction test enforce them (665 to 684 checks); retained runs re-analyzed without a solver re-run and pass with 10x–2400x margins; fresh Debug/Release 15/15 without warnings; D020; MAT-02 remains Done; MAT-03 still the next action |
 | 2026-09-22 | MAT-02 review follow-up resolved | Review findings R1/R2 fixed: specification revision 1.3 names the driven component and checks the prescribed source edge's signed native sample, and the audit pins the emitted initial-condition description after the mode metadata sign was corrected in `benchmarks/closed.cpp` (fingerprint `f02fbe47…` to `706af2e4…`, no computed field affected); 684 to 709 checks including the mutation that previously passed; retained runs re-analyzed without a solver re-run, all tracked values bit-identical; fresh Debug/Release 15/15 without warnings; D021; MAT-02 remains Done; MAT-03 still the next action |
 | 2026-09-22 | MAT-02 review: probe completeness | Second completion review found a prescribed probe absent from every state passing both the audit (uniform row count) and the reduction (defaulting lookup); specification revision 1.4 requires the recorded key set to match the declaration at every state and pins the C2/C3 sets to the fixture-derived pairs, with every read sample required present; 709 to 726 checks including the deletion that previously passed; retained runs re-analyzed without a solver re-run, summary reproduced byte for byte; fresh Debug/Release 15/15 without warnings; D022; MAT-02 remains Done; MAT-03 still the next action |
+| 2026-09-23 | MAT-03 complete | Material map, D023 coefficient table and lossy kernel behind every stepper (vacuum bitwise); S10–S13 and golden states; V05-A/C and V06-A/B pass at their exact discrete predictions; V05-B passes under specification revision 1.5 after the version-1 purity rule failed on roundoff at carrier zero crossings (failure retained, D025, general failure-handling rule); V01–V04 reproduced at zero tolerance; fresh Debug/Release 20/20 without warnings; peak 1.267 GiB; D023–D025; MAT-04 ready; P2 open |
+| 2026-09-25 | MAT-03 completion review | Fresh Debug/Release 20/20 without warnings from the evidence source snapshot; retained material run re-analysed to the tracked summary; V05-B purity-floor scope corrected in the specification, D025 and the records (about 42% of states under the floor; the pass stands); a NaN hidden by the purity maximum and a defaulting plateau-report read fixed with new faults (2636 to 2641 checks); minor gaps recorded; MAT-03 remains Done; MAT-04 next |
+| 2026-09-25 | MAT-03 second review | Owner-requested review with planted-bug checks; fresh Debug/Release 20/20 without warnings, snapshot unchanged; V06-B monotonicity applied at every state, NaN-safe maxima/limits, V06-A H floor 0.5 A/eta, faults for six unexercised checks (11/11 mutants detected), S10 sigma-independent maps and transcribed P1 driven step (3022 to 9554 checks), 2641 to 2654 reduction checks; retained run re-analyses to the tracked summary; no recorded result changes; MAT-03 remains Done; MAT-04 next |
 
 Add concise entries for work-item/cycle reviews, gate outcomes, material blockers,
 and sequencing changes. Keep detailed measurements in validation reports and link them.

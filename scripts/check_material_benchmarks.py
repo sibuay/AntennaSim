@@ -941,6 +941,18 @@ def audit_v07():
     require(max(offsets) < V04B_PEAK_BIN_LIMIT, "peak interpolation worse than the fixed 0.25-bin limit")
 
 
+def transient_bytes(cells, layout="table", per_cell_map=True):
+    """Peak working memory of one case at stepper construction (MAT-03, D023):
+    initial and owned field payloads, the PEC byte mask, the edge coefficients
+    (a uint32 index per E sample plus at most five 48-byte table entries, or two
+    doubles per E sample), the 16-byte-per-cell material map and the fixed
+    16 MiB overhead."""
+    x, y, z = cells
+    e = x * (y + 1) * (z + 1) + (x + 1) * y * (z + 1) + (x + 1) * (y + 1) * z
+    coefficients = 4 * e + 5 * 48 if layout == "table" else 16 * e
+    return 2 * 8 * field_count(cells) + e + coefficients + (16 * x * y * z if per_cell_map else 0) + 16 * 2**20
+
+
 def audit_resources(work_v04a, work_v04b, work_v05c):
     """Calculated budget rows for the specification; cell-steps are not runtime."""
     print("== Resource budget (calculated; cells x steps, eight bytes per field sample) ==")
@@ -974,6 +986,16 @@ def audit_resources(work_v04a, work_v04b, work_v05c):
         print("%-28s cases=%2d largest_cells=%-16s field_MiB=%8.3f cell_steps=%d" %
               (name, cases, cells, mib(cells), work))
     print("P2 suites total cell_steps=%d (P1 suites: %d)" % (total, 865603584 + 215083008))
+    # MAT-03 budget correction (D023): the version-1 sentence counted two field
+    # payloads and the mask only. The stepper also holds the edge coefficients
+    # and a material case the per-cell map; one E-sample copy is retained for D.
+    cells = v01_like(96, EPS_R)[1]
+    for label, layout, per_cell_map in (("table+uint32 index (D023)", "table", True),
+                                        ("two doubles per edge (rejected)", "edges", True),
+                                        ("vacuum reference-v1 (table, no map)", "table", False)):
+        peak = transient_bytes(cells, layout, per_cell_map)
+        print("p=96 transient %-38s %8.1f MiB = %.3f GiB" % (label, peak / 2**20, peak / 2**30))
+    require(transient_bytes(cells, "table", True) < 2**31, "D023 layout exceeds the 2 GiB budget")
 
 
 def main():

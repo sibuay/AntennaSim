@@ -15,7 +15,8 @@ int main(int argc, char* argv[]) {
         std::cout << "AntennaSim reference CPU solver\n"
                      "Usage: antennasim [--help | --version]\n"
                      "       antennasim --benchmark reference-v1 --suite propagation|stability|smoke --output PATH [--steps N]\n"
-                     "       antennasim --benchmark closed-v1 --suite cavity|cavity-spectrum|pec|smoke --output PATH [--steps N]\n"
+                     "       antennasim --benchmark closed-v1 --suite cavity|cavity-spectrum|pec|dielectric|interface|slab-cavity|lossy|dissipation|smoke\n"
+                     "              --output PATH [--steps N]\n"
                      "--steps is permitted only for smoke (default 2); fixed suites retain their version-1 parameters.\n"
                      "Writes native solver samples to a fresh directory; physical acceptance is not evaluated.\n";
         return 0;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "antennasim/fields.hpp"
+#include "antennasim/material.hpp"
 #include "antennasim/pec.hpp"
 
 #include <cstdint>
@@ -67,13 +68,18 @@ private:
     std::array<std::size_t, 3> index_;
 };
 
-// Vacuum with rho=0 initially inside an E-edge PEC mask whose outer closure is
-// the zero_tangential_e box; the two-argument form has no interior conductor.
-// Explicitly copies initial fields. Local algebra harnesses live in detail/.
+// Per-cell isotropic eps_r/sigma (vacuum by default) with rho=0 initially
+// (eps-weighted edge divergence) inside an E-edge PEC mask whose outer closure
+// is the zero_tangential_e box; forms without a mask have no interior
+// conductor. Every constructor runs the MAT-03 material kernel. Explicitly
+// copies initial fields. Local algebra harnesses live in detail/.
 class ReferenceStepper {
 public:
     ReferenceStepper(const FieldStorage& initial, VacuumTimeStep time_step);
     ReferenceStepper(const FieldStorage& initial, VacuumTimeStep time_step, PecMask mask);
+    ReferenceStepper(const FieldStorage& initial, VacuumTimeStep time_step, const MaterialMap& materials);
+    ReferenceStepper(const FieldStorage& initial, VacuumTimeStep time_step, PecMask mask,
+                     const MaterialMap& materials);
     ReferenceStepper(const ReferenceStepper&) = delete;
     ReferenceStepper& operator=(const ReferenceStepper&) = delete;
     ReferenceStepper(ReferenceStepper&&) = delete;
@@ -89,11 +95,16 @@ public:
     [[nodiscard]] bool failed() const noexcept { return failed_; }
     [[nodiscard]] const VacuumTimeStep& time_step() const noexcept { return time_step_; }
     [[nodiscard]] const PecMask& mask() const noexcept { return mask_; }
+    [[nodiscard]] const EdgeCoefficients& coefficients() const noexcept { return coefficients_; }
 
 private:
+    ReferenceStepper(const FieldStorage& initial, VacuumTimeStep time_step, PecMask mask,
+                     EdgeCoefficients coefficients);
     void advance(const ElectricCurrent* current, double amplitude);
     void require_valid() const;
     PecMask mask_;
+    // Built and validated before the owned field copy is allocated.
+    EdgeCoefficients coefficients_;
     FieldStorage fields_;
     VacuumTimeStep time_step_;
     std::uint64_t state_index_ = 0;

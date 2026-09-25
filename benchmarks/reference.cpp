@@ -48,13 +48,14 @@ double potential(const Case& config, std::size_t id, Index index) {
 }
 
 std::size_t working_bytes(const Case& config) {
-    // Fixed built-in grid sizes; count both initial and owned field payloads.
+    // Fixed built-in grid sizes; count both initial and owned field payloads,
+    // the stepper's closure mask (one byte per E sample) and its vacuum
+    // coefficient index (four bytes per E sample) with a one-entry table (D023).
     const auto& grid = config.grid;
-    std::size_t source_count = 0;
-    if (config.driven) {
-        for (std::size_t id = 0; id < 3; ++id) source_count += grid.layout(component(id)).element_count;
-    }
-    return 2*grid.field_bytes() + source_count*sizeof(CurrentSample) +
+    std::size_t e_count = 0;
+    for (std::size_t id = 0; id < 3; ++id) e_count += grid.layout(component(id)).element_count;
+    const std::size_t source_count = config.driven ? e_count : 0;
+    return 2*grid.field_bytes() + e_count + 4*e_count + sizeof(EdgeMaterial) + source_count*sizeof(CurrentSample) +
         6*config.p*sizeof(FieldProbe) + overhead;
 }
 void preflight(const Case& config) {

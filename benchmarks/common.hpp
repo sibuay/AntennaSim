@@ -12,6 +12,7 @@
 #include <locale>
 #include <numbers>
 #include <string>
+#include <utility>
 
 namespace antennasim::benchmark::common {
 using Index = std::array<std::size_t, 3>;
@@ -69,6 +70,36 @@ template<class Array> void json_array(std::ostream& out, const Array& values) {
     for (auto value : values) { if (!first) out << ','; first = false; out << value; }
     out << ']';
 }
+// Benchmark-side four-cell mean of an interior E_a edge, summed in its own
+// order ((b,c), (b-1,c), (b,c-1), (b-1,c-1)); independent of the solver table.
+inline std::pair<double, double> edge_average(const MaterialMap& map, std::size_t a, Index edge) {
+    const auto b = (a + 1) % 3, c = (a + 2) % 3;
+    double eps = 0, sigma = 0;
+    for (std::size_t dc = 0; dc < 2; ++dc)
+        for (std::size_t db = 0; db < 2; ++db) {
+            Index cell = edge;
+            cell[b] -= db;
+            cell[c] -= dc;
+            eps += map.eps_r(cell);
+            sigma += map.sigma(cell);
+        }
+    return {eps / 4, sigma / 4};
+}
+
+// Solver coefficient table as emitted provenance (17 significant digits).
+inline void coefficients_json(std::ostream& out, const EdgeCoefficients& table) {
+    out << "\"coefficients\":{\"provenance\":\"solver table: four-cell mean of eps_r and sigma per unconstrained E edge, "
+           "eps_e=eps_r_e*epsilon0, x=sigma_e*dt/(2 eps_e), Ca=(1-x)/(1+x), Cb=(dt/eps_e)/(1+x); deduplicated, uint32 index per E sample\","
+        << "\"index_bytes\":" << table.index_bytes() << ",\"table_bytes\":" << table.table_bytes() << ",\"entries\":[";
+    bool first = true;
+    for (const auto& entry : table.table()) {
+        out << (first ? "" : ",") << "{\"eps_r\":" << entry.eps_r << ",\"sigma_S_per_m\":" << entry.sigma_s_per_m
+            << ",\"x\":" << entry.x << ",\"Ca\":" << entry.ca << ",\"Cb\":" << entry.cb << ",\"edges\":" << entry.edges << '}';
+        first = false;
+    }
+    out << "]}";
+}
+
 inline void json_string(std::ostream& out, const char* value) {
     out << '"';
     for (const char character : std::string(value)) {

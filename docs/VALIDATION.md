@@ -20,8 +20,8 @@ and [author-review/calculation evidence](validation/FND-04-review.md). Their
 production fixtures, raw-output runners, and independent analyzer now exist and
 their full measurements pass. The
 [FND-05 foundation gate](validation/FND-05-foundation-gate.md) passed on
-2026-09-06 and the P1 gate on 2026-09-17. REF-01 through REF-06, MAT-01 and
-MAT-02 are complete and MAT-03 is ready. P0 infrastructure, S01–S09 on every
+2026-09-06 and the P1 gate on 2026-09-17. REF-01 through REF-06 and MAT-01
+through MAT-03 are complete and MAT-04 is ready. P0 infrastructure, S01–S09 on every
 executed fixture, grid/CFL/source/probe/run-input/mask checks, and the full
 V01–V03 v1 suites pass. V04–V07 have
 [fixed version-1 specifications](validation/MAT-01-closed-domain-benchmarks.md)
@@ -30,8 +30,13 @@ with [audit evidence](validation/MAT-01-review.md). V04 (PEC cavity
 eigenmodes, driven spectrum, interior enforcement) has
 [passing measured evidence](validation/MAT-02-pec-cavity.md) from a clean
 Release build (MAT-02, 2026-09-18), with the V01–V03 suites reproduced at
-zero tolerance through the mask-capable kernel; no material or spectral
-production capability is validated.
+zero tolerance through the mask-capable kernel. V05 (dielectric eigenwave,
+TE-mode interface, slab-loaded cavity) and V06 (lossy eigenwave, dissipation
+identity, zero-conductivity limit) have
+[passing measured evidence](validation/MAT-03-dielectric-conductivity.md) from
+a clean Release build (MAT-03, 2026-09-23). V01–V04 were reproduced at zero
+tolerance through the material kernel. No spectral production capability is
+validated.
 
 ## Acceptance policy
 
@@ -74,13 +79,24 @@ wrong electric component and never referred to the driven edge, and revision
 1.4 a third finding that a prescribed probe absent from every state passed both
 the audit and the reduction, which read its missing samples as zero; the same
 raw runs pass all three revisions with the margins in the
-[MAT-02 evidence](validation/MAT-02-pec-cavity.md). V05–V07 have status **Version 1 specified (MAT-01, 2026-09-18); not
-run**: fixtures, closed-form discrete and continuum comparators, fixed caps,
-resource budgets, and the S10–S14 structural extensions are in the
+[MAT-02 evidence](validation/MAT-02-pec-cavity.md).
+
+V05 and V06 have status **Version 1 measured and passed (MAT-03, 2026-09-23)**
+from a clean Release build with the extended independent analyzer. V05-B mode
+purity passes under specification revision 1.5, which normalizes by
+`max(abs(a_n), 1e-4 peak)`. The version-1 rule failed only at carrier zero
+crossings, where its relative normalization demanded precision below roundoff,
+and that failure is retained in the evidence (D025). V06-C reproduced V01–V03
+at zero tolerance. V05/V06 are permanent regressions through the `closed-v1`
+material suites and their smoke subset.
+
+V07 has status **Version 1 specified (MAT-01, 2026-09-18); not run**; its
+production comparison is MAT-04's. The fixtures, comparators, caps, resource
+budgets (corrected for coefficient storage by D023) and S14 are in the
 [MAT-01 specification](validation/MAT-01-closed-domain-benchmarks.md). V08–V15
 remain **Specified at planning level only**. S01–S08 structural acceptance
 requirements are included in the FND-04 version-1 specification; S09 is
-implemented by `reference.pec`.
+implemented by `reference.pec` and S10–S13 by `reference.material_*`.
 
 Implemented structural coverage: `reference.grid` (CTest labels
 `reference_structural;fast`) covers REF-01's extent/count/size/geometry-input
@@ -133,10 +149,33 @@ oracle with an independently enumerated mask (probes, `U`, `Q`, component and
 region maxima within 1e-12), including the shell case reproducing the open
 cavity bitwise.
 
-All six independent Python convention/specification/golden-state/reduction
-audits are registered in CTest, and Python is required whenever `BUILD_TESTING=ON`;
+MAT-03 adds the following tests:
+
+- **`reference.material_map` (S10, 9554 checks).** Modular per-cell maps,
+  and maps whose `sigma` does not follow `eps_r`, against an independent
+  cell-to-edge enumeration. The vacuum map equals the default table bitwise,
+  and the vacuum kernel is bitwise P1. The driven stepper is bitwise equal to a
+  transcribed P1 step. Covers the rejection matrix and the eps-weighted Gauss
+  screening. The count was 3022 before the 2026-09-25 review.
+- **`reference.material_update` (S11, 1034).** The single-edge lossy update
+  at four values of `x`, and two lossy steps against the exact-rational header
+  that `reference.material_steps` regenerates.
+- **`reference.material_timestep` (S12, 19).** The vacuum CFL value for every
+  material; rejection before allocation, and on coefficient overflow.
+- **`reference.material_dissipation` (S13, 611).** The one-step identity
+  `Q_(n+1) - Q_n + D_n` on modular fields.
+- **`reference.closed_analysis` (from 726 to 2654 checks).** Synthetic
+  V05-A/B/C and V06-A/B series with their fault injections. The second
+  2026-09-25 review added faults for every enforced limit, which a mutation run
+  confirmed. The revision-1.5
+  purity conditioning. The coefficient-table audit against a brute-force
+  enumeration. A pure-Python material oracle that reproduces the five material
+  smoke cases (probes, `U`, `Q`, `D`, maxima) within `1e-12`.
+
+All seven independent Python convention/specification/golden-state/reduction
+audits (MAT-03 added the material golden-state generator) are registered in CTest, and Python is required whenever `BUILD_TESTING=ON`;
 validation therefore fails closed instead of reporting a reduced suite as a pass.
-GitHub CI runs the same fifteen-test Debug/Release suite and retains logs and smoke
+GitHub CI runs the same twenty-test Debug/Release suite and retains logs and smoke
 artifacts. The full physical suites are run manually from a clean Release build
 with `scripts/run_reference_benchmarks.py` (`--benchmark reference-v1` or
 `closed-v1`), `scripts/analyze_reference_benchmarks.py` and
@@ -204,6 +243,28 @@ these evidence types separately and retain contradictory evidence for review.
    assumptions before attempting parameter tuning.
 4. Fix the cause and rerun affected benchmarks and regressions.
 5. Record the failure, resolution, and any remaining limits in the evidence report.
+
+If investigation shows that a criterion fails only because its measurement is
+ill-conditioned, the fix is to the measurement definition, not a looser limit.
+An example is a relative residual divided by a quantity that passes near zero,
+which then demands precision below binary64 roundoff. This applies only when
+the investigation also shows that the absolute error stays at the roundoff
+scale and that there is no solver defect.
+
+- Keep the original limit wherever the quantity is resolvable.
+- Add an absolute floor to the normalizer, derived from the roundoff scale
+  with a stated margin.
+- Show with injected faults that real defects just above the limit are still
+  detected.
+- Report how many measurements fall under the floor and how much looser the
+  check is there. Derive the resolution threshold from the measured
+  accumulated roundoff, not from a single rounding (added after the MAT-03
+  review on 2026-09-25).
+- Preserve the failing analysis, and record a numbered specification revision
+  and a decision.
+
+The owner adopted this rule on 2026-09-23; see MAT-01 V05-B revision 1.5 and
+D025.
 
 Do not fabricate reference results, silently replace baselines, loosen thresholds
 to fit the implementation, or label unsupported configurations as validated.

@@ -17,7 +17,7 @@ function(antennasim_target_defaults target)
 endfunction()
 
 configure_file(src/version.hpp.in generated/antennasim/version.hpp @ONLY)
-add_library(antennasim_core STATIC src/build_info.cpp src/grid.cpp src/fields.cpp src/vacuum.cpp src/pec.cpp src/run.cpp)
+add_library(antennasim_core STATIC src/build_info.cpp src/grid.cpp src/fields.cpp src/vacuum.cpp src/pec.cpp src/material.cpp src/run.cpp)
 add_library(AntennaSim::core ALIAS antennasim_core)
 target_include_directories(antennasim_core
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
@@ -38,7 +38,7 @@ foreach(input IN LISTS snapshot_inputs)
 endforeach()
 string(SHA256 source_snapshot "${snapshot_text}")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/source-snapshot.txt" "${snapshot_text}")
-add_library(antennasim_benchmarks STATIC benchmarks/reference.cpp benchmarks/closed.cpp)
+add_library(antennasim_benchmarks STATIC benchmarks/reference.cpp benchmarks/closed.cpp benchmarks/material.cpp)
 target_include_directories(antennasim_benchmarks PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/benchmarks")
 target_link_libraries(antennasim_benchmarks PUBLIC AntennaSim::core)
 target_compile_definitions(antennasim_benchmarks PRIVATE
@@ -104,6 +104,19 @@ if(BUILD_TESTING)
     add_test(NAME reference.pec COMMAND antennasim_pec_check)
     set_tests_properties(reference.pec PROPERTIES LABELS "reference_structural;closed_domain" TIMEOUT 120)
 
+    # MAT-03 S10-S13: one executable, four independently written groups.
+    add_executable(antennasim_material_check tests/material_check.cpp)
+    target_link_libraries(antennasim_material_check PRIVATE AntennaSim::core)
+    antennasim_target_defaults(antennasim_material_check)
+    foreach(group IN ITEMS map:s10 update:s11 timestep:s12 dissipation:s13)
+        string(REPLACE ":" ";" pair "${group}")
+        list(GET pair 0 test_name)
+        list(GET pair 1 test_group)
+        add_test(NAME reference.material_${test_name} COMMAND antennasim_material_check --check ${test_group})
+        set_tests_properties(reference.material_${test_name} PROPERTIES
+            LABELS "reference_structural;material;fast" TIMEOUT 60)
+    endforeach()
+
     add_test(NAME reference.yee_conventions COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_yee_conventions.py")
     add_test(NAME reference.benchmark_specification COMMAND "${Python3_EXECUTABLE}"
@@ -112,6 +125,10 @@ if(BUILD_TESTING)
         "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_reference_steps.py")
     set_tests_properties(reference.yee_conventions reference.benchmark_specification
         reference.golden_steps PROPERTIES LABELS "reference_structural;analytical_audit;fast" TIMEOUT 30)
+    add_test(NAME reference.material_steps COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_material_steps.py")
+    set_tests_properties(reference.material_steps PROPERTIES
+        LABELS "reference_structural;analytical_audit;material;fast" TIMEOUT 60)
     add_test(NAME reference.material_specification COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_material_benchmarks.py")
     set_tests_properties(reference.material_specification PROPERTIES

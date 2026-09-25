@@ -78,10 +78,14 @@ eigenwaves in a reflecting box at the declared grids and durations. Phase 2 is
 [audit review](validation/MAT-01-review.md)); MAT-02 implemented the explicit
 E-edge PEC mask and passed the V04 cavity benchmarks
 ([contract](methods/MAT-02-pec-mask-contract.md),
-[evidence](validation/MAT-02-pec-cavity.md)); MAT-03 is ready. All later
-phases are **not started**; material, open-boundary and antenna accuracy
-remain unvalidated, and PEC accuracy is established only for the declared
-cavity envelope.
+[evidence](validation/MAT-02-pec-cavity.md)); MAT-03 implemented per-cell
+dielectric and constant-conductivity updates and passed V05/V06
+([contract](methods/MAT-03-material-update-contract.md),
+[evidence](validation/MAT-03-dielectric-conductivity.md)); MAT-04 is ready.
+All later phases are **not started**. PEC and material accuracy are
+established only for the declared cavity, interface, slab and homogeneous
+lossy envelopes (`x <= 0.045`). Spectral-production, open-boundary and antenna
+accuracy remain unvalidated.
 The milestone column maps this plan to the original vision. Later phases are
 broken into detailed work items only when their prerequisites are understood.
 

@@ -1,15 +1,18 @@
-"""MAT-02 independent physical analysis of closed-v1 raw artifacts (V04-A/B/C).
+"""MAT-02/MAT-03 independent physical analysis of closed-v1 raw artifacts (V04-V06).
 
 Reads emitted metadata/CSV only; no solver operator is imported. The
 predictions and fixed version-1 limits come from the MAT-01 specification
 audit (check_material_benchmarks.py), which evaluates only closed-form
-expressions. Every check is recorded and all outputs are written before the
-nonzero exit for a failed suite.
+expressions. The V05/V06 reductions live in material_reductions.py. Every
+check is recorded and all outputs are written before the nonzero exit for a
+failed suite.
 
 Python 3.9+, standard library. Usage:
   python scripts/analyze_closed_benchmarks.py --input ROOT --output DIR
-ROOT contains the CLI suite directories ``cavity``, ``cavity-spectrum`` and
-``pec`` and an optional ``resources.json`` from scripts/run_reference_benchmarks.py.
+ROOT contains the CLI suite directories ``cavity``, ``cavity-spectrum``, ``pec``,
+``dielectric``, ``interface``, ``slab-cavity``, ``lossy`` and ``dissipation`` (any
+subset with --suite) and an optional ``resources.json`` from
+scripts/run_reference_benchmarks.py.
 """
 import argparse
 import csv
@@ -29,6 +32,7 @@ from check_material_benchmarks import (cavity_mode, cavity_lines, pulse_samples,
                                        V04C_PROBES_OUTSIDE, pulse_drive,
                                        V04C_DRIVE_LIMIT, V04C_EXCITATION_FLOOR, V04C_INVARIANT_LIMIT)
 from check_reference_runs import read_json, C0, MU0, EPS0, ETA0, NAMES
+import material_reductions as mr
 
 SCHEMA = "closed-v1-raw-1"
 AMPLITUDE = 1.0
@@ -46,6 +50,7 @@ MODES = ((1, 1), (2, 1), (1, 2))
 AXES = "xyz"
 V04C_BOX = [[V04C_MARGIN, V04C_MARGIN + c] for c in V04_BASE_CELLS]
 REGIONS = ("interior", "surface", "exterior")
+MATERIAL_SUITES = ("dielectric", "interface", "slab-cavity", "lossy", "dissipation")
 # The emitted initial-condition descriptions, checked against the MAT-01
 # convention so that a run can be reproduced from its own metadata. Revision
 # 1.3 (MAT-02 finding R2) corrected the mode sign: the description printed the
@@ -60,6 +65,21 @@ SOURCE_INITIALIZATION = "zero fields"
 HISTORICAL_MODE_INITIALIZATION = ("exact discrete standing mode: E_a=A sin(k_b r_b) sin(k_c r_c) at t=0; "
                                   "H=-C E_s/(mu0 Omega) sin(omega_d dt/2) at -dt/2 by permutation curl")
 HISTORICAL_SNAPSHOT = "f02fbe47c49ba3067e23051e3e10bc22456f1bfd522c5fd767ae20872e4bf61e"
+# MAT-03 material kinds and their pinned initial-condition and source descriptions.
+MATERIAL_KINDS = ("wave", "sheet", "slab", "modular")
+WAVE_INITIALIZATION = {
+    False: ("FND-04 compact potentials, discrete eigenwave: E_b=A cos(k r_a) at t=0; H_c=s abs(h) cos(k r_a+phi) "
+            "at -dt/2 with h=(1/eta) z^(-1/2), phi=-arg(h)=omega_d dt/2"),
+    True: ("FND-04 compact potentials, exact lossy eigenwave: E_b=A cos(k r_a) at t=0; H_c=s abs(h) cos(k r_a+phi) "
+           "at -dt/2 with h=hhat z^(-1/2), hhat/A=(i dt K/mu0)/(z^(1/2)-z^(-1/2)), phi=-arg(h)")}
+MATERIAL_INITIALIZATION = {
+    "sheet": "zero fields",
+    "slab": ("exact discrete slab eigenvector: E_b=A e[i_a] sin(pi i_c/N_c) at t=0; "
+             "H=+(C E_s) sin(omega_d dt/2)/(mu0 Omega) at -dt/2 by permutation curl"),
+    "modular": "FND-04 v1 normalized modular P curl"}
+SHEET_SOURCE = ("J_b=J0 sin(pi i_c/N_c) g_n on every E_b edge of the plane i_src, J0=1 A/m^2, "
+                "g_n=exp(-(((n+1/2) dt-t0)/tau)^2/2) cos(2 pi f0 ((n+1/2) dt-t0)), tau=1/(2 pi 0.15 f0), t0=4 tau, every step")
+COEFFICIENT_LIMIT = 1e-15
 
 
 def finite(value):
@@ -73,6 +93,10 @@ def initialization_accepted(meta):
     only together with the source snapshot that emitted it.
     """
     description = meta["initialization"]
+    if meta["kind"] in MATERIAL_KINDS:
+        expected = (WAVE_INITIALIZATION[meta["sigma_S_per_m"] != 0] if meta["kind"] == "wave"
+                    else MATERIAL_INITIALIZATION[meta["kind"]])
+        return description == expected
     if description == (MODE_INITIALIZATION if meta["kind"] == "mode" else SOURCE_INITIALIZATION):
         return True
     return (meta["kind"] == "mode" and description == HISTORICAL_MODE_INITIALIZATION
@@ -170,6 +194,102 @@ def probe_coverage(meta, per_state):
     return None
 
 
+def update_edges(cells):
+    """E samples per component in the FND-03 update ranges."""
+    return [cells[a] * math.prod(cells[t] - 1 for t in range(3) if t != a) for a in range(3)]
+
+
+def expected_materials(meta):
+    """Independent material classes of a case from its kind and fixed rule.
+
+    Returns ({(eps_r, sigma): cell count}, {(eps_r_e, sigma_e): edge count}).
+    A uniform map has one class; the V05-B/C plane at cell ``i_int`` along the
+    first role axis gives vacuum, the two-medium mean and the loaded medium,
+    counted in closed form per component (E_a by cell, E_b/E_c by a-node).
+    """
+    cells = meta["cells"]
+    total = math.prod(cells)
+    edges = update_edges(cells)
+    kind = meta["kind"]
+    if kind in ("mode", "source"):
+        return {(1.0, 0.0): total}, {(1.0, 0.0): sum(edges)}
+    eps, sigma = float(meta["eps_r"]), float(meta["sigma_S_per_m"])
+    if kind in ("wave", "modular"):
+        return {(eps, sigma): total}, {(eps, sigma): sum(edges)}
+    a, i_int = meta["roles"][0], meta["i_int"]
+    n_a = cells[a]
+    per_layer = total // n_a
+    vacuum = loaded = mean = 0
+    for e in range(3):
+        if e == a:
+            transverse = math.prod(cells[t] - 1 for t in range(3) if t != a)
+            vacuum += i_int * transverse
+            loaded += (n_a - i_int) * transverse
+        else:
+            t = 3 - a - e
+            per_node = cells[e] * (cells[t] - 1)
+            vacuum += (i_int - 1) * per_node
+            mean += per_node
+            loaded += (n_a - 1 - i_int) * per_node
+    return ({(1.0, 0.0): i_int * per_layer, (eps, sigma): (n_a - i_int) * per_layer},
+            {(1.0, 0.0): vacuum, ((1.0 + eps) / 2, 0.0): mean, (eps, sigma): loaded})
+
+
+def same_class(key, entry):
+    """An emitted entry belongs to an expected (eps_r_e, sigma_e) class: eps_r
+    exactly (sums of 1, 4 and 2.25 are exact), sigma within 1e-15 relative."""
+    if entry["eps_r"] != key[0]:
+        return False
+    if key[1] == 0:
+        return entry["sigma_S_per_m"] == 0
+    return abs(entry["sigma_S_per_m"] / key[1] - 1) <= COEFFICIENT_LIMIT
+
+
+def coefficient_audit(meta):
+    """MAT-03: the emitted material summary and solver coefficient table against
+    the independent classes and the MAT-01 formulas. Returns an error or None."""
+    material = meta["kind"] in MATERIAL_KINDS
+    if "coefficients" not in meta:
+        return "missing coefficient table" if material else None
+    cell_classes, edge_classes = expected_materials(meta)
+    summary = meta.get("materials", {})
+    recorded = {(float(c["eps_r"]), float(c["sigma_S_per_m"])): c["count"] for c in summary.get("cells", [])}
+    if recorded != cell_classes:
+        return "material map summary %s differs from the fixed rule %s" % (recorded, cell_classes)
+    extents = [[meta["cells"][a] + int(a != id) for a in range(3)] for id in range(3)]
+    e_total = sum(math.prod(shape) for shape in extents)
+    if summary.get("map_bytes") != (16 * math.prod(meta["cells"]) if material else 0):
+        return "material map bytes"
+    table = meta["coefficients"]
+    entries = table["entries"]
+    if table["index_bytes"] != 4 * e_total or not entries or table["table_bytes"] % len(entries) \
+            or table["table_bytes"] // len(entries) < 40:
+        return "coefficient storage bytes"
+    if len(entries) != len(edge_classes):
+        return "coefficient table has %d entries, expected %d" % (len(entries), len(edge_classes))
+    dt = meta["dt_s"]
+    matched = set()
+    for entry in entries:
+        key = next((k for k in edge_classes if same_class(k, entry)), None)
+        if key is None or key in matched:
+            return "coefficient entry (%r, %r) is not an expected edge class" % (entry["eps_r"], entry["sigma_S_per_m"])
+        matched.add(key)
+        if entry["edges"] != edge_classes[key]:
+            return "entry (%r, %r) covers %d edges, expected %d" % (key + (entry["edges"], edge_classes[key]))
+        eps = entry["eps_r"] * EPS0
+        x = entry["sigma_S_per_m"] * dt / (2 * eps)
+        ca, cb = (1 - x) / (1 + x), dt / eps / (1 + x)
+        if key == (1.0, 0.0):
+            if not (entry["x"] == 0 and entry["Ca"] == 1 and entry["Cb"] == dt / EPS0):
+                return "vacuum entry is not Ca=1, Cb=dt/epsilon0 exactly"
+        elif not (abs(entry["x"] - x) <= COEFFICIENT_LIMIT * abs(x) and abs(entry["Ca"] - ca) <= COEFFICIENT_LIMIT * max(abs(ca), 1)
+                  and abs(entry["Cb"] - cb) <= COEFFICIENT_LIMIT * cb):
+            return "entry (%r, %r) coefficients differ from the MAT-01 formula" % key
+        if not (math.isfinite(entry["Ca"]) and entry["Cb"] > 0):
+            return "entry coefficients are not finite with Cb > 0"
+    return None
+
+
 def load_case(directory):
     meta = read_json(directory / "metadata.json")
     with (directory / "probes.csv").open(newline="") as handle:
@@ -200,8 +320,11 @@ def audit_closed(root, suite):
             raise ValueError("metadata identity")
         if meta["case_status"] != "raw_complete" or meta["fixture_checks_status"] != "passed":
             raise ValueError("incomplete case metadata")
-        if meta["kind"] not in ("mode", "source") or not initialization_accepted(meta):
+        if meta["kind"] not in ("mode", "source") + MATERIAL_KINDS or not initialization_accepted(meta):
             raise ValueError("initial condition description")
+        material = meta["kind"] in MATERIAL_KINDS
+        if material and meta["source"] != (SHEET_SOURCE if meta["kind"] == "sheet" else "J=0"):
+            raise ValueError("source description")
         if len(meta["source_snapshot_sha256"]) != 64:
             raise ValueError("source fingerprint")
         if not (meta["c0"] == C0 and meta["mu0"] == MU0 and meta["epsilon0"] == EPS0 and meta["eta0"] == ETA0):
@@ -216,11 +339,25 @@ def audit_closed(root, suite):
             raise ValueError("six extents")
         payload = 8 * sum(math.prod(shape) for shape in extents)
         mask_bytes = sum(math.prod(extents[id]) for id in range(3))
+        floor = 2 * payload + mask_bytes
+        if "coefficients" in meta:
+            floor += meta["coefficients"]["index_bytes"] + meta["coefficients"]["table_bytes"]
+        if material:
+            if not (meta["map_bytes"] == 16 * math.prod(cells) and meta["coefficient_index_bytes"] == 4 * mask_bytes
+                    and meta["diagnostic_bytes"] == (8 * mask_bytes if meta["diagnostics"] else 0)):
+                raise ValueError("material storage bytes")
+            floor += meta["map_bytes"] + meta["diagnostic_bytes"]
         if not (meta["field_bytes"] == payload and meta["mask_bytes"] == mask_bytes
-                and 2 * payload + mask_bytes <= meta["working_bytes_budgeted"] <= 2**31):
+                and floor <= meta["working_bytes_budgeted"] <= 2**31):
             raise ValueError("transient memory budget")
         if not (meta["fixture_max_divergence_error"] <= 1e-11 and meta["fixture_max_eigen_error"] <= 1e-11):
             raise ValueError("fixture report")
+        # Material fixtures always report the plateau check; V04 metadata predates it.
+        if material and not meta["fixture_max_plateau_error"] <= 1e-11:
+            raise ValueError("fixture report")
+        error = coefficient_audit(meta)
+        if error is not None:
+            raise ValueError(error)
         if meta["closure_edges"] != closure_counts(cells):
             raise ValueError("closure edge counts")
         primitives = meta["pec_primitives"]
@@ -264,6 +401,8 @@ def audit_closed(root, suite):
             energy = list(csv.DictReader(handle))
         if len(energy) != (steps + 1 if meta["diagnostics"] else 0):
             raise ValueError("diagnostic rows")
+        if material and energy and "D_J" not in energy[0]:
+            raise ValueError("dissipation column")
         for n, row in enumerate(energy):
             values = {k: float(v) for k, v in row.items()}
             if int(values["state"]) != n or not all(math.isfinite(v) for v in values.values()):
@@ -860,6 +999,66 @@ def analyze_suite_pec(root, cavity_cases):
     return result, trace
 
 
+def analyze_suite_material(root, suite):
+    """V05-A/B/C and V06-A/B suites; returns (result, trace rows)."""
+    expected = {"dielectric": mr.expected_wave_names(False), "lossy": mr.expected_wave_names(True),
+                "interface": mr.expected_interface_names(), "slab-cavity": mr.expected_slab_names(),
+                "dissipation": mr.expected_dissipation_names()}[suite]
+    result, directories = load_suite(root, suite, expected)
+    result["refinement"] = []
+    trace, series = [], {}
+    for directory in directories:
+        try:
+            meta, probes, diagnostics = load_case(directory)
+            if suite in ("dielectric", "lossy"):
+                metrics, rows = mr.analyze_wave(meta, probes)
+            elif suite == "interface":
+                metrics, rows, series[meta["case"]] = mr.analyze_interface(meta, probes)
+            elif suite == "slab-cavity":
+                metrics, rows = mr.analyze_slab(meta, probes)
+            else:
+                metrics, rows = mr.analyze_dissipation(meta, diagnostics)
+        except Exception as error:
+            result["cases"].append({"case": directory.name, "status": "fail", "failures": ["unreadable: %s" % error]})
+            continue
+        result["cases"].append(metrics)
+        trace.extend(rows)
+    by_name = {m["case"]: m for m in result["cases"]}
+
+    def add(label, errors, keys):
+        entry = mr.refinement(errors, keys)
+        entry["sequence"] = label
+        result["refinement"].append(entry)
+    if suite == "dielectric":
+        for a, b in mr.ORDERINGS:
+            pair = AXES[a] + AXES[b]
+            add(pair, {p: by_name.get("dielectric-%s-p%d" % (pair, p), {}).get("continuum_error") for p in (24, 48, 96)},
+                (24, 48, 96))
+    elif suite == "lossy":
+        for sigma in mr.V06_SIGMAS:
+            for a, b in mr.ORDERINGS:
+                pair = AXES[a] + AXES[b]
+                keys = (24, 48, 96) if pair == "xy" else (24, 48)
+                for quantity in ("decay_error", "phase_error"):
+                    add("%s %s %s" % (pair, mr.SIGMA_LABEL[sigma], quantity),
+                        {p: by_name.get("lossy-%s-p%d-%s" % (pair, p, mr.SIGMA_LABEL[sigma]), {}).get(quantity)
+                         for p in keys}, keys)
+    elif suite == "slab-cavity":
+        for a in range(3):
+            for mode in (1, 2):
+                add("%s m%d" % (AXES[a], mode),
+                    {p: by_name.get("slab-%s-m%d-p%d" % (AXES[a], mode, p), {}).get("continuum_error") for p in (24, 48, 96)},
+                    (24, 48, 96))
+    elif suite == "interface":
+        add("x band maximum", {p: by_name.get("interface-x-p%d" % p, {}).get("continuum_error") for p in (16, 32, 64)},
+            (16, 32, 64))
+        result["orientation"] = [mr.orientation_agreement(series, p) for p in (16, 32)]
+    result["status"] = "pass" if not result["failures"] and all(
+        item["status"] == "pass" for key in ("cases", "refinement", "orientation")
+        for item in result.get(key, [])) else "fail"
+    return result, trace
+
+
 def write_csv(path, rows):
     if not rows:
         path.write_text("")
@@ -867,6 +1066,19 @@ def write_csv(path, rows):
     with path.open("w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()))
         writer.writeheader()
+        for row in rows:
+            writer.writerow({k: repr(v) if isinstance(v, float) else v for k, v in row.items()})
+
+
+def write_material_csv(path, rows):
+    """Heterogeneous material trace rows under the union of their keys."""
+    keys = []
+    for row in rows:
+        keys.extend(k for k in row if k not in keys)
+    with path.open("w", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=keys, restval="")
+        if keys:
+            writer.writeheader()
         for row in rows:
             writer.writerow({k: repr(v) if isinstance(v, float) else v for k, v in row.items()})
 
@@ -879,8 +1091,69 @@ def fmt(value, digits=6):
     return str(value)
 
 
+def material_report(suite):
+    lines = [""]
+    name = suite["suite"]
+    if name == "dielectric":
+        lines += ["| Case | N | omega_m sqrt(eps_r)/(k c0)-1 | cap | predicted | discrete | amp E/H | resid E/H | inactive"
+                  " | Z error | status |", "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+        for c in suite["cases"]:
+            lines.append("| %s | %s | %s | %s | %s | %s | %s / %s | %s / %s | %s | %s | %s |" % (
+                c["case"], c.get("steps"), fmt(c.get("continuum_error"), 9), fmt(c.get("continuum_cap")),
+                fmt(c.get("predicted_continuum_error"), 9), fmt(c.get("discrete_error"), 3),
+                fmt(c.get("max_amplitude_error_e"), 3), fmt(c.get("max_amplitude_error_h"), 3),
+                fmt(c.get("max_residual_e"), 3), fmt(c.get("max_residual_h"), 3), fmt(c.get("max_inactive"), 3),
+                fmt(c.get("max_impedance_error"), 3), c["status"]))
+    elif name == "lossy":
+        lines += ["| Case | N | x | decay error | cap | predicted | phase error | cap | predicted | max abs(rho/z-1) "
+                  "| H ratio (reported) | min abs(C) | status |",
+                  "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+        for c in suite["cases"]:
+            lines.append("| %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |" % (
+                c["case"], c.get("steps"), fmt(c.get("x"), 4), fmt(c.get("decay_error"), 6), fmt(c.get("decay_cap")),
+                fmt(c.get("predicted_decay_error"), 6), fmt(c.get("phase_error"), 6), fmt(c.get("phase_cap")),
+                fmt(c.get("predicted_phase_error"), 6), fmt(c.get("max_discrete_ratio_error"), 3),
+                fmt(c.get("max_magnetic_ratio_error_reported"), 3), fmt(c.get("min_amplitude"), 4), c["status"]))
+    elif name == "interface":
+        lines += ["| Case | N | gate | band max continuum | cap | discrete max | max abs(Im R) | purity 1.5 | purity v1"
+                  " (reported) | states below floor | b-plane mismatches | status |",
+                  "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+        for c in suite["cases"]:
+            lines.append("| %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |" % (
+                c["case"], c.get("steps"), c.get("gate"), fmt(c.get("continuum_error"), 6), fmt(c.get("continuum_cap")),
+                fmt(c.get("max_discrete_error"), 3), fmt(c.get("max_imag_R"), 3), fmt(c.get("max_purity_residual"), 3),
+                fmt(c.get("max_purity_residual_v1_reported"), 3), c.get("purity_states_below_floor"),
+                c.get("b_plane_mismatches"), c["status"]))
+        for item in suite.get("orientation", []):
+            lines.append("")
+            lines.append("Orientation agreement p=%s: max normalized difference %s, %s" % (
+                item["p"], fmt(item.get("max_difference"), 3), item["status"]))
+    elif name == "slab-cavity":
+        lines += ["| Case | N | f_c GHz | f_m/f_c-1 | cap | predicted | f_m/f_d-1 | amplitude | residual | status |",
+                  "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+        for c in suite["cases"]:
+            lines.append("| %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |" % (
+                c["case"], c.get("steps"), fmt((c.get("f_c_hz") or 0) / 1e9, 7), fmt(c.get("continuum_error"), 9),
+                fmt(c.get("continuum_cap")), fmt(c.get("predicted_continuum_error"), 9), fmt(c.get("discrete_error"), 3),
+                fmt(c.get("max_amplitude_error"), 3), fmt(c.get("max_normalized_residual"), 3), c["status"]))
+    elif name == "dissipation":
+        lines += ["| Case | N | Q_0 J | max balance / Q_n | max Q increase | bound violation | negative D | Q_N/Q_0 | status |",
+                  "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+        for c in suite["cases"]:
+            lines.append("| %s | %s | %s | %s | %s | %s | %s | %s | %s |" % (
+                c["case"], c.get("steps"), fmt(c.get("Q0_J"), 6), fmt(c.get("max_balance_error"), 3),
+                fmt(c.get("max_relative_Q_increase"), 3), c.get("bound_violation_state"),
+                c.get("first_negative_D_state"), fmt(c.get("final_Q_ratio"), 3), c["status"]))
+    if suite.get("refinement"):
+        lines += ["", "| Sequence | errors | orders | status |", "| --- | --- | --- | --- |"]
+        for r in suite["refinement"]:
+            lines.append("| %s | %s | %s | %s |" % (r["sequence"], ", ".join(fmt(e, 6) for e in r["errors"]),
+                                                     ", ".join(fmt(o, 6) for o in r["orders"]), r["status"]))
+    return lines
+
+
 def report(summary):
-    lines = ["# MAT-02 closed-v1 physical analysis", "",
+    lines = ["# closed-v1 physical analysis (MAT-02 V04, MAT-03 V05/V06)", "",
              "Generated by scripts/analyze_closed_benchmarks.py; thresholds are the fixed MAT-01 v1 values.",
              "Overall status: **%s**." % summary["status"].upper(), ""]
     for suite in summary["suites"]:
@@ -919,7 +1192,7 @@ def report(summary):
                         lines.append("| %s | %s | %s | %s | %s | %s | %s |" % (
                             name, fmt(g["window_max"], 4), fmt(g["later_max"], 4), fmt(g.get("v1_ratio"), 4),
                             fmt(g["floor"], 3), g["null_component"], "pass" if ok else "fail"))
-        elif suite["suite"] == "pec":
+        if suite["suite"] == "pec":
             lines += ["", "| Case | N | shell edges | silent max | equivalence max / bitwise / matched | status |",
                       "| --- | --- | --- | --- | --- | --- |"]
             for c in suite["cases"]:
@@ -940,12 +1213,18 @@ def report(summary):
                         fmt(c.get("source_probe_error"), 3), fmt(c.get("excitation_peak"), 4),
                         fmt(c.get("excitation_floor"), 4), fmt(c.get("excitation_ratio"), 4),
                         fmt(c.get("post_pulse_invariant_drift"), 3)))
+        elif suite["suite"] in ("dielectric", "lossy", "interface", "slab-cavity", "dissipation"):
+            lines += material_report(suite)
         for c in suite["cases"]:
             for failure in c.get("failures", []):
                 lines.append("- FAIL %s: %s" % (c["case"], failure))
         for item in suite.get("refinement", []):
+            label = item.get("sequence") or "%s %s" % (item.get("polarization"), item.get("mode"))
             for failure in item.get("failures", []):
-                lines.append("- FAIL refinement %s %s: %s" % (item["polarization"], item["mode"], failure))
+                lines.append("- FAIL refinement %s: %s" % (label, failure))
+        for item in suite.get("orientation", []):
+            for failure in item.get("failures", []):
+                lines.append("- FAIL orientation p=%s: %s" % (item["p"], failure))
         lines.append("")
     if summary.get("resources"):
         lines += ["## Measured resources", "", "| Suite | status | elapsed s | peak working set bytes |",
@@ -954,8 +1233,9 @@ def report(summary):
             lines.append("| %s | %s | %s | %s |" % (name, item.get("status"), fmt(item.get("elapsed_seconds"), 5),
                                                     item.get("peak_working_set_bytes")))
         lines.append("")
-    lines += ["Per-state modal projections are in cavity-trace.csv; identified lines are in spectrum-peaks.csv.",
-              "A passing analysis supports only the declared PEC-cavity envelope of the MAT-01 specification."]
+    lines += ["Per-state modal projections are in cavity-trace.csv; identified lines are in spectrum-peaks.csv;",
+              "material fits, growth factors, R/T spectra and balances are in material-trace.csv.",
+              "A passing analysis supports only the declared envelope of the MAT-01 specification."]
     return "\n".join(lines) + "\n"
 
 
@@ -963,7 +1243,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--suite", choices=("all", "cavity", "cavity-spectrum", "pec"), default="all")
+    parser.add_argument("--suite", choices=("all", "v04", "materials", "cavity", "cavity-spectrum", "pec") + MATERIAL_SUITES,
+                        default="all")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     summary = {"schema": "closed-v1-analysis-1", "input": str(args.input.resolve()), "suites": [],
@@ -977,17 +1258,32 @@ def main():
                               "excitation_floor": V04C_EXCITATION_FLOOR, "invariant": V04C_INVARIANT_LIMIT,
                               "excitation_rule_version": "1.4"},
                "analysis_environment": {"python": sys.version.split()[0], "platform": platform.platform()}}
-    trace, peaks = [], []
+    # MAT-03 limits are recorded only when a material suite is analyzed, so that a
+    # V04-only re-analysis stays key-for-key comparable with the MAT-02 summary.
+    if args.suite in ("all", "materials") + MATERIAL_SUITES:
+        summary["thresholds"].update({
+            "v05a_caps": {str(k): v for k, v in mr.V05A_CAPS.items()}, "v05_structure": mr.STRUCTURE_LIMIT,
+            "v05a_impedance": mr.IMPEDANCE_LIMIT, "v05b_caps": {str(k): v for k, v in mr.V05B_R_CAPS.items()},
+            "v05b_discrete": mr.V05B_DISCRETE_LIMIT, "v05b_orientation": mr.ORIENTATION_LIMIT,
+            "v05c_caps": {"%d,%d" % k: v for k, v in mr.V05C_CAPS.items()},
+            "v06a_decay_caps": {"%d,%g" % k: v for k, v in mr.V06_DECAY_CAPS.items()},
+            "v06a_phase_caps": {str(k): v for k, v in mr.V06_PHASE_CAPS.items()},
+            "v06a_discrete": mr.V06_DISCRETE_LIMIT, "v06b_balance": mr.BALANCE_LIMIT,
+            "v06b_monotone": mr.MONOTONE_LIMIT, "v06b_final_energy": mr.FINAL_ENERGY_LIMIT,
+            "coefficients": COEFFICIENT_LIMIT, "v05b_purity_floor": mr.PURITY_FLOOR,
+            "material_rule_version": "1; V05-B purity 1.5"})
+    trace, peaks, material_trace = [], [], []
     cavity_cases = {}
-    if args.suite in ("all", "cavity"):
+    v04 = args.suite in ("all", "v04")
+    if v04 or args.suite == "cavity":
         result, rows, cavity_cases = analyze_suite_cavity(args.input / "cavity")
         summary["suites"].append(result)
         trace = rows
-    if args.suite in ("all", "cavity-spectrum"):
+    if v04 or args.suite == "cavity-spectrum":
         result, rows = analyze_suite_spectrum(args.input / "cavity-spectrum")
         summary["suites"].append(result)
         peaks = rows
-    if args.suite in ("all", "pec"):
+    if v04 or args.suite == "pec":
         if args.suite == "pec":
             cavity_root = args.input / "cavity"
             for name in ("cavity-%s-m11-s1" % AXES[a] for a in range(3)):
@@ -999,6 +1295,11 @@ def main():
         result, rows = analyze_suite_pec(args.input / "pec", cavity_cases)
         summary["suites"].append(result)
         trace.extend(rows)
+    for suite in MATERIAL_SUITES:
+        if args.suite in ("all", "materials", suite):
+            result, rows = analyze_suite_material(args.input / suite, suite)
+            summary["suites"].append(result)
+            material_trace.extend(rows)
     resources = args.input / "resources.json"
     try:
         summary["resources"] = read_json(resources) if resources.is_file() else None
@@ -1026,6 +1327,7 @@ def main():
     (args.output / "metrics.json").write_text(json.dumps(summary, indent=1) + "\n")
     write_csv(args.output / "cavity-trace.csv", trace)
     write_csv(args.output / "spectrum-peaks.csv", peaks)
+    write_material_csv(args.output / "material-trace.csv", material_trace)
     (args.output / "report.md").write_text(report(summary))
     print(report(summary))
     return 0 if summary["status"] == "pass" else 1

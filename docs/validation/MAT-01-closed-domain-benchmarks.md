@@ -4,8 +4,10 @@ Version 1, 2026-09-18; revision 1.1 of the V04-B growth rule on 2026-09-18
 (MAT-02, see V04-B); revision 1.2 of the V04-C driven acceptance on 2026-09-22
 (MAT-02 review, see V04-C); revisions 1.3 and 1.4 of the V04-C driven
 acceptance and the probe-record completeness rule on 2026-09-22 (MAT-02 review
-follow-ups, see V04-C). **Author-reviewed; thresholds fixed for this
-version.**
+follow-ups, see V04-C); MAT-03 errata and resource-budget correction on
+2026-09-23 (no limit changed; see the section at the end); revision 1.5 of the
+V05-B mode-purity normalization on 2026-09-23 (MAT-03, see V05-B). **Author-reviewed;
+thresholds fixed for this version.**
 No P2 benchmark has run and no PEC, material, or spectral accuracy is
 established. This contract fixes the Phase 2 acceptance before any MAT-02,
 MAT-03, or MAT-04 solver code exists; the [MAT-01 review](MAT-01-review.md)
@@ -308,8 +310,9 @@ have `eps_r=4`; the `E_b` edges at `i_int` receive the mean `2.5`. Source:
 `tau=1/(2 pi 0.15 f0)`, `t0=4 tau`, sampled at half times. Run
 `N=ceil(29 T0/dt)` steps (611, 1221, 2441); gate `n_g=ceil(15 T0/dt)`
 (316, 632, 1263). Record `E_b` at `(i_p1, 0, N_c/2)` and `(i_p2, 0, N_c/2)`
-every state, the `E_b` line along `c` at `i_p1` and `j=0` every 64 states, and
-`E_b[j=1]` at both probes.
+every state, the `E_b` line along `c` at `i_p1` and `j=0` every 64 states
+(recorded at every state from MAT-03; see the errata), and `E_b[j=1]` at both
+probes.
 
 Reduction: rectangular-window transforms of the incident window `[1,n_g]`,
 reflected window `[n_g+1,N]` and the whole transmitted record at 21 frequencies
@@ -325,7 +328,7 @@ T_m(f) = X_tra/X_inc * exp(+i (kappa1 (i_int-i_p1) + kappa2 (i_p2-i_int)) d_a)
 | Continuum `abs(abs(R_m)-abs(R_c))` and `abs(abs(T_m)-abs(T_c))`, max over the band | p=16: 0.06; p=32: 0.0135; p=64: 0.0034 |
 | Discrete `abs(R_m-R_d)` and `abs(T_m-T_d)` (complex), max over the band | <= 1e-4 |
 | Imaginary part of `R_m` | <= 1e-4 |
-| Mode purity: residual of the `c`-line projection onto `sin(pi r_c/L_c)` normalized by its amplitude | <= 1e-9 at every recorded state |
+| Mode purity: residual of the `c`-line projection onto `sin(pi r_c/L_c)` normalized by its amplitude; **version 1.5 (MAT-03, 2026-09-23):** normalized by `max(abs(a_n), 1e-4 max_n abs(a_n))` | <= 1e-9 at every recorded state |
 | `b` invariance: `E_b[j=1]` equals `E_b[j=0]` | exactly, every state |
 | Orientation agreement: the three `p=16` (and `p=32`) probe series | identical within 1e-12 normalized |
 | Refinement of the `(x,y,z)` band-maximum continuum error | strictly decreasing; both `log2` ratios in [1.8,2.2] |
@@ -340,9 +343,55 @@ layout. The layout with the shorter far region or a longer record was shown to
 admit echoes (errors of order 1); the record length and gate are therefore
 part of the fixture and may not be changed without re-auditing.
 
+Revision 1.5 of the purity normalization. The version-1 rule divided the
+projection residual by the state's own TE_1 amplitude `a_n`. The first MAT-03
+measurement failed it in all seven cases: 1.47e-9, 5.14e-8 and 1.28e-7 at
+`p=16/32/64`. Every other V05-B limit passed.
+
+The failures occur only at 2, 7 and 28 of 612, 1222 and 2442 states, where
+`abs(a_n)` is below `1e-6` of the record peak (carrier zero crossings and the
+quiet gaps between pulses). Measured against the record peak, the residual is
+at most 0.85e-15, 1.4e-15 and 1.7e-15 in every amplitude band. That is
+binary64 roundoff carried by the other transverse modes, not a solver or
+profile error.
+
+The rule is meaningful only while `1e-9 abs(a_n)` exceeds the roundoff in the
+record. A single rounding is `eps * peak = 2.2e-16 peak`, which would put the
+limit at `abs(a_n) > 2.2e-7 peak`. The accumulated roundoff over the up to
+2,441 steps is larger, and version 1 also exceeded `1e-9` at a few states
+above that level (at most `5.05e-9`, with `abs(a_n)` below `1e-6 peak`). The
+floor `1e-4` is about 500 times the single-rounding level.
+
+Scope of the floor (corrected 2026-09-25 after review; the text first said the
+version-1 limit was unchanged "wherever the amplitude is resolvable"):
+
+- The version-1 limit is unchanged at states with `abs(a_n) >= 1e-4 peak`:
+  356 of 612, 709 of 1222 and 1416 of 2442 states at `p=16/32/64`, about 58%.
+- The other 42% are held to `1e-13` of the peak instead, about 60 times the
+  observed roundoff. They include 33, 65 and 129 states before the pulse
+  arrives, where the amplitude is exactly zero.
+- In the band `2.2e-7 peak < abs(a_n) < 1e-4 peak` (218, 431 and 856 states)
+  this is looser than the version-1 relative limit, by up to about 450 times
+  at the lower edge of the band.
+
+The self-test shows that the revision keeps the version-1 detection at strong
+states and an absolute bound at weak ones: it detects TE_2 content of
+`2e-9 a_n` at the peak state and `3e-13 peak` at a quiet state.
+It also shows the conditioning fix: roundoff-scale content (`2e-15 peak`) at a
+quiet state passes, where version 1 would have reported `7.5e-9`.
+
+The version-1 failure is retained in the
+[MAT-03 evidence](MAT-03-dielectric-conductivity.md), and the analyzer still
+reports the version-1 value. Neither the record cadence nor any other V05-B
+limit changed. The same raw run passes revision 1.5 with a worst value of
+`1.58e-11`, re-analyzed without re-running the solver. The owner delegated this
+decision on 2026-09-23 on the condition that it resolve the failure without
+lowering the quality bar (D025).
+
 ### V05-C Slab-loaded TE cavity (18 cases)
 
-Fixture: cells `(p, 2, 2p)`, spacings `(1, 1.5, 1) lambda0/p`, `L_a=lambda0`,
+Fixture: cells `(p, 2, 2p)`, spacings `(1, 2, 1) lambda0/p` (MAT-03 erratum;
+the version-1 text read `(1, 1.5, 1)`), `L_a=lambda0`,
 `L_c=2 lambda0`, `eps_r=4` in cells `i_a>=p/2` (`i_int=p/2`, mean `2.5` on the
 interface edges), `p=24,48,96`, three cyclic orientations, two modes: the two
 lowest roots above the vacuum-region cutoff of the discrete characteristic
@@ -456,7 +505,7 @@ production operator as its own oracle.
 | ID / owner | Fixture and assertion | Threshold |
 | --- | --- | --- |
 | S09 / MAT-02 | PEC mask on `(5,4,3)` and `(2,3,4)`: the default mask equals `pec_shell` of the whole domain and the enumerated tangential outer-face set; `pec_box` and `pec_shell` for `[1,3)x[1,3)x[1,2)`, a primitive touching a wall, two overlapping primitives, and the V04-C shell on `(18,22,26)` (3,008 edges): marked edges equal the independent endpoint enumeration; masked E stays exactly zero over two steps with a compatible nonzero fixture; unmasked samples evolve; H inside a box and face-normal H on a shell stay zero; nonzero initial masked sample (including the V04-C mode inside a `pec_box`), source on a masked edge, inverted/out-of-range primitive rejected | exact integers/zeros; no unintended zeroing |
-| S10 / MAT-03 | Per-cell material map on `(2,3,4)` with `eps_r` and `sigma` from the S05 modular formula (`eps_r=1+value/60`, `sigma=value/50` clipped at 0): every edge coefficient equals the independently averaged value; vacuum map gives `Ca=1` and `Cb=dt/epsilon0` bitwise; `eps_r<1`, `sigma<0`, nonfinite, wrong-shape maps rejected | coefficients <= 1e-15 relative; vacuum exact |
+| S10 / MAT-03 | Per-cell material map on `(2,3,4)` with `eps_r` and `sigma` from the S05 modular formula (`eps_r=1+value/60`, `sigma=value/50` clipped at 0; the clipping applies to the value, the only reading with `eps_r>=1`): every edge coefficient equals the independently averaged value; vacuum map gives `Ca=1` and `Cb=dt/epsilon0` bitwise; `eps_r<1`, `sigma<0`, nonfinite, wrong-shape maps rejected | coefficients <= 1e-15 relative; vacuum exact |
 | S11 / MAT-03 | Single edge with prescribed `eps_e`, `sigma_e`, curl and J: `Enew` equals the independent formula for four `x_e` values including 0; two full lossy steps on `(5,4,3)` against the pure-Python transcription of the coefficient update | <= 1e-13 normalized |
 | S12 / MAT-03 | Time-step policy unchanged: the accepted `dt` for a material grid equals the vacuum value; `eps_r<1` rejected before allocation; coefficient overflow/nonfinite rejected | exact |
 | S13 / MAT-03 | Dissipation identity on the S05 modular fields with the S10 material map and the outer closure: `Q_(n+1)-Q_n+D_n` for one step | <= 1e-12 max(1, sum of absolute terms) |
@@ -526,7 +575,14 @@ The P2 physical suites total 5,358,056,072 cell-steps, five times the P1
 suites (1,080,686,592); at the REF-06 observed rates this is of order one hour
 serially, to be measured, not assumed. Peak memory remains bounded by the `p=96` transient
 (two 489.380 MiB payloads plus the mask) within the 2 GiB budget; the runner
-must keep enforcing it. Long runs stay manual from a clean Release build;
+must keep enforcing it. **Corrected by MAT-03 (D023):** that sentence omitted
+the solver's edge coefficients and the per-cell material map. With the adopted
+deduplicated table and a `uint32` index per E sample, the `p=96` V05-A/V06-A
+transient is 978.8 MiB of payloads, 30.7 MiB of mask, 122.6 MiB of index,
+162.0 MiB of map and the 16 MiB overhead, 1.279 GiB in total. Two doubles per
+edge would have given 1.639 GiB. The vacuum V01 `p=96` transient is 1.121 GiB.
+`check_material_benchmarks.py` prints these values and requires the adopted
+layout to stay below 2 GiB. Long runs stay manual from a clean Release build;
 smoke-length cases and all synthetic/oracle checks belong to CTest.
 
 ## Version and review rules
@@ -538,3 +594,24 @@ is claimed. Later failed measurements keep the corresponding item open; they do
 not retroactively make this specification a passed benchmark. Preserve
 version-1 limits and failed results if a reasoned revision is needed, and
 re-run `check_material_benchmarks.py` after any fixture change.
+
+## MAT-03 errata and resource-budget correction (2026-09-23)
+
+The MAT-03 contract recorded these corrections before any V05/V06 suite ran.
+None changes a cap, a prediction, a fixture quantity that a prediction depends
+on, or an acceptance rule. The owner confirmed the first two on 2026-09-22.
+
+- **V05-C spacing.** The fixture text gave `(1, 1.5, 1) lambda0/p`. The audit's
+  `v05c_geometry` uses `(1, 2, 1) lambda0/p`, and it produced every tabulated
+  V05-C prediction, the caps and the review table. The `b` spacing enters only
+  through the time step. With 1.5, mode 1 at `p=24` would predict `3.093e-4`
+  error and 225 steps, instead of the tabulated `2.98080e-4` and 216. The text
+  now matches the audit.
+- **V05-B line cadence.** Revision 1.4 requires every closed-v1 state to record
+  the same probe keys, and the version-1 line was recorded every 64 states. The
+  line is now recorded at every state, a superset of the version-1 record, so
+  the purity limit applies at every state.
+- **S10 clipping.** "Clipped at 0" applies to the modular value:
+  `v = max(0, S05 value)`, with `eps_r = 1 + v/60` and `sigma = v/50`.
+- **Resource budget.** Coefficient and map storage are now counted (see the
+  corrected budget paragraph and D023).

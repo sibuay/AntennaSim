@@ -14,5 +14,9 @@ void advance_e(FieldStorage& fields, const VacuumTimeStep& dt, std::uint64_t n);
 // Skips masked E samples; the outer closure is already excluded by the ranges,
 // so a mask without interior primitives performs the identical arithmetic.
 void advance_e(FieldStorage& fields, const VacuumTimeStep& dt, std::uint64_t n, const PecMask& mask);
+// MAT-03 material kernel: Enew = Ca*E + Cb*curl H on unmasked update-range
+// samples; with vacuum coefficients it is bitwise the masked vacuum kernel.
+void advance_e(FieldStorage& fields, const VacuumTimeStep& dt, std::uint64_t n, const PecMask& mask,
+               const EdgeCoefficients& coefficients);
 
 } // namespace antennasim::detail

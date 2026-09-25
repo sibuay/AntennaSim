@@ -1,5 +1,6 @@
 #include "closed.hpp"
 #include "common.hpp"
+#include "material.hpp"
 #include "antennasim/build_info.hpp"
 
 #include <algorithm>
@@ -67,11 +68,13 @@ Case source_case(std::size_t pad, std::uint64_t steps, Index source, std::vector
     return config;
 }
 
+// Two field payloads, the byte mask, the vacuum coefficient index (four bytes
+// per E sample) and its one-entry table (D023), probes, the current and overhead.
 std::size_t working_bytes(const Case& config) {
     std::size_t mask_bytes = 0;
     for (std::size_t id = 0; id < 3; ++id) mask_bytes += config.grid.layout(component(id)).element_count;
-    return 2 * config.grid.field_bytes() + mask_bytes + probes(config).size() * sizeof(FieldProbe) +
-        sizeof(CurrentSample) + overhead;
+    return 2 * config.grid.field_bytes() + mask_bytes + 4 * mask_bytes + sizeof(EdgeMaterial) +
+        probes(config).size() * sizeof(FieldProbe) + sizeof(CurrentSample) + overhead;
 }
 
 void preflight(const Case& config) {
@@ -146,7 +149,8 @@ Diagnostics diagnostics(const ReferenceStepper& solver, const Case& config) {
     return result;
 }
 
-void metadata(const Case& config, const std::filesystem::path& path, FixtureChecks checks, double elapsed, bool complete) {
+void metadata(const Case& config, const std::filesystem::path& path, FixtureChecks checks, double elapsed, bool complete,
+              const EdgeCoefficients* table = nullptr) {
     auto out = stream(path);
     const char* cpu = std::getenv("PROCESSOR_IDENTIFIER");
     const auto pec = mask(config);
@@ -205,7 +209,11 @@ void metadata(const Case& config, const std::filesystem::path& path, FixtureChec
         if (p != 0) out << ',';
         json_array(out, config.ez_probes[p]);
     }
-    out << "],\n\"charge\":\"rho initially zero; delta rho=-dt*div J; PEC surface charge implied\",\n"
+    const auto& cells = config.grid.cells().values();
+    out << "],\n\"materials\":{\"rule\":\"vacuum default: no per-cell map\",\"cells\":[{\"eps_r\":1,\"sigma_S_per_m\":0,\"count\":"
+        << cells[0] * cells[1] * cells[2] << "}],\"map_bytes\":0}";
+    if (table != nullptr) { out << ",\n"; coefficients_json(out, *table); }
+    out << ",\n\"charge\":\"rho initially zero; delta rho=-dt*div J; PEC surface charge implied\",\n"
         << "\"native_time\":\"E=n*dt; H=(n-0.5)*dt; rows include n=0\",\n"
         << "\"diagnostic_weights\":\"half per transverse E outer wall, half per normal H outer wall\",\n"
         << "\"region_sets\":\"interior strictly inside the open shell box; surface on its closed faces; exterior strictly outside\",\n"
@@ -262,7 +270,7 @@ void run_case(const Case& config, const std::filesystem::path& path) {
     }
     raw.close(); energy.close();
     const double elapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count();
-    metadata(config, path / "metadata.json", checks, elapsed, true);
+    metadata(config, path / "metadata.json", checks, elapsed, true, &solver.coefficients());
 }
 } // namespace
 
@@ -443,7 +451,11 @@ FixtureChecks initialize(const Case& config, FieldStorage& fields) {
 }
 
 void run_suite(std::string_view suite, const std::filesystem::path& output, std::uint64_t smoke_steps) {
-    const auto configs = cases(suite, smoke_steps);
+    // Material suites (MAT-03) and the material half of smoke come from material.cpp.
+    const bool material_suite = material::is_suite(suite);
+    const auto configs = material_suite ? std::vector<Case>{} : cases(suite, smoke_steps);
+    const auto material_configs = material_suite || suite == "smoke" ? material::cases(suite, smoke_steps)
+                                                                     : std::vector<material::Case>{};
     if (output.empty()) throw std::invalid_argument("Output path is empty.");
     if (!output.parent_path().empty()) std::filesystem::create_directories(output.parent_path());
     if (!std::filesystem::create_directory(output)) throw std::invalid_argument("Output directory already exists.");
@@ -451,9 +463,13 @@ void run_suite(std::string_view suite, const std::filesystem::path& output, std:
         try { run_case(config, output / config.name); }
         catch (const std::exception& error) { throw std::runtime_error(config.name + ": " + error.what()); }
     }
+    for (const auto& config : material_configs) {
+        try { material::run_case(config, output / config.name); }
+        catch (const std::exception& error) { throw std::runtime_error(config.name + ": " + error.what()); }
+    }
     auto complete = stream(output / "COMPLETE.json.tmp");
     complete << "{\"schema\":\"closed-v1-raw-1\",\"suite\":\"" << suite
-        << "\",\"cases\":" << configs.size() << ",\"physical_acceptance\":\"not evaluated\"}\n";
+        << "\",\"cases\":" << configs.size() + material_configs.size() << ",\"physical_acceptance\":\"not evaluated\"}\n";
     complete.close();
     std::filesystem::rename(output / "COMPLETE.json.tmp", output / "COMPLETE.json");
 }
