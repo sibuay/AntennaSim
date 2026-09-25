@@ -164,7 +164,7 @@ MAT-03 adds the following tests:
   material; rejection before allocation, and on coefficient overflow.
 - **`reference.material_dissipation` (S13, 611).** The one-step identity
   `Q_(n+1) - Q_n + D_n` on modular fields.
-- **`reference.closed_analysis` (from 726 to 2654 checks).** Synthetic
+- **`reference.closed_analysis` (from 726 to 2655 checks).** Synthetic
   V05-A/B/C and V06-A/B series with their fault injections. The second
   2026-09-25 review added faults for every enforced limit, which a mutation run
   confirmed. The revision-1.5

@@ -303,10 +303,23 @@ def synthetic_interface_checks():
     meta["steps"] = 4
     rows = [r for r in rows if int(r["state"]) <= 4]
     require(mr.analyze_interface(meta, rows, fixed_suite=False)[0]["status"] == "pass", "zero smoke record")
-    rows[4]["value"], rows[12]["value"] = repr(1e-300), repr(-1e-300)    # orthogonal to sin(pi k/N_c)
-    require(has_failure(mr.analyze_interface(meta, rows, fixed_suite=False)[0], "zero amplitude"),
+    # Impurity at k = 0, where sin(0) = 0 exactly in every libm, so the TE_1
+    # amplitude is exactly zero and the zero-amplitude rule must reject it. (Hosted
+    # CI, 2026-09-25: the earlier +/-1e-300 pair at k = 4 and 12 relied on
+    # sin(pi/4) == sin(3 pi/4), which holds in the Windows libm but not in glibc.)
+    impure = [dict(r) for r in rows]
+    impure[0]["value"] = repr(1e-300)
+    require(has_failure(mr.analyze_interface(meta, impure, fixed_suite=False)[0], "zero amplitude"),
             "impure zero-amplitude record undetected")
-    checks += 5
+    # A pair that nearly cancels leaves a subnormal amplitude, and so a subnormal
+    # peak and floor; the purity limit must reject it. This is the glibc outcome
+    # of the old pair, made platform-independent with a 1e-10 relative mismatch
+    # (amplitude about 1e-311 whatever the last bit of either sine).
+    impure = [dict(r) for r in rows]
+    impure[4]["value"], impure[12]["value"] = repr(1e-300), repr(-1e-300 * (1 + 1e-10))
+    require(has_failure(mr.analyze_interface(meta, impure, fixed_suite=False)[0], "projection residual exceeds"),
+            "impure near-zero-amplitude record undetected")
+    checks += 6
     print("PASS synthetic V05-B reductions: %d checks (reduced-TE oracle series at p=16)" % checks)
     return checks
 

@@ -498,6 +498,41 @@ a new evidence build):
 
 The known metadata gaps in the first addendum remain.
 
+## Hosted CI addendum (2026-09-25)
+
+The first hosted run after the push (Ubuntu/GCC, Python 3.13, run 4 of
+Validation, commit `6c74934`) built both configurations and passed 19 of 20
+CTests in each. `reference.closed_analysis` failed in a V05-B self-test case.
+No solver output or recorded measurement was involved.
+
+**Cause.** The case built a zero record with an impurity of `+1e-300` at
+`k = 4` and `-1e-300` at `k = 12` on the `N_c = 16` line. It assumed the pair
+cancels exactly against `sin(pi k/N_c)`, which needs
+`sin(pi/4) == sin(3 pi/4)` in binary64. The Windows runtime returns equal
+values; glibc may round them one ulp apart. On Linux the TE_1 amplitude was
+therefore a subnormal `~1e-317`, not zero. The reduction still rejected the
+record, through the purity limit, but the test required the zero-amplitude
+message.
+
+**Correction** (self-test only):
+- The zero-amplitude case now places the impurity at `k = 0`, where
+  `sin(0) = 0` exactly on every platform.
+- A second case keeps the near-cancelling pair, with a `1e-10` relative
+  mismatch. It must fail through the purity limit on every platform.
+
+A local run that shifted `sin(3 pi/4)` by one ulp reproduced the CI outcome for
+the old pair. Both new cases gave the same result with either sine.
+
+**Consequence for the evidence.**
+- The part of `reference.closed_analysis` after this case has not yet run on
+  Linux: the V05-C, V06-B and coefficient-table self-tests, and the smoke
+  oracle.
+- The remaining checks compare integers, apply `1e-12` tolerances, or compare
+  the solver with itself, so none should depend on the platform's `sin`
+  rounding.
+- The next hosted run is the evidence.
+- `reference.closed_analysis` has 2655 checks.
+
 ## Limits
 
 - Same-author review. The physical suites ran on one Windows/Clang machine;
